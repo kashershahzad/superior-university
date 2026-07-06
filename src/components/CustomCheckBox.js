@@ -3,15 +3,31 @@ import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { COLORS } from '../utils/COLORS';
 import Icons from './Icons';
 
-const CustomCheckbox = ({ value, onValueChange }) => {
+const CustomCheckbox = ({
+  value,
+  onValueChange,
+  checkedBgColor = COLORS.primaryColor,
+  tickColor = COLORS.white,
+}) => {
   return (
     <TouchableOpacity
       style={styles.checkboxContainer}
       onPress={() => onValueChange(!value)}
       activeOpacity={0.7}
     >
-      <View style={[styles.checkbox, value && styles.checked]}>
-        {value && <Icons name="check" family={"AntDesign"} size={16} color="white" />}
+      <View
+        style={[
+          styles.checkbox,
+          value && {backgroundColor: checkedBgColor},
+        ]}>
+        {value && (
+          <Icons
+            name="check"
+            family={'AntDesign'}
+            size={12}
+            color={tickColor}
+          />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -21,8 +37,8 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 24,
-    height: 24,
+    width: 16,
+    height: 16,
     borderRadius: 4,
     borderWidth: 2,
     borderColor: COLORS.primaryColor, // Primary color for the checkbox border
@@ -33,10 +49,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white', // Checkbox background when unchecked
-  },
-  checked: {
-    backgroundColor: COLORS.primaryColor, // Background color when checked
+    backgroundColor: 'white',
   },
 });
 

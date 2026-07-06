@@ -14,6 +14,7 @@ import CountryPhoneInput from '../../../components/CountryPhoneInput';
 import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 import {Images} from '../../../assets/images';
+import Signinmodel from '../Login/Signinmodel';
 
 const initialForm = {
   email: '',
@@ -33,6 +34,11 @@ const Signup = ({navigation}) => {
   const [form, setForm] = useState(initialForm);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [signinModelVisible, setSigninModelVisible] = useState(false);
+
+  const handleSigninModel = () => {
+    setSigninModelVisible(true);
+  };
 
   const updateField = useCallback((key, value) => {
     setForm(prev => ({...prev, [key]: value}));
@@ -60,10 +66,10 @@ const Signup = ({navigation}) => {
         secondTitle=" Sign in here"
         marginTop={16}
         marginBottom={20}
-        onPress={() => navigation.navigate('Login')}
+        onPress={handleSigninModel}
       />
     ),
-    [navigation],
+    [handleSigninModel],
   );
 
   const renderStudentCardFields = () => (
@@ -152,8 +158,9 @@ const Signup = ({navigation}) => {
         onChangeText={text => updateField('password', text)}
         withLabel="Password"
         borderColor="#98A2B3"
-        iconName="lock"
+        icon={Images.password}
         secureTextEntry
+        eyeIconColor={COLORS.primaryColor}
       />
 
       <CustomInput
@@ -162,8 +169,9 @@ const Signup = ({navigation}) => {
         onChangeText={text => updateField('confirmPassword', text)}
         withLabel="Confirm Password"
         borderColor="#98A2B3"
-        iconName="lock"
+        icon={Images.password}
         secureTextEntry
+        eyeIconColor={COLORS.primaryColor}
       />
     </>
   );
@@ -221,6 +229,13 @@ const Signup = ({navigation}) => {
         marginTop={10}
         marginBottom={20}
         borderRadius={30}
+      />
+
+
+      <Signinmodel
+        visible={signinModelVisible}
+        onClose={() => setSigninModelVisible(false)}
+        navigation={navigation}
       />
     </ScreenWrapper>
   );

@@ -43,6 +43,7 @@ const CustomInput = ({
   rightIconName,
   rightIconFamily = 'Feather',
   onPress,
+  eyeIconColor,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [hidePass, setHidePass] = useState(true);
@@ -140,7 +141,7 @@ const CustomInput = ({
         {secureTextEntry && (
           <Icons
             name={!hidePass ? 'eye' : 'eye-off'}
-            color={COLORS.gray}
+            color={eyeIconColor || COLORS.gray}
             size={20}
             family="Feather"
             onPress={() => setHidePass(!hidePass)}

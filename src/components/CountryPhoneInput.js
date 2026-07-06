@@ -8,11 +8,12 @@ import { COLORS } from "../utils/COLORS";
 import fonts from "../assets/fonts";
 
 const CountryPhoneInput = ({
-  value = "+1869",
+  value = "+92",
   setValue,
   withLabel,
   onEndEditing,
   error,
+  borderColor = "#98A2B3",
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const ref = useRef();
@@ -22,6 +23,10 @@ const CountryPhoneInput = ({
   const handleBlur = () => {
     setIsFocused(false);
   };
+
+  const inputBorderColor = error ? COLORS.red : isFocused ? "#98A2B3" : borderColor;
+  const inputBackgroundColor = isFocused ? "#FAFAFA" : "#FFFFFF";
+
   return (
     <View style={{ marginBottom: error ? 0 : 20 }}>
       {withLabel && (
@@ -34,42 +39,38 @@ const CountryPhoneInput = ({
       )}
       <PhoneInput
         ref={ref}
-        textInputStyle={{
-          fontSize: 14,
-          fontFamily: fonts.regular,
-        }}
         defaultValue={value}
-        defaultCode="KN"
-        layout="first"
+        defaultCode="PK"
+        layout="second"
+        flagSize={20}
+        placeholder="Phone Number"
+        textInputStyle={[
+          styles.phoneInput,
+          { backgroundColor: inputBackgroundColor },
+        ]}
         textInputProps={{
           placeholderTextColor: COLORS.inputLabel,
           maxLength: 12,
-          style: [
-            styles.phoneInput,
-            { flex: 1, backgroundColor: isFocused ? "#e3ebef" : "#FAFAFA" },
-          ],
           onFocus: handleFocus,
           onBlur: handleBlur,
           onEndEditing,
         }}
-        countryPickerButtonStyle={{
-          backgroundColor: isFocused ? "#e3ebef" : "#FAFAFA",
-        }}
-        codeTextStyle={[styles.phoneInput, { marginLeft: -8 }]}
+        flagButtonStyle={styles.flagButton}
+        countryPickerButtonStyle={[
+          styles.flagButton,
+          { backgroundColor: inputBackgroundColor },
+        ]}
+        codeTextStyle={styles.codeText}
         containerStyle={[
           styles.phoneInputContainer,
           {
-            borderColor: error
-              ? COLORS.red
-              : isFocused
-              ? COLORS.primaryColor
-              : COLORS.inputBg,
-            backgroundColor: isFocused ? "#e3ebef" : "#FAFAFA",
+            borderColor: inputBorderColor,
+            backgroundColor: inputBackgroundColor,
           },
         ]}
         textContainerStyle={[
           styles.textContainerStyle,
-          { backgroundColor: isFocused ? "#e3ebef" : "#FAFAFA" },
+          { backgroundColor: inputBackgroundColor },
         ]}
         onChangeFormattedText={(formattedValue) => setValue(formattedValue)}
       />
@@ -89,6 +90,10 @@ const CountryPhoneInput = ({
 export default CountryPhoneInput;
 const styles = StyleSheet.create({
   phoneInput: {
+    flex: 1,
+    height: "100%",
+    padding: 0,
+    margin: 0,
     fontSize: 14,
     fontFamily: fonts.regular,
     color: COLORS.black,
@@ -99,8 +104,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  flagButton: {
+    width: 76,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 8,
+    paddingRight: 2,
   },
   textContainerStyle: {
+    flex: 1,
+    height: "100%",
     paddingVertical: 0,
+    paddingLeft: 4,
+    paddingRight: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  codeText: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: COLORS.black,
+    marginRight: 4,
+    marginLeft: 2,
   },
 });
