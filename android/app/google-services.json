@@ -1,0 +1,250 @@
+{
+  "project_info": {
+    "project_number": "735961848532",
+    "project_id": "job-finder-24aae",
+    "storage_bucket": "job-finder-24aae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:8df6fdca791eb9fd6df941",
+        "android_client_info": {
+          "package_name": "com.amedd.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:1a8fcec1e653f8536df941",
+        "android_client_info": {
+          "package_name": "com.jobfinder.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-9sivfusr3m38oiuqeanepqbt9b0jimjn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jobfinder.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "735961848532-ba6iqq5lkgarrrl2afsqqi9r1clplnif.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jobfinder.app",
+            "certificate_hash": "066d5cfabb4b72de9ef84f8d66aef6a91feb0d8e"
+          }
+        },
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:1b39528e8d85d9526df941",
+        "android_client_info": {
+          "package_name": "com.muslimsofireland.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:3a899fe9c723cc186df941",
+        "android_client_info": {
+          "package_name": "com.onlinecourses.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:75f86fd72b091eb46df941",
+        "android_client_info": {
+          "package_name": "com.qosta.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735961848532:android:4e7552c23eca921e6df941",
+        "android_client_info": {
+          "package_name": "com.utechokit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735961848532-ta3qfl8t6tjitshguj9urm46cdubgbb2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.utechokit",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTCRzdcCsslTe9NXSu13kxlscxKpiOXD4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735961848532-eibai22aakbj22nutl177d7au091vv1o.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735961848532-057qadvbc16nm6e1iiqidunlmk8is2pc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.referrals.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
