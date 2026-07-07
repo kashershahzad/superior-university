@@ -13,6 +13,7 @@ const MainStack = () => {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        initialRouteName: 'TabStack',
       }}>
       <Stack.Screen name="TabStack" component={TabStack} />
       <Stack.Screen name="InboxScreen" component={InboxScreen} />

@@ -19,4 +19,8 @@ export const Images = {
   password: require('./icons/password.png'),
   email2: require('./icons/email2.png'),
   phone: require('./icons/phone.png'),
+  profile: require('./icons/profile.png'),
+  notification: require('./icons/notifications.png'),
+  verfied: require('./icons/verfied.png'),
+  cover2: require('./cover2.png'),
 };

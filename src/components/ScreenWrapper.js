@@ -1,8 +1,8 @@
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useIsFocused } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React from "react";
 import {
-  SafeAreaView,
   Dimensions,
   StatusBar,
   StyleSheet,
@@ -18,9 +18,7 @@ const { width, height } = Dimensions.get("window");
 
 const FocusAwareStatusBar = (props) => {
   const isFocused = useIsFocused();
-  return isFocused ? (
-    <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} {...props} />
-  ) : null;
+  return isFocused ? <StatusBar {...props} /> : null;
 };
 
 const ScreenWrapper = ({
@@ -38,6 +36,9 @@ const ScreenWrapper = ({
   nestedScrollEnabled,
   paddingHorizontal = 16,
 }) => {
+  const insets = useSafeAreaInsets();
+  const topInset = translucent ? insets.top : Platform.OS === "ios" ? insets.top : 0;
+
   const content = () => {
     return (
       <View
@@ -55,34 +56,33 @@ const ScreenWrapper = ({
       >
         <FocusAwareStatusBar
           barStyle={barStyle}
-          backgroundColor={statusBarColor}
+          backgroundColor={translucent ? "transparent" : statusBarColor}
           translucent={translucent}
         />
-        {!translucent && (
-          <SafeAreaView style={(styles.container, { backgroundColor })} />
-        )}
-        {headerUnScrollable()}
+        <View style={[styles.container, { paddingTop: topInset }]}>
+          {headerUnScrollable()}
 
-        {scrollEnabled ? (
-          <KeyboardAwareScrollView
-            nestedScrollEnabled={nestedScrollEnabled}
-            refreshControl={refreshControl}
-            style={[
-              styles.container,
-              {
-                backgroundColor,
-                paddingHorizontal,
-              },
-            ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </KeyboardAwareScrollView>
-        ) : (
-          <View style={{ paddingHorizontal, flex: 1 }}>{children}</View>
-        )}
-        {footerUnScrollable()}
+          {scrollEnabled ? (
+            <KeyboardAwareScrollView
+              nestedScrollEnabled={nestedScrollEnabled}
+              refreshControl={refreshControl}
+              style={[
+                styles.container,
+                {
+                  backgroundColor,
+                  paddingHorizontal,
+                },
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </KeyboardAwareScrollView>
+          ) : (
+            <View style={{ paddingHorizontal, flex: 1 }}>{children}</View>
+          )}
+          {footerUnScrollable()}
+        </View>
       </View>
     );
   };
