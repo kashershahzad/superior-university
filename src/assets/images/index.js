@@ -26,7 +26,11 @@ export const Images = {
   generateCard: require('./icons/gen_card.png'),
   feeStatus: require('./icons/money.png'),
   passwordforget: require('./icons/setting-2.png'),
-  verify: require('./icons/verified.png'),
+  verify: require('./icons/verfied.png'),
+  verfied: require('./icons/verfied.png'),
+  profile: require('./icons/profile.png'),
+  notification: require('./icons/notifications.png'),
+  cover2: require('./cover2.png'),
   backArrow: require('./icons/arrow-left.png'),
   rightArrow: require('./icons/arrow-right.png'),
 };
