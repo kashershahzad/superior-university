@@ -27,7 +27,7 @@ const RootNavigation = () => {
         headerShown: false,
         animation: 'slide_from_right',
       }}>
-      {isToken ? (
+      {/* {isToken ? (
         <>
           <Stack.Screen name="MainStack" component={MainStack} />
           <Stack.Screen name="AuthStack" component={AuthStack} />
@@ -37,7 +37,9 @@ const RootNavigation = () => {
           <Stack.Screen name="AuthStack" component={AuthStack} />
           <Stack.Screen name="MainStack" component={MainStack} />
         </>
-      )}
+      )} */}
+      <Stack.Screen name="MainStack" component={MainStack} />
+      <Stack.Screen name="AuthStack" component={AuthStack} />
     </Stack.Navigator>
   );
 };
