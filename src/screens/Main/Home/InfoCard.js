@@ -5,10 +5,10 @@ import CustomText from '../../../components/CustomText';
 import fonts from '../../../assets/fonts';
 
 const STATUS_STYLES = {
-  pending: {backgroundColor: '#FEECEB', color: '#F97066'},
-  done: {backgroundColor: '#E8F5E9', color: '#618833'},
-  inProgress: {backgroundColor: '#FFF3E0', color: '#B08968'},
-  waiting: {backgroundColor: '#F0F0F0', color: '#9E9E9E'},
+  pending: {backgroundColor: '#FFE7E7', color: '#EB5757'},
+  done: {backgroundColor: '#E7F1D9', color: '#719055'},
+  inProgress: {backgroundColor: '#F8EEDA', color: '#A67F4E'},
+  waiting: {backgroundColor: '#F1EFE8', color: '#88878A'},
 };
 
 const getStatusStyle = (status, statusType) => {
@@ -46,9 +46,9 @@ const InfoCard = ({title, titleStatus, titleStatusType, items = []}) => {
       <View style={styles.header}>
         <CustomText
           label={title}
-          fontSize={16}
+          fontSize={13}
           fontFamily={fonts.bold}
-          color="#001B48"
+          color="#0C1B54"
         />
         {titleStatus ? (
           <StatusBadge label={titleStatus} statusType={titleStatusType} />
@@ -64,17 +64,17 @@ const InfoCard = ({title, titleStatus, titleStatusType, items = []}) => {
               <View style={styles.row}>
                 <CustomText
                   label={row.item}
-                  fontSize={14}
-                  fontFamily={fonts.regular}
-                  color="#6C7293"
+                  fontSize={13}
+                  fontFamily={fonts.medium}
+                  color="#6D7698"
                 />
 
                 {row.itemValue ? (
                   <CustomText
                     label={row.itemValue}
-                    fontSize={14}
+                    fontSize={13}
                     fontFamily={fonts.bold}
-                    color="#001B48"
+                    color="#0C1B54"
                     textAlign="right"
                     containerStyle={styles.valueText}
                   />
@@ -128,13 +128,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   badge: {
-    borderRadius: 20,
+    borderRadius: 8,
+    height: 28,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   divider: {
     borderBottomWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#D0D5DD',
+    borderColor: '#98A2B3',
   },
 });
