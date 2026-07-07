@@ -1,5 +1,6 @@
 import React from 'react';
-import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {FlatList, Image, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
@@ -13,14 +14,12 @@ import {Images} from '../../../assets/images';
 const CONTACT_ROWS = [
   {
     key: 'email',
-    iconFamily: 'MaterialIcons',
-    iconName: 'email',
+    Icons: Images.email,
     label: 'YourServo@uni.com',
   },
   {
     key: 'phone',
-    iconFamily: 'Feather',
-    iconName: 'phone-call',
+    Icons: Images.phone,
     label: '+923457071709',
   },
 ];
@@ -28,69 +27,60 @@ const CONTACT_ROWS = [
 const ACCOUNT_ROWS = [
   {
     key: 'personal-data',
-    iconFamily: 'FontAwesome6',
-    iconName: 'user',
+    Icons: Images.user,
     label: 'Personal Data',
     showArrow: true,
   },
   {
     key: 'generate-card',
-    iconFamily: 'MaterialCommunityIcons',
-    iconName: 'card-account-details-outline',
+    Icons: Images.generateCard,
     label: 'Generate Card',
     badge: {text: 'Generate Card', variant: 'primary'},
   },
   {
     key: 'fee-status',
-    iconFamily: 'MaterialIcons',
-    iconName: 'receipt-long',
+    Icons: Images.feeStatus,
     label: 'Fee Status',
-    badge: {text: 'Pending', variant: 'danger'},
+    badge: {variant: 'danger', text: 'Pending'},
   },
 ];
 
 const SETTINGS_ROWS = [
   {
     key: 'password',
-    iconFamily: 'MaterialIcons',
-    iconName: 'lock-outline',
+    Icons: Images.passwordforget,
     label: 'Change Password',
     showArrow: true,
   },
   {
     key: 'faq',
-    iconFamily: 'MaterialIcons',
-    iconName: 'help-outline',
+    Icons: Images.faqs,
     label: 'FAQ and Help',
     showArrow: true,
   },
   {
     key: 'logout',
-    iconFamily: 'MaterialIcons',
-    iconName: 'logout',
+    Icons: Images.logout,
     label: 'Logout',
-    iconColor: '#F14E4E',
     showArrow: true,
   },
 ];
 
-const ProfileRow = ({item, onPress}) => {
+const ProfileRow = ({item}) => {
+  const rowLabel = item.label || '';
+  const badgeText = item.badge?.text || '';
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={onPress}
-      style={styles.rowContainer}
-      disabled={!onPress}>
+      style={styles.rowContainer}>
       <View style={styles.rowLeft}>
-        <Icons
-          family={item.iconFamily}
-          name={item.iconName}
-          color={item.iconColor || COLORS.primaryColor}
-          size={18}
+        <Image
+          source={item.Icons}
+          style={{width: 18, height: 18}}
         />
         <CustomText
-          label={item.label}
-          removeTranslation
+          label={rowLabel}
           fontFamily={fonts.medium}
           fontSize={11}
           color="#4F5464"
@@ -105,7 +95,7 @@ const ProfileRow = ({item, onPress}) => {
             item.badge.variant === 'danger' ? styles.dangerBadge : styles.primaryBadge,
           ]}>
           <CustomText
-            label={item.badge.text}
+            label={badgeText}
             removeTranslation
             fontFamily={fonts.bold}
             fontSize={10}
@@ -117,11 +107,9 @@ const ProfileRow = ({item, onPress}) => {
       ) : null}
 
       {item.showArrow ? (
-        <Icons
-          family="Ionicons"
-          name="chevron-forward"
-          color="#B6C2D7"
-          size={16}
+        <Image
+          source={Images.rightArrow}
+          style={{width: 16, height: 16}}
         />
       ) : null}
     </TouchableOpacity>
@@ -129,6 +117,16 @@ const ProfileRow = ({item, onPress}) => {
 };
 
 const ProfileSection = ({title, rows}) => {
+  const renderProfileRow = ({item, index}) => {
+    return (
+      <View>
+        <ProfileRow
+          item={item}
+        />
+      </View>
+    );
+  };
+
   return (
     <View style={styles.sectionWrap}>
       <CustomText
@@ -139,28 +137,47 @@ const ProfileSection = ({title, rows}) => {
         fontSize={12}
       />
       <View style={styles.sectionCard}>
-        {rows.map((row, index) => (
-          <View key={row.key}>
-            <ProfileRow item={row} />
-            {index !== rows.length - 1 ? <View style={styles.rowSeparator} /> : null}
-          </View>
-        ))}
+        <FlatList
+          data={rows}
+          keyExtractor={item => item.key}
+          renderItem={renderProfileRow}
+          scrollEnabled={false}
+        />
       </View>
     </View>
   );
 };
 
 const Profile = () => {
+  const navigation = useNavigation();
+  const sectionData = [
+    {key: 'contact', title: 'CONTACT', rows: CONTACT_ROWS},
+    {key: 'account', title: 'ACCOUNT', rows: ACCOUNT_ROWS},
+    {key: 'settings', title: 'SETTINGS', rows: SETTINGS_ROWS},
+  ];
+
   return (
     <ScreenWrapper
-      scrollEnabled
       paddingHorizontal={0}
-      backgroundColor="#F4F6F9"
       statusBarColor={COLORS.primaryColor}
       barStyle="light-content">
       <View style={styles.topBackground} />
       <View style={styles.headerRow}>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.backBtn}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+              return;
+            }
+            navigation.navigate('Home');
+          }}>
+          <Image
+            source={Images.backArrow}
+            style={{width: 16, height: 16}}
+          />
+        </TouchableOpacity>
         <CustomText
           label="My Profile"
           removeTranslation
@@ -171,35 +188,52 @@ const Profile = () => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <View style={styles.avatarWrap}>
-        <Image
-          source={{uri: ''}}
-          style={styles.avatar}
-          resizeMode="cover"
-        />
-        <View style={styles.nameRow}>
-          <CustomText
-            label="Nimra Sultan"
-            removeTranslation
-            color="#101828"
-            fontFamily={fonts.semiBold}
-            fontSize={18}
-          />
-          <Icons family="MaterialIcons" name="edit" color="#B7C0CB" size={18} />
-        </View>
-        <CustomText
-          label="Computer Science"
-          removeTranslation
-          color={COLORS.primaryColor}
-          fontFamily={fonts.medium}
-          fontSize={13}
-        />
-      </View>
-
       <View style={styles.contentCard}>
-        <ProfileSection title="CONTACT" rows={CONTACT_ROWS} />
-        <ProfileSection title="ACCOUNT" rows={ACCOUNT_ROWS} />
-        <ProfileSection title="SETTINGS" rows={SETTINGS_ROWS} />
+        <View style={styles.avatarWrap} pointerEvents="box-none">
+          <Image
+            source={Images.placeholderUser}
+            style={styles.avatar}
+            resizeMode="cover"
+          />
+          <View style={styles.nameRow}>
+            <CustomText
+              label="Nimra Sultan"
+              removeTranslation
+              color="#101828"
+              fontFamily={fonts.semiBold}
+              fontSize={18}
+            />
+            <Image
+              source={Images.verify}
+              style={{width: 18, height: 18}}
+            />
+          </View>
+          <CustomText
+            label="Computer Science"
+            removeTranslation
+            color={COLORS.primaryColor}
+            fontFamily={fonts.medium}
+            fontSize={13}
+          />
+        </View>
+
+        <View style={styles.scrollClip}>
+          <FlatList
+            style={styles.contentFlatList}
+            data={sectionData}
+            keyExtractor={item => item.key}
+            renderItem={({item}) => (
+              <ProfileSection
+                title={item.title}
+                rows={item.rows}
+                fontFamily={fonts.semiBold}
+                color="#344054"
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentList}
+          />
+        </View>
       </View>
     </ScreenWrapper>
   );
@@ -218,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryColor,
   },
   headerRow: {
-    marginTop: 16,
+    marginTop: 50,
     paddingHorizontal: 16,
     minHeight: 44,
     flexDirection: 'row',
@@ -229,9 +263,20 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
   },
-  avatarWrap: {
+  backBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
+  },
+  avatarWrap: {
+    position: 'absolute',
+    top: -60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
     zIndex: 1,
   },
   avatar: {
@@ -248,12 +293,23 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   contentCard: {
-    marginTop: 20,
+    flex: 1,
+    marginTop: 86,
+    position: 'relative',
+  },
+  scrollClip: {
+    flex: 1,
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
+    overflow: 'hidden',
     paddingHorizontal: 15,
-    paddingTop: 22,
+    paddingTop: 138,
+  },
+  contentFlatList: {
+    flex: 1,
+  },
+  contentList: {
     paddingBottom: 24,
     gap: 20,
   },
@@ -267,7 +323,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   rowContainer: {
-    minHeight: 32,
+    minHeight: 38,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -277,11 +333,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  rowSeparator: {
-    height: 1,
-    backgroundColor: '#EEF1F5',
-    marginVertical: 6,
   },
   badge: {
     borderRadius: 8,
