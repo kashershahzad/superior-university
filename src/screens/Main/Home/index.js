@@ -1,9 +1,9 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {useDispatch} from 'react-redux';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import React, {useEffect} from 'react';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
-import UploadImage from '../../../components/UploadImage';
 import CustomText from '../../../components/CustomText';
 
 import {setLocation} from '../../../store/reducer/usersSlice';
@@ -17,13 +17,15 @@ import GradientButton from './GradientButton';
 const Home = () => {
   const dispatch = useDispatch();
   const locationData = GetLocation();
+  const insets = useSafeAreaInsets();
+
   useEffect(() => {
     dispatch(setLocation(locationData));
   }, [locationData]);
 
   return (
     <ScreenWrapper
-      backgroundColor="#FFFFFF"
+      backgroundColor="#F1F3F8"
       paddingHorizontal={0}
       statusBarColor="transparent"
       translucent
@@ -37,7 +39,12 @@ const Home = () => {
       }}
       headerUnScrollable={() => {
         return (
-          <View style={styles.headerContainer}>
+          <View
+            style={[
+              styles.headerWrapper,
+              {marginTop: -insets.top, paddingTop: insets.top},
+            ]}>
+            <View style={styles.headerContainer}>
           <View style={styles.profileContainer}>
            <ImageFast
            source={Images.placeholderUser}
@@ -55,6 +62,7 @@ const Home = () => {
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             <ImageFast source={Images.profile} style={styles.notificationImage} resizeMode="contain" />
             <ImageFast source={Images.notification} style={styles.notificationImage} resizeMode="contain" />
+          </View>
           </View>
           </View>
         );
@@ -99,6 +107,9 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
+  headerWrapper: {
+    backgroundColor: '#FFFFFF',
+  },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -133,12 +144,13 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#F1F3F8',
     paddingVertical: 20,
     paddingHorizontal: 20,
   },
   footerContainer: {
+    backgroundColor: '#F1F3F8',
     paddingHorizontal: 20,
     paddingBottom: 20,
+    paddingTop: 8,
   },
 });
