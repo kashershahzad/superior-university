@@ -41,162 +41,158 @@ const FeePaid = () => {
       }}
       headerUnScrollable={() => {
         return (
-          <>
-            <View style={styles.headerWrapper}>
-              <View style={styles.headerContent}>
-                <View style={{ marginTop: -20 }}>
-                  <CustomText
-                    label="My Transport"
-                    color="#FEFEFE"
-                    fontSize={24}
-                    fontFamily={fonts.bold}
-                  />
-                  <CustomText
-                    label="Fee Paid"
-                    color="#D9D6FE"
-                    fontSize={14}
-                    fontFamily={fonts.medium}
-                  />
-                </View>
-                <ImageFast
-                  source={Images.bus}
-                  style={styles.busImage}
-                  resizeMode="contain"
+          <View style={styles.headerWrapper}>
+            <View style={styles.headerContent}>
+              <View style={{ marginTop: -20 }}>
+                <CustomText
+                  label="My Transport"
+                  color="#FEFEFE"
+                  fontSize={24}
+                  fontFamily={fonts.bold}
+                />
+                <CustomText
+                  label="Fee Paid"
+                  color="#D9D6FE"
+                  fontSize={14}
+                  fontFamily={fonts.medium}
                 />
               </View>
-              <View style={styles.cardOverlay}>
-                <View style={styles.card}>
-                  <CustomText
-                    label="Total Expense"
-                    color="#101828"
-                    fontSize={14}
-                    fontFamily={fonts.medium}
-                  />
-                  <CustomText
-                    label="Period 1 Jan 2024 - 30 Dec 2024"
-                    color="#101828"
-                    fontSize={12}
-                    fontFamily={fonts.regular}
-                  />
-                  <View style={styles.infoContainer}>
-                    <View style={styles.infoWrapper}>
-                      <View style={styles.feeRow}>
-                        <ImageFast
-                          source={Images.fee}
-                          style={styles.feeImage}
-                          resizeMode="contain"
-                        />
-                        <CustomText
-                          label="Fee"
-                          color="#475467"
-                          fontSize={12}
-                          fontFamily={fonts.medium}
-                        />
-                      </View>
+              <ImageFast
+                source={Images.bus}
+                style={styles.busImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.cardOverlay}>
+              <View style={styles.card}>
+                <CustomText
+                  label="Total Expense"
+                  color="#101828"
+                  fontSize={14}
+                  fontFamily={fonts.medium}
+                />
+                <CustomText
+                  label="Period 1 Jan 2024 - 30 Dec 2024"
+                  color="#101828"
+                  fontSize={12}
+                  fontFamily={fonts.regular}
+                />
+                <View style={styles.infoContainer}>
+                  <View style={styles.infoWrapper}>
+                    <View style={styles.feeRow}>
+                      <ImageFast
+                        source={Images.fee}
+                        style={styles.feeImage}
+                        resizeMode="contain"
+                      />
                       <CustomText
-                        label="Paid"
-                        color="#101828"
-                        fontSize={22}
-                        fontFamily={fonts.regular}
-                        marginTop={3}
-                        marginLeft={2}
-                        removeTranslation
+                        label="Fee"
+                        color="#475467"
+                        fontSize={12}
+                        fontFamily={fonts.medium}
                       />
                     </View>
+                    <CustomText
+                      label="Paid"
+                      color="#101828"
+                      fontSize={22}
+                      fontFamily={fonts.regular}
+                      marginTop={3}
+                      marginLeft={2}
+                      removeTranslation
+                    />
+                  </View>
 
-                    <View style={styles.infoWrapper}>
-                      <View style={styles.feeRow}>
-                        <ImageFast
-                          source={Images.bus2}
-                          style={styles.feeImage}
-                          resizeMode="contain"
-                        />
-                        <CustomText
-                          label="Buss"
-                          color="#475467"
-                          fontSize={12}
-                          fontFamily={fonts.medium}
-                        />
-                      </View>
+                  <View style={styles.infoWrapper}>
+                    <View style={styles.feeRow}>
+                      <ImageFast
+                        source={Images.bus2}
+                        style={styles.feeImage}
+                        resizeMode="contain"
+                      />
                       <CustomText
-                        label="03"
-                        color="#101828"
-                        fontSize={22}
-                        fontFamily={fonts.regular}
-                        marginTop={3}
-                        marginLeft={2}
-                        removeTranslation
+                        label="Buss"
+                        color="#475467"
+                        fontSize={12}
+                        fontFamily={fonts.medium}
                       />
                     </View>
+                    <CustomText
+                      label="03"
+                      color="#101828"
+                      fontSize={22}
+                      fontFamily={fonts.regular}
+                      marginTop={3}
+                      marginLeft={2}
+                      removeTranslation
+                    />
+                  </View>
 
-                    <View style={styles.infoWrapper}>
-                      <View style={styles.feeRow}>
-                        <ImageFast
-                          source={Images.timer}
-                          style={styles.feeImage}
-                          resizeMode="contain"
-                        />
-                        <CustomText
-                          label="Pickup ETA"
-                          color="#475467"
-                          fontSize={12}
-                          fontFamily={fonts.medium}
-                        />
-                      </View>
+                  <View style={styles.infoWrapper}>
+                    <View style={styles.feeRow}>
+                      <ImageFast
+                        source={Images.timer}
+                        style={styles.feeImage}
+                        resizeMode="contain"
+                      />
                       <CustomText
-                        label="08:15"
-                        color="#101828"
-                        fontSize={22}
-                        fontFamily={fonts.regular}
-                        marginTop={3}
-                        marginLeft={2}
-                        removeTranslation
+                        label="Pickup ETA"
+                        color="#475467"
+                        fontSize={12}
+                        fontFamily={fonts.medium}
                       />
                     </View>
+                    <CustomText
+                      label="08:15"
+                      color="#101828"
+                      fontSize={22}
+                      fontFamily={fonts.regular}
+                      marginTop={3}
+                      marginLeft={2}
+                      removeTranslation
+                    />
                   </View>
                 </View>
               </View>
             </View>
-            <View style={styles.busLiveLocation}>
-              <CustomText
-                label="Bus Live Location"
-                color="#101828"
-                fontSize={12}
-                fontFamily={fonts.medium}
-              />
-              <MapView
-                style={styles.map}
-                scrollEnabled={false}
-                zoomEnabled={false}
-                rotateEnabled={false}
-                pitchEnabled={false}
-                initialRegion={DEFAULT_BUS_LOCATION}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: DEFAULT_BUS_LOCATION.latitude,
-                    longitude: DEFAULT_BUS_LOCATION.longitude,
-                  }}
-                />
-              </MapView>
-            </View>
-            <View style={{ marginHorizontal: 16, marginTop: 16 }}>
-              <InfoCard
-                title="Fee Details"
-                //   titleStatus="Pending"
-                titleStatusType="pending"
-                items={[
-                  { item: 'Route', itemValue: '3-Faisalabad' },
-                  { item: 'Driver Name', itemValue: 'Tariq Mehmood' },
-                  { item: 'Bus', itemValue: '#3 Jail Road' },
-                  { item: 'Submitted Date', itemValue: '21 May 2025' },
-                ]}
-              />
-            </View>
-          </>
+          </View>
         );
-      }}
-    ></ScreenWrapper>
+      }}>
+      <View style={styles.busLiveLocation}>
+        <CustomText
+          label="Bus Live Location"
+          color="#101828"
+          fontSize={12}
+          fontFamily={fonts.medium}
+        />
+        <MapView
+          style={styles.map}
+          scrollEnabled={false}
+          zoomEnabled={false}
+          rotateEnabled={false}
+          pitchEnabled={false}
+          initialRegion={DEFAULT_BUS_LOCATION}>
+          <Marker
+            coordinate={{
+              latitude: DEFAULT_BUS_LOCATION.latitude,
+              longitude: DEFAULT_BUS_LOCATION.longitude,
+            }}
+          />
+        </MapView>
+      </View>
+      <View style={styles.feeDetails}>
+        <InfoCard
+          title="Fee Details"
+          titleStatusType="pending"
+          items={[
+            {item: 'Route', itemValue: '3-Faisalabad'},
+            {item: 'Driver Name', itemValue: 'Tariq Mehmood'},
+            {item: 'Bus', itemValue: '#3 Jail Road'},
+            {item: 'Submitted Date', itemValue: '21 May 2025'},
+          ]}
+        />
+      </View>
+    </ScreenWrapper>
   );
 };
 
@@ -206,7 +202,7 @@ const styles = StyleSheet.create({
   headerWrapper: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: '10%',
+    paddingBottom: '18%',
     backgroundColor: '#701A73',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
@@ -228,7 +224,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: -100,
+    bottom: -70,
     zIndex: 10,
     elevation: 10,
   },
@@ -236,11 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 8,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 8,
+    // elevation: 8,
   },
   bodySpacer: {
     height: 110,
@@ -275,7 +271,12 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     marginHorizontal: 16,
-    marginTop: 120,
+    marginTop: 80,
+  },
+  feeDetails: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 24,
   },
   map: {
     width: '100%',
