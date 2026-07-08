@@ -41,4 +41,5 @@ export const Images = {
   fee: require('./icons/fee.png'),
   bus2: require('./icons/bus 2.png'),
   timer: require('./icons/timer.png'),
+  discontinue: require('./icons/discontinue.png'),
 };

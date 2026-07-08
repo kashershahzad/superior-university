@@ -1,11 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 import React from 'react';
-import MapView, {Marker} from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
+import InfoCard from './InfoCard';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -21,6 +22,23 @@ const FeePaid = () => {
       paddingHorizontal={0}
       statusBarColor="#701A73"
       scrollEnabled
+      footerUnScrollable={() => {
+        return (
+          <View style={styles.footerContainer}>
+            <ImageFast
+              source={Images.discontinue}
+              style={styles.discontinueIcon}
+              resizeMode="contain"
+            />
+            <CustomText
+              label="Discontinue Service"
+              color="#701A73"
+              fontSize={14}
+              fontFamily={fonts.medium}
+            />
+          </View>
+        );
+      }}
       headerUnScrollable={() => {
         return (
           <>
@@ -152,7 +170,8 @@ const FeePaid = () => {
                 zoomEnabled={false}
                 rotateEnabled={false}
                 pitchEnabled={false}
-                initialRegion={DEFAULT_BUS_LOCATION}>
+                initialRegion={DEFAULT_BUS_LOCATION}
+              >
                 <Marker
                   coordinate={{
                     latitude: DEFAULT_BUS_LOCATION.latitude,
@@ -160,6 +179,19 @@ const FeePaid = () => {
                   }}
                 />
               </MapView>
+            </View>
+            <View style={{ marginHorizontal: 16, marginTop: 16 }}>
+              <InfoCard
+                title="Fee Details"
+                //   titleStatus="Pending"
+                titleStatusType="pending"
+                items={[
+                  { item: 'Route', itemValue: '3-Faisalabad' },
+                  { item: 'Driver Name', itemValue: 'Tariq Mehmood' },
+                  { item: 'Bus', itemValue: '#3 Jail Road' },
+                  { item: 'Submitted Date', itemValue: '21 May 2025' },
+                ]}
+              />
             </View>
           </>
         );
@@ -251,5 +283,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 12,
     overflow: 'hidden',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#F1F3F8',
+    height: 48,
+    marginBottom: 16,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: '#701A73',
+    marginHorizontal: 40,
+  },
+  discontinueIcon: {
+    width: 24,
+    height: 24,
   },
 });
