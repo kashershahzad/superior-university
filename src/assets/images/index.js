@@ -37,4 +37,8 @@ export const Images = {
   calender: require('./icons/calendar.png'),
   studentCard: require('./student-card.png'),
   check: require('./icons/Check.png'),
+  bus: require('./bus.png'),
+  fee: require('./icons/fee.png'),
+  bus2: require('./icons/bus 2.png'),
+  timer: require('./icons/timer.png'),
 };
