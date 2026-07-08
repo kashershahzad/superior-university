@@ -33,4 +33,6 @@ export const Images = {
   cover2: require('./cover2.png'),
   backArrow: require('./icons/arrow-left.png'),
   rightArrow: require('./icons/arrow-right.png'),
+  voucher: require('./fee-voucher.png'),
+  calender: require('./icons/calendar.png'),
 };

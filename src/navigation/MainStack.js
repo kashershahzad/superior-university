@@ -3,6 +3,7 @@ import React from 'react';
 
 import InboxScreen from '../screens/Main/Chat/InboxScreen';
 import Notifications from '../screens/Main/Notifications';
+import FeeVoucher from '../screens/Main/FeeVoucher';
 import TabStack from './TabStack';
 
 const Stack = createNativeStackNavigator();
@@ -18,6 +19,7 @@ const MainStack = () => {
       <Stack.Screen name="TabStack" component={TabStack} />
       <Stack.Screen name="InboxScreen" component={InboxScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="FeeVoucher" component={FeeVoucher} />
     </Stack.Navigator>
   );
 };

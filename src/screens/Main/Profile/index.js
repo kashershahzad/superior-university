@@ -10,6 +10,7 @@ import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 
 import {Images} from '../../../assets/images';
+import ImageFast from '../../../components/ImageFast';
 
 const CONTACT_ROWS = [
   {
@@ -173,7 +174,7 @@ const Profile = () => {
             }
             navigation.navigate('Home');
           }}>
-          <Image
+          <ImageFast
             source={Images.backArrow}
             style={{width: 16, height: 16}}
           />

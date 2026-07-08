@@ -2,6 +2,7 @@ import {StyleSheet, View} from 'react-native';
 import {useDispatch} from 'react-redux';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import React, {useEffect} from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
@@ -18,6 +19,7 @@ const Home = () => {
   const dispatch = useDispatch();
   const locationData = GetLocation();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   useEffect(() => {
     dispatch(setLocation(locationData));
@@ -33,7 +35,7 @@ const Home = () => {
       footerUnScrollable={() => {
         return (
           <View style={styles.footerContainer}>
-            <GradientButton title="Generate Fee Voucher" onPress={() => {}} />
+            <GradientButton title="Generate Fee Voucher" onPress={() => navigation.navigate('FeeVoucher')} />
           </View>
         );
       }}
@@ -117,6 +119,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: '#EAECF0',
+    paddingTop: 20,
     paddingBottom: 20,
   },
   profileContainer: {
