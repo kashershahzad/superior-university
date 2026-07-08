@@ -23,14 +23,14 @@ const Home = () => {
     { label: 'Route', value: 'Route 3' },
     { label: 'Bus No.', value: 'Bus #3' },
     { label: 'Due Date', value: '21 May 2026' },
-    { label: 'Monthly Fee', value: 'PKR 1000' },
+    { label: 'Monthly Fee', value: 'PKR 8,000' },
   ];
 
   const DetailItem = ({label, value, style}) => (
     <View style={[styles.detailItem, style]}>
       <CustomText
         label={label}
-        fontSize={12}
+        fontSize={11}
         fontFamily={fonts.medium}
         color="#98A2B3"
       />
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    gap: 8,
+    gap: 2,
     marginBottom: 12,
   },
   cardWrapper: {
@@ -205,11 +205,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: 16,
-    rowGap: 16,
+    gap: 12,
+    rowGap: 12,
   },
   detailCol: {
-    width: '31%',
+    width: '30%',
   },
   detailItem: {
     marginBottom: 2,
@@ -219,5 +219,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 26,
     paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#D0D5DD',
+    boxShadow: '0px -4px 9px rgba(170, 159, 254, 0.10), 0px -17px 17px rgba(170, 159, 254, 0.09), 0px -38px 23px rgba(170, 159, 254, 0.05), 0px -67px 27px rgba(170, 159, 254, 0.01), 0px -105px 29px rgba(170, 159, 254, 0)',
   },
 });
