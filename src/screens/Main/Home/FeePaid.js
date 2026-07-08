@@ -22,23 +22,23 @@ const FeePaid = () => {
       paddingHorizontal={0}
       statusBarColor="#701A73"
       scrollEnabled
-      footerUnScrollable={() => {
-        return (
-          <View style={styles.footerContainer}>
-            <ImageFast
-              source={Images.discontinue}
-              style={styles.discontinueIcon}
-              resizeMode="contain"
-            />
-            <CustomText
-              label="Discontinue Service"
-              color="#701A73"
-              fontSize={14}
-              fontFamily={fonts.medium}
-            />
-          </View>
-        );
-      }}
+    //   footerUnScrollable={() => {
+    //     return (
+    //       <View style={styles.footerContainer}>
+    //         <ImageFast
+    //           source={Images.discontinue}
+    //           style={styles.discontinueIcon}
+    //           resizeMode="contain"
+    //         />
+    //         <CustomText
+    //           label="Discontinue Service"
+    //           color="#701A73"
+    //           fontSize={14}
+    //           fontFamily={fonts.medium}
+    //         />
+    //       </View>
+    //     );
+    //   }}
       headerUnScrollable={() => {
         return (
           <View style={styles.headerWrapper}>
@@ -192,6 +192,19 @@ const FeePaid = () => {
           ]}
         />
       </View>
+      <View style={styles.footerContainer}>
+            <ImageFast
+              source={Images.discontinue}
+              style={styles.discontinueIcon}
+              resizeMode="contain"
+            />
+            <CustomText
+              label="Discontinue Service"
+              color="#701A73"
+              fontSize={14}
+              fontFamily={fonts.medium}
+            />
+          </View>
     </ScreenWrapper>
   );
 };
@@ -276,7 +289,6 @@ const styles = StyleSheet.create({
   feeDetails: {
     marginHorizontal: 16,
     marginTop: 16,
-    marginBottom: 24,
   },
   map: {
     width: '100%',
