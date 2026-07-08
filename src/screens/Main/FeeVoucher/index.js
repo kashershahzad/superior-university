@@ -12,7 +12,7 @@ import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
 
-const Home = () => {
+const FeeVoucher = () => {
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -136,7 +136,7 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default FeeVoucher;
 
 const styles = StyleSheet.create({
   headerWrapper: {

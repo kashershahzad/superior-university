@@ -37,6 +37,7 @@ const ACCOUNT_ROWS = [
     Icons: Images.generateCard,
     label: 'Generate Card',
     badge: {text: 'Generate Card', variant: 'primary'},
+    actionKey: 'generate-card',
   },
   {
     key: 'fee-status',
@@ -67,13 +68,14 @@ const SETTINGS_ROWS = [
   },
 ];
 
-const ProfileRow = ({item}) => {
+const ProfileRow = ({item, onPress}) => {
   const rowLabel = item.label || '';
   const badgeText = item.badge?.text || '';
 
   return (
     <TouchableOpacity
       activeOpacity={0.7}
+      onPress={onPress}
       style={styles.rowContainer}>
       <View style={styles.rowLeft}>
         <Image
@@ -117,12 +119,13 @@ const ProfileRow = ({item}) => {
   );
 };
 
-const ProfileSection = ({title, rows}) => {
-  const renderProfileRow = ({item, index}) => {
+const ProfileSection = ({title, rows, onRowPress}) => {
+  const renderProfileRow = ({item}) => {
     return (
       <View>
         <ProfileRow
           item={item}
+          onPress={item.actionKey ? () => onRowPress(item.actionKey) : undefined}
         />
       </View>
     );
@@ -151,6 +154,13 @@ const ProfileSection = ({title, rows}) => {
 
 const Profile = () => {
   const navigation = useNavigation();
+
+  const handleRowPress = actionKey => {
+    if (actionKey === 'generate-card') {
+      navigation.navigate('GenerateCard');
+    }
+  };
+
   const sectionData = [
     {key: 'contact', title: 'CONTACT', rows: CONTACT_ROWS},
     {key: 'account', title: 'ACCOUNT', rows: ACCOUNT_ROWS},
@@ -227,8 +237,7 @@ const Profile = () => {
               <ProfileSection
                 title={item.title}
                 rows={item.rows}
-                fontFamily={fonts.semiBold}
-                color="#344054"
+                onRowPress={handleRowPress}
               />
             )}
             showsVerticalScrollIndicator={false}

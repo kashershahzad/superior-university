@@ -35,4 +35,6 @@ export const Images = {
   rightArrow: require('./icons/arrow-right.png'),
   voucher: require('./fee-voucher.png'),
   calender: require('./icons/calendar.png'),
+  studentCard: require('./student-card.png'),
+  check: require('./icons/Check.png'),
 };

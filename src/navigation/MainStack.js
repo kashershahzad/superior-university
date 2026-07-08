@@ -5,6 +5,7 @@ import InboxScreen from '../screens/Main/Chat/InboxScreen';
 import Notifications from '../screens/Main/Notifications';
 import FeeVoucher from '../screens/Main/FeeVoucher';
 import TabStack from './TabStack';
+import GenerateCard from '../screens/Main/GenerateCard';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +21,7 @@ const MainStack = () => {
       <Stack.Screen name="InboxScreen" component={InboxScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="FeeVoucher" component={FeeVoucher} />
+      <Stack.Screen name="GenerateCard" component={GenerateCard} />
     </Stack.Navigator>
   );
 };
