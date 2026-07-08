@@ -41,5 +41,10 @@ export const Images = {
   fee: require('./icons/fee.png'),
   bus2: require('./icons/bus 2.png'),
   timer: require('./icons/timer.png'),
+  loading: require('./icons/loading.png'),
+  clock: require('./icons/clock.png'),
+  success: require('./icons/success.png'),
+  verificationSuccess: require('./verification-success.png'),
+  verificationPending: require('./verification-pending.png'),
   discontinue: require('./icons/discontinue.png'),
 };

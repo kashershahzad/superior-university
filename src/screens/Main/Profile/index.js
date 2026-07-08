@@ -44,6 +44,7 @@ const ACCOUNT_ROWS = [
     Icons: Images.feeStatus,
     label: 'Fee Status',
     badge: {variant: 'danger', text: 'Pending'},
+    actionKey: 'fee-status',
   },
 ];
 
@@ -158,6 +159,9 @@ const Profile = () => {
   const handleRowPress = actionKey => {
     if (actionKey === 'generate-card') {
       navigation.navigate('GenerateCard');
+    }
+    if (actionKey === 'fee-status') {
+      navigation.navigate('Verification', {status: 'success'});
     }
   };
 
