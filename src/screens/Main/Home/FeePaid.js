@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: -90,
+    bottom: -100,
     zIndex: 10,
     elevation: 10,
   },
@@ -248,11 +248,11 @@ const styles = StyleSheet.create({
   infoContainer: {
     marginTop: 16,
     flexDirection: 'row',
-    gap: 12,
+    gap: "2%",
   },
   infoWrapper: {
     backgroundColor: '#F9F9F9',
-    width: '30%',
+    width: '32%',
     borderRadius: 8,
     height: 72,
     paddingHorizontal: 12,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     marginHorizontal: 16,
-    marginTop: 100,
+    marginTop: 120,
   },
   map: {
     width: '100%',
