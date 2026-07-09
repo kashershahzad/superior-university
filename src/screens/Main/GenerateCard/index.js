@@ -11,6 +11,7 @@ import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
+import StudentCard from './StudentCard';
 
 const GenerateCard = () => {
 
@@ -65,9 +66,11 @@ const GenerateCard = () => {
             <ImageFast source={Images.check} style={{ width: 16, height: 16 }} resizeMode="contain" />
             <CustomText label={`Your Student card is ready!`} fontSize={13} fontFamily={fonts.medium} color="#19B36E" />
         </View>
-        <ImageFast source={Images.studentCard} style={{ width: '100%', height: 500}} resizeMode="contain" />
+        <StudentCard />
         <CustomText label={`Show this card while boarding the university transport.`} fontSize={13} fontFamily={fonts.medium} color="#475467" textAlign="center" />
+        <View style={styles.buttonContainer}>
         <GradientButton title="Download Card" onPress={() => { }} />
+        </View>
       </View>
     </ScreenWrapper>
   );
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 20,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     gap: 24,
   },
   cardInfoContainer: {
@@ -109,6 +112,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+  },
+  buttonContainer: {
+    paddingHorizontal: 12,
   },
   footerContainer: {
     backgroundColor: COLORS.white,

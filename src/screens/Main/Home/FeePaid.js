@@ -1,5 +1,5 @@
-import { StyleSheet, View } from 'react-native';
-import React from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -8,6 +8,7 @@ import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
+import DiscontinueService from './DiscontinueService';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -18,6 +19,7 @@ const DEFAULT_BUS_LOCATION = {
 
 const FeePaid = () => {
   const insets = useSafeAreaInsets();
+  const [isSheetVisible, setSheetVisible] = useState(false);
 
   return (
     <ScreenWrapper
@@ -179,6 +181,9 @@ const FeePaid = () => {
           ]}
         />
       </View>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => setSheetVisible(true)}>
       <View style={styles.footerContainer}>
             <ImageFast
               source={Images.discontinue}
@@ -191,7 +196,18 @@ const FeePaid = () => {
               fontSize={14}
               fontFamily={fonts.medium}
             />
-          </View>
+      </View>
+      </TouchableOpacity>
+      <DiscontinueService
+        isVisible={isSheetVisible}
+        topImg={Images.modalImg}
+        onClose={() => setSheetVisible(false)}
+        onConfirm={(reason) => {
+          console.log(reason);
+          setSheetVisible(false);
+        }}
+        onKeepService={() => setSheetVisible(false)}
+      />
     </ScreenWrapper>
   );
 };

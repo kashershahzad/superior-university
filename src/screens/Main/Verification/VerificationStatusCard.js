@@ -10,9 +10,9 @@ import GradientButton from '../Home/GradientButton';
 const VERIFICATION_CONFIG = {
   pending: {
     heroImage: Images.verificationPending,
-    title: 'Fee Voucher Verification in Progress',
+    title: 'Fee Voucher Verification \n in Progress',
     description:
-      'Your fee voucher has been uploaded successfully and is currently under verification. Our system is processing your request. You will be notified once the verification process is completed.',
+      'Your fee voucher has been uploaded \n successfully and is currently under verification. \n Our system is processing your request. \n You will be notified once the verification \n process is completed.',
     cards: [
       {
         variant: 'processing',
@@ -30,9 +30,9 @@ const VERIFICATION_CONFIG = {
   },
   success: {
     heroImage: Images.verificationSuccess,
-    title: 'Fee Voucher Verified Successfully',
+    title: 'Fee Voucher Verified \nSuccessfully',
     description:
-      'Your uploaded fee voucher has been verified successfully. Your transport service account is now active and you can access all transport-related features.',
+      'Your uploaded fee voucher has been \n verified successfully. \n Your transport service account is now active \n and you can access all transport-related \n features.',
     cards: [
       {
         variant: 'success',
@@ -48,31 +48,34 @@ const VERIFICATION_CONFIG = {
 const VARIANT_STYLES = {
   processing: {
     bg: '#FDF7ED',         
+    cardBorder: '#FCEDD8',
     image: Images.loading,
   },
   time: {
     bg: '#F5F2FB',          
+    cardBorder: '#E9DEFF',
     image: Images.clock,
   },
   success: {
     bg: '#F1FAF2',        
+    cardBorder: '#E3F1E5',
     image: Images.success,
   },
 };
 
 const SmallStatusCard = ({variant, title, subtitle}) => {
   const variantStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.processing;
-  const {bg, image, border} = variantStyle;
+  const {bg, image, cardBorder} = variantStyle;
 
   return (
-    <View style={[styles.card, {backgroundColor: bg, borderColor: border}]}>
+    <View style={[styles.card, {backgroundColor: bg, borderColor: cardBorder}]}>
       <View style={styles.iconWrap}>
         <ImageFast source={image} style={styles.cardIcon} />
       </View>
       <View style={styles.textWrap}>
         <CustomText
           label={title}
-          fontSize={13}
+          fontSize={15}
           fontFamily={fonts.semiBold}
           color={
             variant === 'time' ? COLORS.primaryColor : variant === 'success' ? '#6CC268' : '#F8A837'
@@ -90,7 +93,7 @@ const SmallStatusCard = ({variant, title, subtitle}) => {
   );
 };
 
-const VerificationContent = ({status = 'pending', onPrimaryPress, onSecondaryPress}) => {
+const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
   const config = VERIFICATION_CONFIG[status] || VERIFICATION_CONFIG.pending;
 
   return (
@@ -104,11 +107,12 @@ const VerificationContent = ({status = 'pending', onPrimaryPress, onSecondaryPre
         />
         <CustomText
           label={config.title}
-          fontSize={18}
+          fontSize={19}
           fontFamily={fonts.bold}
           color="#101828"
           textAlign="center"
           marginTop={24}
+          lineHeight={26}
         />
         <CustomText
           label={config.description}
@@ -134,7 +138,7 @@ const VerificationContent = ({status = 'pending', onPrimaryPress, onSecondaryPre
       </View>
 
       {/* Buttons */}
-      <View style={styles.buttonsWrap}>
+      <View style={[styles.buttonsWrap, {marginTop: status === 'success' ? 64 : status === 'pending' ? 12 : 0}]}>
         <GradientButton
           title={config.primaryButton}
           onPress={onPrimaryPress}
@@ -159,63 +163,49 @@ export default VerificationContent;
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 17,
+    paddingVertical: 23,
+    gap: 12,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    width: 38,
+    height: 38,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    overflow: 'visible',
   },
   textWrap: {
     flex: 1,
+    gap: 2,
   },
   content: {
     flex: 1,
-    flexDirection: 'column',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 24,
-    gap: 30,
   },
   heroWrap: {
+    marginTop: 30,
     alignItems: 'center',
   },
   heroImage: {
-    width: 220,
-    height: 220,
+    width: 182,
+    height: 140,
   },
   cardsWrap: {
-    gap: 12,
+    marginTop: 30,
+    gap: 19,
   },
   buttonsWrap: {
-    marginTop: 30,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  iconWrap: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    // marginTop: 'auto',
   },
   cardIcon: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     resizeMode: 'contain',
   },
   outlineBtn: {

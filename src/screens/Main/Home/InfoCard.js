@@ -40,9 +40,9 @@ const StatusBadge = ({label, statusType}) => {
   );
 };
 
-const InfoCard = ({title, titleStatus, titleStatusType, items = []}) => {
+const InfoCard = ({title, titleStatus, titleStatusType, items = [], backgroundColor = '#FFFFFF', bodyBackgroundColor = '#F8F9FE'}) => {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor }]}>
       <View style={styles.header}>
         <CustomText
           label={title}
@@ -55,7 +55,7 @@ const InfoCard = ({title, titleStatus, titleStatusType, items = []}) => {
         ) : null}
       </View>
 
-      <View style={styles.body}>
+      <View style={[styles.body, { backgroundColor: bodyBackgroundColor }]}>
         {items.map((row, index) => {
           const isLast = index === items.length - 1;
 

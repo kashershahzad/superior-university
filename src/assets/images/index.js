@@ -47,4 +47,9 @@ export const Images = {
   verificationSuccess: require('./verification-success.png'),
   verificationPending: require('./verification-pending.png'),
   discontinue: require('./icons/discontinue.png'),
+  modalImg: require('./modal-image.png'),
+  studentCardHeader: require('./student-card-header.png'),
+  qrCode: require('./qr-code.png'),
+  signature: require('./signature.png'),
+  busLogo: require('./icons/school-bus.png'),
 };
