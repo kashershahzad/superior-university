@@ -52,4 +52,8 @@ export const Images = {
   qrCode: require('./qr-code.png'),
   signature: require('./signature.png'),
   busLogo: require('./icons/school-bus.png'),
+  uploadImg: require('./upload-img.png'),
+  uploadIcon: require('./icons/upload-icon.png'),
+  closeIcon: require('./icons/cross.png'),
+  serviceFee: require('./service-fee.png'),
 };

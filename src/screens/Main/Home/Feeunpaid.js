@@ -1,25 +1,29 @@
-import {StyleSheet, View} from 'react-native';
-import {useDispatch} from 'react-redux';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import React, {useEffect} from 'react';
-import {useNavigation} from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 
-import {setLocation} from '../../../store/reducer/usersSlice';
+import { setLocation } from '../../../store/reducer/usersSlice';
 import GetLocation from '../../../utils/GetLocation';
 import ImageFast from '../../../components/ImageFast';
-import {Images} from '../../../assets/images';
+import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import InfoCard from './InfoCard';
 import GradientButton from './GradientButton';
+import ModalBox from './ModalBox';
+import CustomButton from '../../../components/CustomButton';
+import { COLORS } from '../../../utils/COLORS';
 
 const Feeunpaid = () => {
   const dispatch = useDispatch();
   const locationData = GetLocation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     dispatch(setLocation(locationData));
@@ -35,6 +39,17 @@ const Feeunpaid = () => {
       footerUnScrollable={() => {
         return (
           <View style={styles.footerContainer}>
+            <CustomButton
+              title="Upload Fee Voucher"
+              backgroundColor="transparent"
+              color={COLORS.primaryColor}
+              borderWidth={1}
+              borderColor={COLORS.primaryColor}
+              borderRadius={24}
+              height={48}
+              marginBottom={8}
+              onPress={() => setIsModalVisible(true)}
+            />
             <GradientButton
               title="Generate Fee Voucher"
               onPress={() => navigation.navigate('FeeVoucher')}
@@ -47,7 +62,7 @@ const Feeunpaid = () => {
           <View
             style={[
               styles.headerWrapper,
-              {marginTop: -insets.top, paddingTop: insets.top},
+              { marginTop: -insets.top, paddingTop: insets.top },
             ]}>
             <View style={styles.headerContainer}>
               <View style={styles.profileContainer}>
@@ -83,7 +98,7 @@ const Feeunpaid = () => {
                   />
                 </View>
               </View>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <ImageFast
                   source={Images.profile}
                   style={styles.notificationImage}
@@ -102,7 +117,7 @@ const Feeunpaid = () => {
       <View style={styles.container}>
         <ImageFast
           source={Images.cover2}
-          style={{height: 120, width: '100%', marginBottom: 20}}
+          style={{ height: 120, width: '100%', marginBottom: 20 }}
           resizeMode="contain"
         />
 
@@ -111,16 +126,16 @@ const Feeunpaid = () => {
           titleStatus="Pending"
           titleStatusType="pending"
           items={[
-            {item: 'Route', itemValue: '3-Faisalabad'},
-            {item: 'Bus', itemValue: '#3 Jail Road'},
-            {item: 'Submitted Date', itemValue: '21 May 2025'},
+            { item: 'Route', itemValue: '3-Faisalabad' },
+            { item: 'Bus', itemValue: '#3 Jail Road' },
+            { item: 'Submitted Date', itemValue: '21 May 2025' },
           ]}
         />
 
         <InfoCard
           title="What happens next"
           items={[
-            {item: 'Request Submitted', itemStatus: 'Done', statusType: 'done'},
+            { item: 'Request Submitted', itemStatus: 'Done', statusType: 'done' },
             {
               item: 'Under Review',
               itemStatus: 'In Progress',
@@ -134,6 +149,17 @@ const Feeunpaid = () => {
           ]}
         />
       </View>
+
+      <ModalBox
+        type={'upload'}
+        isVisible={isModalVisible}
+        topImg={Images.uploadImg}
+        onClose={() => setIsModalVisible(false)}
+        onUpload={(file) => {
+          console.log('Uploaded file:', file);
+          setIsModalVisible(false);
+        }}
+      />
     </ScreenWrapper>
   );
 };
@@ -175,7 +201,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingVertical: 20,
+    paddingVertical: 16,
     paddingHorizontal: 20,
   },
   footerContainer: {

@@ -8,7 +8,8 @@ import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
-import DiscontinueService from './DiscontinueService';
+import ModalBox from './ModalBox';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -17,9 +18,11 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = () => {
+const FeePaid = ({ feeStatus }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
+  const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   return (
     <ScreenWrapper
@@ -31,10 +34,10 @@ const FeePaid = () => {
       <View
         style={[
           styles.headerWrapper,
-          {marginTop: -insets.top, paddingTop: insets.top + 16},
+          { marginTop: -insets.top, paddingTop: insets.top + 16 },
         ]}>
         <View style={styles.headerContent}>
-          <View style={{marginTop: -20}}>
+          <View style={{ marginTop: -20 }}>
             <CustomText
               label="My Transport"
               color="#FEFEFE"
@@ -69,30 +72,35 @@ const FeePaid = () => {
               fontFamily={fonts.regular}
             />
             <View style={styles.infoContainer}>
-              <View style={styles.infoWrapper}>
-                <View style={styles.feeRow}>
-                  <ImageFast
-                    source={Images.fee}
-                    style={styles.feeImage}
-                    resizeMode="contain"
-                  />
+              <TouchableOpacity style={styles.infoWrapper} activeOpacity={0.8} onPress={() => navigation.navigate('Fees', {
+                status: feeStatus,
+                isMapLocked: feeStatus !== 'paid',
+                unlockText: feeStatus === 'paid' ? 'Bus #03 2.3km away' : 'Pay fee to unlock track', })}>
+                <View>
+                  <View style={styles.feeRow}>
+                    <ImageFast
+                      source={Images.fee}
+                      style={styles.feeImage}
+                      resizeMode="contain"
+                    />
+                    <CustomText
+                      label="Fee"
+                      color="#475467"
+                      fontSize={12}
+                      fontFamily={fonts.medium}
+                    />
+                  </View>
                   <CustomText
-                    label="Fee"
-                    color="#475467"
-                    fontSize={12}
-                    fontFamily={fonts.medium}
+                    label="Paid"
+                    color="#101828"
+                    fontSize={22}
+                    fontFamily={fonts.regular}
+                    marginTop={3}
+                    marginLeft={2}
+                    removeTranslation
                   />
                 </View>
-                <CustomText
-                  label="Paid"
-                  color="#101828"
-                  fontSize={22}
-                  fontFamily={fonts.regular}
-                  marginTop={3}
-                  marginLeft={2}
-                  removeTranslation
-                />
-              </View>
+              </TouchableOpacity>
 
               <View style={styles.infoWrapper}>
                 <View style={styles.feeRow}>
@@ -154,6 +162,7 @@ const FeePaid = () => {
           fontSize={12}
           fontFamily={fonts.medium}
         />
+        {isFocused && (
         <MapView
           style={styles.map}
           scrollEnabled={false}
@@ -168,42 +177,43 @@ const FeePaid = () => {
             }}
           />
         </MapView>
+        )}
       </View>
       <View style={styles.feeDetails}>
         <InfoCard
           title="Fee Details"
           titleStatusType="pending"
           items={[
-            {item: 'Route', itemValue: '3-Faisalabad'},
-            {item: 'Driver Name', itemValue: 'Tariq Mehmood'},
-            {item: 'Bus', itemValue: '#3 Jail Road'},
-            {item: 'Submitted Date', itemValue: '21 May 2025'},
+            { item: 'Route', itemValue: '3-Faisalabad' },
+            { item: 'Driver Name', itemValue: 'Tariq Mehmood' },
+            { item: 'Bus', itemValue: '#3 Jail Road' },
+            { item: 'Submitted Date', itemValue: '21 May 2025' },
           ]}
         />
       </View>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => setSheetVisible(true)}>
-      <View style={styles.footerContainer}>
-            <ImageFast
-              source={Images.discontinue}
-              style={styles.discontinueIcon}
-              resizeMode="contain"
-            />
-            <CustomText
-              label="Discontinue Service"
-              color="#701A73"
-              fontSize={14}
-              fontFamily={fonts.medium}
-            />
-      </View>
+        <View style={styles.footerContainer}>
+          <ImageFast
+            source={Images.discontinue}
+            style={styles.discontinueIcon}
+            resizeMode="contain"
+          />
+          <CustomText
+            label="Discontinue Service"
+            color="#701A73"
+            fontSize={14}
+            fontFamily={fonts.medium}
+          />
+        </View>
       </TouchableOpacity>
-      <DiscontinueService
+      <ModalBox
+        type="discontinue"
         isVisible={isSheetVisible}
         topImg={Images.modalImg}
         onClose={() => setSheetVisible(false)}
-        onConfirm={(reason) => {
-          console.log(reason);
+        onConfirm={() => {
           setSheetVisible(false);
         }}
         onKeepService={() => setSheetVisible(false)}

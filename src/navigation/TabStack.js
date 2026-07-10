@@ -2,11 +2,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image, Platform, StyleSheet, View } from 'react-native';
 import React from 'react';
 
-import Reciepts from '../screens/Main/Notifications';
-import MapScreen from '../screens/Main/MapScreen';
 import Profile from '../screens/Main/Profile';
-import Chat from '../screens/Main/Chat';
 import Home from '../screens/Main/Home';
+import Reciepts from '../screens/Main/Notifications';
 
 import { tabIcons } from '../assets/images/tabIcons';
 import { COLORS } from '../utils/COLORS';

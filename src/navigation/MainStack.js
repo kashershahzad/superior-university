@@ -7,6 +7,7 @@ import FeeVoucher from '../screens/Main/FeeVoucher';
 import TabStack from './TabStack';
 import GenerateCard from '../screens/Main/GenerateCard';
 import Verification from '../screens/Main/Verification';
+import Fees from '../screens/Main/Fees';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +25,7 @@ const MainStack = () => {
       <Stack.Screen name="FeeVoucher" component={FeeVoucher} />
       <Stack.Screen name="GenerateCard" component={GenerateCard} />
       <Stack.Screen name="Verification" component={Verification} />
+      <Stack.Screen name="Fees" component={Fees} />
     </Stack.Navigator>
   );
 };
