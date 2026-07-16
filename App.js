@@ -18,9 +18,9 @@ import Navigation from './src/navigation';
 import i18n from './src/language/i18n';
 
 const App = () => {
-  useEffect(() => {
-    RNBootSplash.hide({ fade: true });
-  }, []);
+  // useEffect(() => {
+  //   RNBootSplash.hide({ fade: true });
+  // }, []);
   const onMessageHandler = async () => {
     const channelId = await notifee.createChannel({
       id: 'default',

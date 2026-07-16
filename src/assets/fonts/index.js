@@ -1,12 +1,12 @@
-const black = 'Poppins-Black';
-const boldExtra = 'Poppins-ExtraBold';
-const bold = 'Poppins-Bold';
-const semiBold = 'Poppins-SemiBold';
-const medium = 'Poppins-Medium';
-const regular = 'Poppins-Regular';
-const light = 'Poppins-Light';
-const extraLight = 'Poppins-ExtraLight';
-const thin = 'Poppins-Thin';
+const black = 'DMSans-Black';
+const boldExtra = 'DMSans-ExtraBold';
+const bold = 'DMSans-Bold';
+const semiBold = 'DMSans-SemiBold';
+const medium = 'DMSans-Medium';
+const regular = 'DMSans-Regular';
+const light = 'DMSans-Light';
+const extraLight = 'DMSans-ExtraLight';
+const thin = 'DMSans-Thin';
 
 export default {
   black,

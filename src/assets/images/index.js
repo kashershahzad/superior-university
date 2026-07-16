@@ -56,4 +56,5 @@ export const Images = {
   uploadIcon: require('./icons/upload-icon.png'),
   closeIcon: require('./icons/cross.png'),
   serviceFee: require('./service-fee.png'),
+  splash: require('./splash.png'),
 };

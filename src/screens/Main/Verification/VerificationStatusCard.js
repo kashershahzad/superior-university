@@ -6,6 +6,8 @@ import {Images} from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import {COLORS} from '../../../utils/COLORS';
 import GradientButton from '../Home/GradientButton';
+import { useNavigation } from '@react-navigation/native';
+import i18n from '../../../language/i18n';
 
 const VERIFICATION_CONFIG = {
   pending: {
@@ -95,6 +97,7 @@ const SmallStatusCard = ({variant, title, subtitle}) => {
 
 const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
   const config = VERIFICATION_CONFIG[status] || VERIFICATION_CONFIG.pending;
+  const navigation = useNavigation();
 
   return (
     <View style={styles.content}>
@@ -141,7 +144,9 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
       <View style={[styles.buttonsWrap, {marginTop: status === 'success' ? 64 : status === 'pending' ? 12 : 0}]}>
         <GradientButton
           title={config.primaryButton}
-          onPress={onPrimaryPress}
+          onPress={() => {if (status === 'success') {
+            navigation.navigate('TabStack', { screen: i18n.t('Home') });
+          }}}
         />
         <View style={{height: 12}} />
         <View style={styles.outlineBtn}>
@@ -159,7 +164,6 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
 
 export default VerificationContent;
 
-
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
@@ -172,8 +176,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   iconWrap: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'visible',
@@ -200,13 +204,11 @@ const styles = StyleSheet.create({
     marginTop: 30,
     gap: 19,
   },
-  buttonsWrap: {
-    // marginTop: 'auto',
-  },
   cardIcon: {
-    width: 38,
-    height: 38,
+    width: 39,
+    height: 39,
     resizeMode: 'contain',
+    overflow: 'visible',
   },
   outlineBtn: {
     height: 48,

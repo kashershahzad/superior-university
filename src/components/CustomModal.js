@@ -1,6 +1,8 @@
 import { StyleSheet, TouchableOpacity } from "react-native";
 import Modal from "react-native-modal";
 import React from "react";
+import { BlurView } from "@react-native-community/blur";
+import { View } from "react-native";
 
 const CustomModal = ({
   isVisible,
@@ -16,17 +18,22 @@ const CustomModal = ({
   overflow,
   children,
   isChange,
+  animationIn = "fadeIn",
+  animationOut = "fadeOut",
+  statusBarTranslucent = false,
+  withBlur = false,
 }) => {
   return (
     <Modal
       isVisible={isVisible}
-      animationIn="fadeIn"
-      animationOut="fadeOut"
+      animationIn={animationIn}
+      animationOut={animationOut}
       transparent={transparent}
       onBackdropPress={onDisable}
       onBackButtonPress={onDisable}
       onDismiss={onDisable}
       backdropOpacity={backdropOpacity || 0.6}
+      statusBarTranslucent={statusBarTranslucent}
       style={[
         {
           margin: mainMargin,
@@ -38,6 +45,23 @@ const CustomModal = ({
           overflow,
         },
       ]}
+      customBackdrop={
+        withBlur ? (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={onDisable}
+            style={StyleSheet.absoluteFill}>
+            <BlurView
+              style={StyleSheet.absoluteFill}
+              blurType="dark"
+              blurAmount={15}
+              overlayColor="#2D2D2D"
+              reducedTransparencyFallbackColor="rgba(24, 24, 24, 0.6)"
+            />
+            <View style={styles.blurTint} />
+          </TouchableOpacity>
+        ) : undefined
+      }
     >
       <TouchableOpacity
         style={isChange ? styles.mainContainer1 : styles.mainContainer}
@@ -69,5 +93,9 @@ const styles = StyleSheet.create({
   },
   container: {
     width: "100%",
+  },
+  blurTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
 });

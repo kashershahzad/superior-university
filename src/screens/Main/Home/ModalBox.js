@@ -195,8 +195,12 @@ const ModalBox = ({
         isChange
         isVisible={isVisible}
         onDisable={onClose}
-        backdropOpacity={0.5}
+        backdropOpacity={0}
         mainMargin={0}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        statusBarTranslucent
+        withBlur
       >
         <View style={styles.sheet}>
           <View style={styles.topImgWrap}>

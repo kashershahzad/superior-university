@@ -45,7 +45,7 @@ const FeePaid = ({ feeStatus }) => {
               fontFamily={fonts.bold}
             />
             <CustomText
-              label="Fee Paid"
+              label="Welcome Back!"
               color="#D9D6FE"
               fontSize={14}
               fontFamily={fonts.medium}
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     marginHorizontal: 16,
     marginTop: 80,
+    overflow: 'hidden',
   },
   feeDetails: {
     marginHorizontal: 16,
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: 180,
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 12,
     overflow: 'hidden',
   },
@@ -322,6 +323,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#701A73',
     marginHorizontal: 40,
+    marginTop: 18,
   },
   discontinueIcon: {
     width: 24,

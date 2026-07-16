@@ -11,9 +11,9 @@ import fonts from '../../../assets/fonts';
 const CARD_DATA = {
     name: 'Nimra Sultan',
     department: 'Computer Science',
-    program: 'BSCS – 4th Semester',
+    program: 'BSCS - 4th Semester',
     studentId: '23-CS-1027',
-    session: '2023 – 2027',
+    session: '2023 - 2027',
     dob: '12 Feb 2003',
     bloodGroup: 'B+',
     issueDate: '15 May 2024',
@@ -54,7 +54,7 @@ const StudentCard = ({ data = CARD_DATA }) => {
                     </View>
                     <View style={styles.idBox}>
                         <CustomText label="STUDENT ID" fontSize={10} color="#667085" />
-                        <CustomText label={data.studentId} fontFamily={fonts.bold} color="#701A73" fontSize={16} />
+                        <CustomText label={data.studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
                     </View>
                 </View>
                 <View style={styles.divider} />

@@ -10,15 +10,15 @@ import { COLORS } from '../../../utils/COLORS';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
+import i18n from '../../../language/i18n';
 import GradientButton from '../Home/GradientButton';
 import VerificationContent from './VerificationStatusCard';
 
 const Verification = ({ route }) => {
-
+  const navigation = useNavigation();
   const status = route?.params?.status || 'pending';
 
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
 
   return (
     <ScreenWrapper
