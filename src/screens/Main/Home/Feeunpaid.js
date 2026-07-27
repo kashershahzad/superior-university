@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
@@ -20,14 +20,14 @@ import { COLORS } from '../../../utils/COLORS';
 
 const Feeunpaid = () => {
   const dispatch = useDispatch();
-  const locationData = GetLocation();
+  // const locationData = GetLocation();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  useEffect(() => {
-    dispatch(setLocation(locationData));
-  }, [locationData]);
+  // useEffect(() => {
+  //   dispatch(setLocation(locationData));
+  // }, [locationData]);
 
   return (
     <ScreenWrapper
@@ -36,27 +36,6 @@ const Feeunpaid = () => {
       statusBarColor="transparent"
       translucent
       scrollEnabled
-      footerUnScrollable={() => {
-        return (
-          <View style={styles.footerContainer}>
-            <CustomButton
-              title="Upload Fee Voucher"
-              backgroundColor="transparent"
-              color={COLORS.primaryColor}
-              borderWidth={1}
-              borderColor={COLORS.primaryColor}
-              borderRadius={24}
-              height={48}
-              marginBottom={8}
-              onPress={() => setIsModalVisible(true)}
-            />
-            <GradientButton
-              title="Generate Fee Voucher"
-              onPress={() => navigation.navigate('FeeVoucher')}
-            />
-          </View>
-        );
-      }}
       headerUnScrollable={() => {
         return (
           <View
@@ -65,45 +44,55 @@ const Feeunpaid = () => {
               { marginTop: -insets.top, paddingTop: insets.top },
             ]}>
             <View style={styles.headerContainer}>
-              <View style={styles.profileContainer}>
-                <ImageFast
-                  source={Images.placeholderUser}
-                  style={styles.profileImage}
-                  resizeMode="contain"
-                />
-                <View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                    }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Profile')}
+              >
+                <View style={styles.profileContainer}>
+                  <ImageFast
+                    source={Images.placeholderUser}
+                    style={styles.profileImage}
+                    resizeMode="contain"
+                  />
+                  <View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                      }}>
+                      <CustomText
+                        label="Welcome"
+                        fontSize={16}
+                        fontFamily={fonts.medium}
+                        color="#2D2D2D"
+                      />
+                      <ImageFast
+                        source={Images.verfied}
+                        style={styles.verfiedImage}
+                        resizeMode="contain"
+                      />
+                    </View>
                     <CustomText
-                      label="Welcome"
-                      fontSize={16}
+                      label="Nimra Sultan"
+                      fontSize={12}
                       fontFamily={fonts.medium}
-                      color="#2D2D2D"
-                    />
-                    <ImageFast
-                      source={Images.verfied}
-                      style={styles.verfiedImage}
-                      resizeMode="contain"
+                      color="#701A73"
                     />
                   </View>
-                  <CustomText
-                    label="Nimra Sultan"
-                    fontSize={12}
-                    fontFamily={fonts.medium}
-                    color="#701A73"
-                  />
                 </View>
-              </View>
+              </TouchableOpacity>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('Profile')}
+              >
                 <ImageFast
                   source={Images.profile}
                   style={styles.notificationImage}
                   resizeMode="contain"
                 />
+                </TouchableOpacity>
                 <ImageFast
                   source={Images.notification}
                   style={styles.notificationImage}
@@ -117,7 +106,7 @@ const Feeunpaid = () => {
       <View style={styles.container}>
         <ImageFast
           source={Images.cover2}
-          style={{ height: 120, width: '100%', marginBottom: 20 }}
+          style={{ height: 120, width: '100%', marginBottom: 4 }}
           resizeMode="contain"
         />
 
@@ -148,6 +137,23 @@ const Feeunpaid = () => {
             },
           ]}
         />
+        <View style={styles.footerContainer}>
+          <CustomButton
+            title="Upload Fee Voucher"
+            backgroundColor="transparent"
+            color={COLORS.primaryColor}
+            borderWidth={1}
+            borderColor={COLORS.primaryColor}
+            borderRadius={24}
+            height={48}
+            marginBottom={8}
+            onPress={() => setIsModalVisible(true)}
+          />
+          <GradientButton
+            title="Generate Fee Voucher"
+            onPress={() => navigation.navigate('FeeVoucher')}
+          />
+        </View>
       </View>
 
       <ModalBox
@@ -201,13 +207,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingVertical: 16,
+    // paddingVertical: 16,
     paddingHorizontal: 20,
   },
   footerContainer: {
-    backgroundColor: '#F1F3F8',
     paddingHorizontal: 20,
     paddingBottom: 20,
-    paddingTop: 8,
+    paddingTop: 24,
   },
 });

@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { PersistGate } from 'redux-persist/integration/react';
 import messaging from '@react-native-firebase/messaging';
-import RNBootSplash from 'react-native-bootsplash';
+// import RNBootSplash from 'react-native-bootsplash';
 import { I18nextProvider } from 'react-i18next';
 import notifee from '@notifee/react-native';
 import React, { useEffect } from 'react';

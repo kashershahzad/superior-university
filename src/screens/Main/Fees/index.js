@@ -33,7 +33,7 @@ const Fees = () => {
         status = 'unpaid',
         isMapLocked = true,
         unlockText = 'Pay fee to unlock track',
-      } = route.params || {};
+    } = route.params || {};
 
     return (
         <>
@@ -69,62 +69,64 @@ const Fees = () => {
                 }}>
                 <View style={styles.container}>
                     <View>
-                    <ImageFast
-                        source={Images.serviceFee}
-                        style={{ height: 130, width: '100%' }}
-                        resizeMode="contain"
-                    />
-                    <View style={styles.busLiveLocation}>
-                        <CustomText
-                            label="Bus Live Location"
-                            color="#101828"
-                            fontSize={12}
-                            fontFamily={fonts.medium}
+                        <ImageFast
+                            source={Images.serviceFee}
+                            style={{ height: 130, width: '100%' }}
+                            resizeMode="contain"
                         />
-                        {isMapLocked ? (
-                        <MapView
-                            style={styles.map}
-                            scrollEnabled={false}
-                            zoomEnabled={false}
-                            rotateEnabled={false}
-                            pitchEnabled={false}
-                            initialRegion={DEFAULT_BUS_LOCATION}>
-                            <Marker
-                                coordinate={{
-                                    latitude: DEFAULT_BUS_LOCATION.latitude,
-                                    longitude: DEFAULT_BUS_LOCATION.longitude,
-                                }}
-                            />
-                        </MapView>
-                        ): null}
-                        {isMapLocked && unlockText ?(
-                        <View style={styles.busLocationInfo}>
-                            <View style={styles.dot}/>
+                        <View style={styles.busLiveLocation}>
                             <CustomText
-                                label={unlockText}
-                                color="#701A73"
+                                label="Bus Live Location"
+                                color="#101828"
                                 fontSize={12}
                                 fontFamily={fonts.medium}
                             />
+                            {isMapLocked ? (
+                                <View style={styles.mapWrap}>
+                                    <MapView
+                                        style={styles.map}
+                                        scrollEnabled={false}
+                                        zoomEnabled={false}
+                                        rotateEnabled={false}
+                                        pitchEnabled={false}
+                                        initialRegion={DEFAULT_BUS_LOCATION}>
+                                        <Marker
+                                            coordinate={{
+                                                latitude: DEFAULT_BUS_LOCATION.latitude,
+                                                longitude: DEFAULT_BUS_LOCATION.longitude,
+                                            }}
+                                        />
+                                    </MapView>
+                                </View>
+                            ) : null}
+                            {unlockText ? (
+                                <View style={styles.busLocationInfo}>
+                                    <View style={styles.dot} />
+                                    <CustomText
+                                        label={unlockText}
+                                        color="#701A73"
+                                        fontSize={12}
+                                        fontFamily={fonts.medium}
+                                    />
+                                </View>
+                            ) : null}
                         </View>
-                        ): null}
-                    </View>
-                    <InfoCard
-                        title="Fee Details"
-                        titleStatus="Pending"
-                        titleStatusType="pending"
-                        items={[
-                            { item: 'Route', itemValue: '3-Faisalabad' },
-                            { item: 'Bus', itemValue: '#3 Jail Road' },
-                            { item: 'Submitted Date', itemValue: '21 May 2025' },
-                        ]}
-                    />
+                        <InfoCard
+                            title="Fee Details"
+                            titleStatus="Pending"
+                            titleStatusType="pending"
+                            items={[
+                                { item: 'Route', itemValue: '3-Faisalabad' },
+                                { item: 'Bus', itemValue: '#3 Jail Road' },
+                                { item: 'Submitted Date', itemValue: '21 May 2025' },
+                            ]}
+                        />
                     </View>
                     <View style={styles.buttonContainer}>
-                    <GradientButton
-                        title="Upload Fee Voucher"
-                        onPress={() => setIsModalVisible(true)}
-                    />
+                        <GradientButton
+                            title="Upload Fee Voucher"
+                            onPress={() => setIsModalVisible(true)}
+                        />
                     </View>
                 </View>
             </ScreenWrapper>
@@ -179,15 +181,23 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         marginBottom: 8,
     },
+    mapWrap: {
+        width: '100%',
+        height: 178,
+        borderWidth: 1,
+        borderColor: '#EBECEE',
+        borderRadius: 12,
+        marginTop: 12,
+        overflow: 'hidden',
+    },
     map: {
         width: '100%',
-        height: 180,
-        borderRadius: 8,
-        marginTop: 12,
+        height: 178,
         overflow: 'hidden',
     },
     buttonContainer: {
         marginBottom: 16,
+        paddingHorizontal: 20,
     },
     busLocationInfo: {
         flexDirection: 'row',

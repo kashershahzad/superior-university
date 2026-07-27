@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
 import {Images} from '../../../assets/images';
@@ -77,17 +77,17 @@ const SmallStatusCard = ({variant, title, subtitle}) => {
       <View style={styles.textWrap}>
         <CustomText
           label={title}
-          fontSize={15}
-          fontFamily={fonts.semiBold}
+          fontSize={16}
+          fontFamily={fonts.bold}
           color={
-            variant === 'time' ? COLORS.primaryColor : variant === 'success' ? '#6CC268' : '#F8A837'
+            variant === 'time' ? '#995DB4' : variant === 'success' ? '#6CC268' : '#F8A837'
           }
         />
         <CustomText
           label={subtitle}
-          fontSize={12}
+          fontSize={14}
           fontFamily={fonts.regular}
-          color="#667085"
+          color="#A2A6A3"
           marginTop={4}
         />
       </View>
@@ -101,6 +101,7 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
 
   return (
     <View style={styles.content}>
+      <View style={styles.top}>
       {/* Hero image + texts */}
       <View style={styles.heroWrap}>
         <ImageFast
@@ -112,7 +113,7 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
           label={config.title}
           fontSize={19}
           fontFamily={fonts.bold}
-          color="#101828"
+          color="#363D4B"
           textAlign="center"
           marginTop={24}
           lineHeight={26}
@@ -121,7 +122,7 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
           label={config.description}
           fontSize={13}
           fontFamily={fonts.regular}
-          color="#667085"
+          color="#A3A3A4"
           textAlign="center"
           marginTop={12}
           lineHeight={20}
@@ -139,16 +140,38 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
           />
         ))}
       </View>
+      </View>
 
       {/* Buttons */}
       <View style={[styles.buttonsWrap, {marginTop: status === 'success' ? 64 : status === 'pending' ? 12 : 0}]}>
         <GradientButton
           title={config.primaryButton}
-          onPress={() => {if (status === 'success') {
-            navigation.navigate('TabStack', { screen: i18n.t('Home') });
-          }}}
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'TabStack',
+                  params: { screen: i18n.t('Home') },
+                },
+              ],
+            });
+          }}
         />
         <View style={{height: 12}} />
+        <TouchableOpacity
+        onPress={() => {
+          if (status === 'pending') {
+            navigation.setParams({ status: 'success' });
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [
+                { name: 'TabStack', params: { screen: i18n.t('Home') } },
+              ],
+            });
+          }
+        }}>
         <View style={styles.outlineBtn}>
           <CustomText
             label={config.secondaryButton}
@@ -157,6 +180,7 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
             color={COLORS.primaryColor}
           />
         </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -169,9 +193,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: 17,
-    paddingVertical: 23,
-    gap: 12,
+    paddingLeft: 16,
+    paddingVertical: 20,
+    gap: 10,
     borderRadius: 8,
     borderWidth: 1,
   },
@@ -189,8 +213,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 6,
     paddingBottom: 24,
+    // backgroundColor: 'red',
+    justifyContent: 'space-between',
   },
   heroWrap: {
     marginTop: 30,

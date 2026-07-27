@@ -15,7 +15,7 @@ export const Images = {
   program: require('./icons/program.png'),
   semester: require('./icons/program.png'),
   route: require('./icons/route.png'),
-  bus: require('./icons/bus.png'),
+  busIcon: require('./icons/bus.png'),
   password: require('./icons/password.png'),
   email2: require('./icons/email2.png'),
   phone: require('./icons/phone.png'),

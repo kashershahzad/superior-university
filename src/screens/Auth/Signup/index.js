@@ -1,6 +1,6 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import ImageFast from '../../../components/ImageFast';
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -11,10 +11,12 @@ import CustomCheckbox from '../../../components/CustomCheckBox';
 import DualText from '../../../components/DualText';
 import CountryPhoneInput from '../../../components/CountryPhoneInput';
 
-import {COLORS} from '../../../utils/COLORS';
+import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
-import {Images} from '../../../assets/images';
+import { Images } from '../../../assets/images';
 import Signinmodel from '../Login/Signinmodel';
+import SelectRoute from './SelectRoute';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const initialForm = {
   email: '',
@@ -29,19 +31,26 @@ const initialForm = {
   busNumber: '',
 };
 
-const Signup = ({navigation}) => {
+const Signup = ({ navigation }) => {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [signinModelVisible, setSigninModelVisible] = useState(false);
+  const [routeModalVisible, setRouteModalVisible] = useState(false);
+
+  const handleSelectRoute = (route) => {
+    updateField('route', route.name);
+    updateField('busNumber', route.busNumber); // auto-fill bus
+    setRouteModalVisible(false);
+  };
 
   const handleSigninModel = () => {
     setSigninModelVisible(true);
   };
 
   const updateField = useCallback((key, value) => {
-    setForm(prev => ({...prev, [key]: value}));
+    setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
   useFocusEffect(
@@ -57,20 +66,13 @@ const Signup = ({navigation}) => {
   const handleSignUp = useCallback(() => {
     setLoading(true);
     setTimeout(() => setLoading(false), 500);
+    navigation.getParent()?.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'MainStack' }],
+      }),
+    );
   }, []);
-
-  const renderFooter = useCallback(
-    () => (
-      <DualText
-        title="Already have an account?"
-        secondTitle=" Sign in here"
-        marginTop={16}
-        marginBottom={20}
-        onPress={handleSigninModel}
-      />
-    ),
-    [handleSigninModel],
-  );
 
   const renderStudentCardFields = () => (
     <>
@@ -119,15 +121,15 @@ const Signup = ({navigation}) => {
         borderColor="#98A2B3"
         icon={Images.route}
         rightIconName="chevron-right"
-        onPress={() => {}}
+        onPress={() => setRouteModalVisible(true)}
       />
 
       <CustomInput
-        placeholder="Buss No"
+        placeholder="Bus No"
         value={form.busNumber}
-        withLabel="Buss Number (auto)"
+        withLabel="Bus Number (auto)"
         borderColor="#98A2B3"
-        icon={Images.bus}
+        icon={Images.busIcon}
         editable={false}
       />
     </>
@@ -184,7 +186,32 @@ const Signup = ({navigation}) => {
       paddingHorizontal={30}
       statusBarColor={COLORS.white}
       scrollEnabled
-      footerUnScrollable={renderFooter}>
+      footerUnScrollable={() =>
+        !isStudentStep ? (
+          <View style={styles.dualTextContainer}>
+            <CustomText
+              label="Already have an account?"
+              fontSize={12}
+              fontFamily={fonts.medium}
+              color="#393B41"
+            />
+            <CustomText
+              label=" Sign in here"
+              fontSize={12}
+              fontFamily={fonts.medium}
+              color={COLORS.primaryColor}
+              onPress={handleSigninModel}
+            />
+          </View>
+        ) : null
+      }
+    >
+      <KeyboardAwareScrollView
+      enableOnAndroid
+      extraScrollHeight={25}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+
       <View style={styles.header}>
         <ImageFast source={Images.signin_img} style={styles.logo} />
         <CustomText
@@ -210,17 +237,15 @@ const Signup = ({navigation}) => {
         {isStudentStep ? renderStudentCardFields() : renderEmailFields()}
       </View>
 
-      {!isStudentStep && (
-        <View style={styles.termsRow}>
-          <CustomCheckbox value={agreed} onValueChange={setAgreed} />
-          <Text style={styles.termsText}>
-            I agree with{' '}
-            <Text style={styles.termsLink}>terms & conditions</Text>
-            {' and '}
-            <Text style={styles.termsLink}>privacy policy</Text>
-          </Text>
-        </View>
-      )}
+      <View style={[styles.termsRow, isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 }]}>
+        <CustomCheckbox value={agreed} onValueChange={setAgreed} />
+        <Text style={styles.termsText}>
+          I agree with{' '}
+          <Text style={styles.termsLink}>terms & conditions</Text>
+          {' and '}
+          <Text style={styles.termsLink}>privacy policy</Text>
+        </Text>
+      </View>
 
       <CustomButton
         title={isStudentStep ? 'Next' : 'Sign Up'}
@@ -229,14 +254,40 @@ const Signup = ({navigation}) => {
         marginTop={10}
         marginBottom={20}
         borderRadius={30}
+        color='#ffffff'
       />
 
+      {isStudentStep && (
+        <View style={styles.dualTextContainer}>
+          <CustomText
+            label="Already have an account?"
+            fontSize={12}
+            fontFamily={fonts.medium}
+            color="#393B41"
+          />
+          <CustomText
+            label=" Sign in here"
+            fontSize={12}
+            fontFamily={fonts.medium}
+            color={COLORS.primaryColor}
+            onPress={handleSigninModel}
+          />
+        </View>
+      )}
 
       <Signinmodel
         visible={signinModelVisible}
         onClose={() => setSigninModelVisible(false)}
         navigation={navigation}
       />
+
+      <SelectRoute
+        visible={routeModalVisible}
+        onClose={() => setRouteModalVisible(false)}
+        selectedRoute={form.route}
+        onSelectRoute={handleSelectRoute}
+      />
+      </KeyboardAwareScrollView>
     </ScreenWrapper>
   );
 };
@@ -257,21 +308,30 @@ const styles = StyleSheet.create({
   form: {
     marginTop: 10,
   },
+  dualText: {
+    width: '100%',
+    backgroundColor: 'red',
+  },
+  dualTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
     marginBottom: 10,
-    paddingRight: 10,
   },
   termsText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 20,
     color: '#393B41',
     fontFamily: fonts.regular,
   },
   termsLink: {
+    fontSize: 12,
     color: COLORS.primaryColor,
     fontFamily: fonts.semiBold,
   },

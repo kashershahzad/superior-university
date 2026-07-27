@@ -22,10 +22,12 @@ const CustomModal = ({
   animationOut = "fadeOut",
   statusBarTranslucent = false,
   withBlur = false,
+  avoidKeyboard = false,
 }) => {
   return (
     <Modal
       isVisible={isVisible}
+      avoidKeyboard={avoidKeyboard}
       animationIn={animationIn}
       animationOut={animationOut}
       transparent={transparent}

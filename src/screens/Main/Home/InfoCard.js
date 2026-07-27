@@ -74,7 +74,7 @@ const InfoCard = ({title, titleStatus, titleStatusType, items = [], backgroundCo
                     label={row.itemValue}
                     fontSize={13}
                     fontFamily={fonts.bold}
-                    color="#0C1B54"
+                    color={row.itemValueColor || '#0C1B54'}
                     textAlign="right"
                     containerStyle={styles.valueText}
                   />
@@ -128,6 +128,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   badge: {
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 8,
     height: 28,
     paddingHorizontal: 12,

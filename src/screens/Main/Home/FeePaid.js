@@ -18,7 +18,7 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = ({ feeStatus }) => {
+const FeePaid = ({ feestatus }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
   const navigation = useNavigation();
@@ -73,9 +73,9 @@ const FeePaid = ({ feeStatus }) => {
             />
             <View style={styles.infoContainer}>
               <TouchableOpacity style={styles.infoWrapper} activeOpacity={0.8} onPress={() => navigation.navigate('Fees', {
-                status: feeStatus,
-                isMapLocked: feeStatus !== 'paid',
-                unlockText: feeStatus === 'paid' ? 'Bus #03 2.3km away' : 'Pay fee to unlock track', })}>
+                status: feestatus,
+                unlockText: feestatus === 'unpaid' ? 'Pay fee to unlock track' : 'Bus #03 2.3km away',
+              })}>
                 <View>
                   <View style={styles.feeRow}>
                     <ImageFast
@@ -163,21 +163,34 @@ const FeePaid = ({ feeStatus }) => {
           fontFamily={fonts.medium}
         />
         {isFocused && (
-        <MapView
-          style={styles.map}
-          scrollEnabled={false}
-          zoomEnabled={false}
-          rotateEnabled={false}
-          pitchEnabled={false}
-          initialRegion={DEFAULT_BUS_LOCATION}>
-          <Marker
-            coordinate={{
-              latitude: DEFAULT_BUS_LOCATION.latitude,
-              longitude: DEFAULT_BUS_LOCATION.longitude,
-            }}
-          />
-        </MapView>
+          <View style={styles.mapWrap}>
+            <MapView
+              style={styles.map}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              initialRegion={DEFAULT_BUS_LOCATION}>
+              <Marker
+                coordinate={{
+                  latitude: DEFAULT_BUS_LOCATION.latitude,
+                  longitude: DEFAULT_BUS_LOCATION.longitude,
+                }}
+              />
+            </MapView>
+          </View>
         )}
+        {feestatus ? (
+          <View style={styles.busLocationInfo}>
+            <View style={styles.dot} />
+            <CustomText
+              label={feestatus === 'unpaid' ? 'Pay fee to unlock track' : 'Bus #03 2.3km away'}
+              color="#701A73"
+              fontSize={12}
+              fontFamily={fonts.medium}
+            />
+          </View>
+        ) : null}
       </View>
       <View style={styles.feeDetails}>
         <InfoCard
@@ -304,11 +317,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
   },
-  map: {
+  mapWrap: {
     width: '100%',
-    height: 180,
+    height: 178,
+    borderWidth: 1,
+    borderColor: '#EBECEE',
     borderRadius: 12,
     marginTop: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    width: '100%',
+    height: 178,
     overflow: 'hidden',
   },
   footerContainer: {
@@ -328,5 +348,18 @@ const styles = StyleSheet.create({
   discontinueIcon: {
     width: 24,
     height: 24,
+  },
+  busLocationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 12,
+    backgroundColor: '#701A73',
   },
 });

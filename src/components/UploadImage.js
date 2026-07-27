@@ -112,14 +112,6 @@ const UploadImage = props => {
         onDisable={() => setImageModal(false)}
         backgroundColor="transparent">
         <View style={styles.mainContainer}>
-          <Icons
-            family="Entypo"
-            name="circle-with-cross"
-            size={25}
-            color={COLORS.black}
-            style={{alignSelf: 'flex-end', marginBottom: 10}}
-            onPress={() => setImageModal(false)}
-          />
           <CustomText
             label="Choose Picture From"
             fontSize={18}

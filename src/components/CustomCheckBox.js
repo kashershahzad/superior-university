@@ -40,8 +40,8 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 4,
-    borderWidth: 2,
-    borderColor: COLORS.primaryColor, // Primary color for the checkbox border
+    borderWidth: 1,
+    borderColor: COLORS.primaryColor,
     marginRight: 10,
   },
   checkbox: {
@@ -49,7 +49,8 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#F4F3FF',
+    borderRadius: 3,
   },
 });
 

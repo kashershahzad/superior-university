@@ -1,16 +1,20 @@
-import React from 'react';
-import {FlatList, Image, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useState } from 'react';
+import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../../store/reducer/AuthConfig';
+
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import Icons from '../../../components/Icons';
 
-import {COLORS} from '../../../utils/COLORS';
+import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 
-import {Images} from '../../../assets/images';
+import { Images } from '../../../assets/images';
 import ImageFast from '../../../components/ImageFast';
+import UploadImage from '../../../components/UploadImage';
 
 const CONTACT_ROWS = [
   {
@@ -36,14 +40,14 @@ const ACCOUNT_ROWS = [
     key: 'generate-card',
     Icons: Images.generateCard,
     label: 'Generate Card',
-    badge: {text: 'Generate Card', variant: 'primary'},
+    badge: { text: 'Generate Card', variant: 'primary' },
     actionKey: 'generate-card',
   },
   {
     key: 'fee-status',
     Icons: Images.feeStatus,
     label: 'Fee Status',
-    badge: {variant: 'danger', text: 'Pending'},
+    badge: { variant: 'danger', text: 'Pending' },
     actionKey: 'fee-status',
   },
 ];
@@ -66,10 +70,11 @@ const SETTINGS_ROWS = [
     Icons: Images.logout,
     label: 'Logout',
     showArrow: true,
+    actionKey: 'logout',
   },
 ];
 
-const ProfileRow = ({item, onPress}) => {
+const ProfileRow = ({ item, onPress }) => {
   const rowLabel = item.label || '';
   const badgeText = item.badge?.text || '';
 
@@ -81,7 +86,7 @@ const ProfileRow = ({item, onPress}) => {
       <View style={styles.rowLeft}>
         <Image
           source={item.Icons}
-          style={{width: 18, height: 18}}
+          style={{ width: 18, height: 18 }}
         />
         <CustomText
           label={rowLabel}
@@ -113,15 +118,15 @@ const ProfileRow = ({item, onPress}) => {
       {item.showArrow ? (
         <Image
           source={Images.rightArrow}
-          style={{width: 16, height: 16}}
+          style={{ width: 16, height: 16 }}
         />
       ) : null}
     </TouchableOpacity>
   );
 };
 
-const ProfileSection = ({title, rows, onRowPress}) => {
-  const renderProfileRow = ({item}) => {
+const ProfileSection = ({ title, rows, onRowPress }) => {
+  const renderProfileRow = ({ item }) => {
     return (
       <View>
         <ProfileRow
@@ -155,20 +160,32 @@ const ProfileSection = ({title, rows, onRowPress}) => {
 
 const Profile = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const [avatarUri, setAvatarUri] = useState(null);
 
   const handleRowPress = actionKey => {
     if (actionKey === 'generate-card') {
       navigation.navigate('GenerateCard');
     }
     if (actionKey === 'fee-status') {
-      navigation.navigate('Verification', {status: 'success'});
+      navigation.navigate('Verification', { status: 'pending' });
+    }
+    if (actionKey === 'logout') {
+      dispatch(logout());
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'AuthStack' }],
+        }),
+      );
     }
   };
 
   const sectionData = [
-    {key: 'contact', title: 'CONTACT', rows: CONTACT_ROWS},
-    {key: 'account', title: 'ACCOUNT', rows: ACCOUNT_ROWS},
-    {key: 'settings', title: 'SETTINGS', rows: SETTINGS_ROWS},
+    { key: 'contact', title: 'CONTACT', rows: CONTACT_ROWS },
+    { key: 'account', title: 'ACCOUNT', rows: ACCOUNT_ROWS },
+    { key: 'settings', title: 'SETTINGS', rows: SETTINGS_ROWS },
   ];
 
   return (
@@ -190,7 +207,7 @@ const Profile = () => {
           }}>
           <ImageFast
             source={Images.backArrow}
-            style={{width: 16, height: 16}}
+            style={{ width: 16, height: 16 }}
           />
         </TouchableOpacity>
         <CustomText
@@ -205,11 +222,38 @@ const Profile = () => {
 
       <View style={styles.contentCard}>
         <View style={styles.avatarWrap} pointerEvents="box-none">
-          <Image
-            source={Images.placeholderUser}
-            style={styles.avatar}
-            resizeMode="cover"
+
+          <UploadImage
+            options={{
+              cropping: true,
+              width: 400,
+              height: 400,
+              cropperCircleOverlay: false, // square avatar ke liye
+              compressImageQuality: 0.8,
+            }}
+            handleChange={result => {
+              // image-crop-picker → path
+              const uri = result?.path || result?.uri;
+              if (uri) setAvatarUri(uri);
+            }}
+            renderButton={openPickerModal => (
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={openPickerModal}
+                style={styles.avatarTouch}>
+                <Image
+                  source={
+                    avatarUri
+                      ? { uri: avatarUri }
+                      : Images.placeholderUser
+                  }
+                  style={styles.avatar}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            )}
           />
+
           <View style={styles.nameRow}>
             <CustomText
               label="Nimra Sultan"
@@ -220,7 +264,7 @@ const Profile = () => {
             />
             <Image
               source={Images.verify}
-              style={{width: 18, height: 18}}
+              style={{ width: 18, height: 18 }}
             />
           </View>
           <CustomText
@@ -237,7 +281,7 @@ const Profile = () => {
             style={styles.contentFlatList}
             data={sectionData}
             keyExtractor={item => item.key}
-            renderItem={({item}) => (
+            renderItem={({ item }) => (
               <ProfileSection
                 title={item.title}
                 rows={item.rows}
@@ -292,6 +336,9 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 1,
+  },
+  avatarTouch: {
+    position: 'relative',
   },
   avatar: {
     width: 120,

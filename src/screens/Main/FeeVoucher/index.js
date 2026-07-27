@@ -19,26 +19,26 @@ const FeeVoucher = () => {
 
 
   const VOUCHER_DETAILS = [
-    { label: 'Voucher No.', value: 'TFV-2025-001' },
+    { label: 'Voucher No.', value: 'TFV-2025-001', wide: true },
     { label: 'Route', value: 'Route 3' },
     { label: 'Bus No.', value: 'Bus #3' },
-    { label: 'Due Date', value: '21 May 2026' },
-    { label: 'Monthly Fee', value: 'PKR 8,000' },
+    { label: 'Due Date', value: '21 May 2026', wide: true },
+    { label: 'Monthly Fee', value: 'PKR 8,000', wide: true },
   ];
 
   const DetailItem = ({label, value, style}) => (
     <View style={[styles.detailItem, style]}>
       <CustomText
         label={label}
-        fontSize={11}
+        fontSize={12}
         fontFamily={fonts.medium}
-        color="#98A2B3"
+        color="#475467"
       />
       <CustomText
         label={value}
-        fontSize={14}
-        fontFamily={fonts.bold}
-        color="#0C1B54"
+        fontSize={16}
+        fontFamily={fonts.medium}
+        color="#344054"
         marginTop={4}
       />
     </View>
@@ -46,7 +46,7 @@ const FeeVoucher = () => {
 
   return (
     <ScreenWrapper
-      backgroundColor="#F1F3F8"
+      backgroundColor="#FAFAFF"
       paddingHorizontal={0}
       statusBarColor="transparent"
       translucent
@@ -94,15 +94,15 @@ const FeeVoucher = () => {
               source={Images.calender}
               style={{ width: 16, height: 16}}
             />
-            <CustomText label="30 May 2026" fontSize={14} fontFamily={fonts.medium} color="#0C1B54" marginLeft={8} />
+            <CustomText label="30 May 2026" fontSize={14} fontFamily={fonts.semiBold} color="#101828" marginLeft={8} />
           </View>
           <View style={styles.card}>
             <CustomText
               label="Transport Fees Voucher"
               removeTranslation
-              fontSize={14}
+              fontSize={12}
               fontFamily={fonts.medium}
-              color="#6D7698"
+              color="#475467"
             />
             <ImageFast
               source={Images.voucher}
@@ -113,9 +113,9 @@ const FeeVoucher = () => {
               <CustomText
                 label="Voucher Details"
                 removeTranslation
-                fontSize={14}
+                fontSize={12}
                 fontFamily={fonts.semiBold}
-                color="#6D7698"
+                color="#475467"
               />
               <View style={styles.detailsUnderline} />
             </View>
@@ -125,7 +125,7 @@ const FeeVoucher = () => {
                   key={item.label}
                   label={item.label}
                   value={item.value}
-                  style={styles.detailCol}
+                  style={item.wide ? styles.detailColWide : styles.detailCol}
                 />
               ))}
             </View>
@@ -205,11 +205,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: 12,
+    gap: 22,
     rowGap: 12,
   },
   detailCol: {
-    width: '30%',
+    width: '22%',
+  },
+  detailColWide: {
+    width: '38%', // Voucher No + Due Date
   },
   detailItem: {
     marginBottom: 2,

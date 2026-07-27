@@ -7,24 +7,33 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Text,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import {CommonActions} from '@react-navigation/native';
 
-import CustomButton from '../../../components/CustomButton';
 import CustomInput from '../../../components/CustomInput';
 import CustomText from '../../../components/CustomText';
 import CustomCheckbox from '../../../components/CustomCheckBox';
-import DualText from '../../../components/DualText';
+import CountryPhoneInput from '../../../components/CountryPhoneInput';
 
 import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 import {Images} from '../../../assets/images';
+import GradientButton from '../../Main/Home/GradientButton';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const OutlineButton = ({icon, title, onPress}) => (
-  <TouchableOpacity style={styles.outlineButton} onPress={onPress} activeOpacity={0.7}>
+  <TouchableOpacity
+    style={styles.outlineButton}
+    onPress={onPress}
+    activeOpacity={0.7}>
     <Image source={icon} style={styles.outlineIcon} />
     <CustomText
       label={title}
+      removeTranslation
       color={COLORS.primaryColor}
       fontFamily={fonts.semiBold}
       fontSize={14}
@@ -32,20 +41,46 @@ const OutlineButton = ({icon, title, onPress}) => (
   </TouchableOpacity>
 );
 
+const OrRow = () => (
+  <View style={styles.orRow}>
+    <View style={styles.orLine} />
+    <Text style={styles.orText}>OR</Text>
+    <View style={styles.orLine} />
+  </View>
+);
+
 const Signinmodel = ({visible, onClose, navigation}) => {
+  const [mode, setMode] = useState('default'); // 'default' | 'phone'
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    if (!visible) {
+      setMode('default');
+      setLoading(false);
+      setPhone('');
+    }
+  }, [visible]);
+
+  const handleClose = () => {
+    setMode('default');
+    onClose?.();
+  };
 
   const handleSignIn = () => {
     setLoading(true);
-    setTimeout(() => setLoading(false), 500);
+    setTimeout(() => {
+      setLoading(false);
+      navigation?.navigate('MainStack');
+    }, 500);
   };
 
   const handleForgotPassword = () => {
-    onClose?.();
-    navigation?.navigate('ForgetPass');
+    handleClose();
   };
 
   return (
@@ -53,17 +88,22 @@ const Signinmodel = ({visible, onClose, navigation}) => {
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.content} onPress={() => {}}>
-          <View style={styles.handle} />
+      statusBarTranslucent
+      onRequestClose={handleClose}>
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
+        <View style={[styles.content, {paddingBottom: Math.max(insets.bottom, 16) + 14 }]}>
+          <KeyboardAwareScrollView
+            enableOnAndroid
+            extraScrollHeight={20}
             keyboardShouldPersistTaps="handled"
-            bounces={false}>
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            contentContainerStyle={styles.scrollContent}>
             <CustomText
               label="Sign In"
+              removeTranslation
               fontSize={24}
               fontFamily={fonts.bold}
               color="#101828"
@@ -72,6 +112,7 @@ const Signinmodel = ({visible, onClose, navigation}) => {
             />
             <CustomText
               label="Sign in to your account"
+              removeTranslation
               fontSize={14}
               fontFamily={fonts.medium}
               color="#475467"
@@ -79,95 +120,147 @@ const Signinmodel = ({visible, onClose, navigation}) => {
               marginBottom={24}
             />
 
-            <CustomInput
-              placeholder="Enter Your Email"
-              value={studentId}
-              onChangeText={setStudentId}
-              autoCapitalize="none"
-              withLabel="Student ID"
-              borderColor="#98A2B3"
-              icon={Images.studentId}
-            />
+            {mode === 'phone' ? (
+              <>
+                <View style={styles.phoneWrap}>
+                  <CountryPhoneInput
+                    withLabel="Phone Number"
+                    value={phone}
+                    setValue={setPhone}
+                    borderColor="#98A2B3"
+                  />
+                </View>
 
-            <CustomInput
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              withLabel="Password"
-              borderColor="#98A2B3"
-              icon={Images.password}
-              secureTextEntry
-              eyeIconColor={COLORS.primaryColor}
-            />
-
-            <View style={styles.rememberRow}>
-              <View style={styles.rememberLeft}>
-                <CustomCheckbox
-                  value={rememberMe}
-                  onValueChange={setRememberMe}
-                  checkedBgColor="#F4F3FF"
-                  tickColor={COLORS.primaryColor}
+                <GradientButton
+                  title="Sign In"
+                  onPress={() => navigation?.navigate('OTPScreen', { phone })}
+                  loading={loading}
+                  borderRadius={30}
+                  marginTop={8}
+                  marginBottom={32}
                 />
-                <CustomText
-                  label="Remember Me"
-                  fontSize={13}
-                  color="#393B41"
-                  fontFamily={fonts.regular}
+
+                <OrRow />
+
+                <OutlineButton
+                  icon={Images.email2}
+                  title="Sign in With Email"
                 />
-              </View>
-              <CustomText
-                label="Forgot Password"
-                fontSize={13}
-                fontFamily={fonts.semiBold}
-                color={COLORS.primaryColor}
-                onPress={handleForgotPassword}
-              />
-            </View>
+                <OutlineButton
+                  icon={Images.email2}
+                  title="Sign in With Student ID"
+                  onPress={() => setMode('default')}
+                />
 
-            <CustomButton
-              title="Sign In"
-              onPress={handleSignIn}
-              loading={loading}
-              borderRadius={30}
-              marginTop={8}
-              marginBottom={24}
-            />
+                <View style={styles.dualTextContainer}>
+                  <CustomText
+                    label="Don't have an account?"
+                    removeTranslation
+                    fontSize={12}
+                    fontFamily={fonts.medium}
+                    color="#393B41"
+                  />
+                  <CustomText
+                    label=" Sign up here"
+                    removeTranslation
+                    fontSize={12}
+                    fontFamily={fonts.medium}
+                    color={COLORS.primaryColor}
+                    onPress={handleClose}
+                  />
+                </View>
+              </>
+            ) : (
+              <>
+                <CustomInput
+                  placeholder="Enter Your Email"
+                  value={studentId}
+                  onChangeText={setStudentId}
+                  autoCapitalize="none"
+                  withLabel="Student ID"
+                  borderColor="#98A2B3"
+                  icon={Images.studentId}
+                />
 
-            <View style={styles.orRow}>
-              <View style={styles.orLine} />
-              <CustomText
-                label="OR"
-                fontSize={13}
-                color="#98A2B3"
-                marginLeft={12}
-                marginRight={12}
-                fontFamily={fonts.medium}
-                marginHorizontal={12}
-              />
-              <View style={styles.orLine} />
-            </View>
+                <CustomInput
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  withLabel="Password"
+                  borderColor="#98A2B3"
+                  icon={Images.password}
+                  secureTextEntry
+                  eyeIconColor={COLORS.primaryColor}
+                />
 
-            <OutlineButton
-              icon={Images.email2}
-              title="Sign in With Email"
-              onPress={() => {}}
-            />
-            <OutlineButton
-              icon={Images.phone}
-              title="Sign in With Phone"
-              onPress={() => {}}
-            />
+                <View style={styles.rememberRow}>
+                  <View style={styles.rememberLeft}>
+                    <CustomCheckbox
+                      value={rememberMe}
+                      onValueChange={setRememberMe}
+                    />
+                    <CustomText
+                      label="Remember Me"
+                      removeTranslation
+                      fontSize={13}
+                      color="#393B41"
+                      fontFamily={fonts.regular}
+                    />
+                  </View>
+                  <CustomText
+                    label="Forgot Password"
+                    removeTranslation
+                    fontSize={13}
+                    fontFamily={fonts.semiBold}
+                    color={COLORS.primaryColor}
+                    onPress={handleForgotPassword}
+                  />
+                </View>
 
-            <DualText
-              title="Don't have an account?"
-              secondTitle=" Sign Up Here"
-              marginTop={20}
-              marginBottom={8}
-              onPress={onClose}
-            />
-          </ScrollView>
-        </Pressable>
-      </Pressable>
+                <GradientButton
+                  title="Sign In"
+                  onPress={handleSignIn}
+                  loading={loading}
+                  borderRadius={30}
+                  marginTop={8}
+                  marginBottom={32}
+                />
+
+                <OrRow />
+
+                <OutlineButton
+                  icon={Images.email2}
+                  title="Sign in With Email"
+                  onPress={() => {}}
+                />
+                <OutlineButton
+                  icon={Images.phone}
+                  title="Sign in With Phone"
+                  onPress={() => setMode('phone')}
+                />
+
+                <View style={styles.dualTextContainer}>
+                  <CustomText
+                    label="Don't have an account?"
+                    removeTranslation
+                    fontSize={12}
+                    fontFamily={fonts.medium}
+                    color="#393B41"
+                  />
+                  <CustomText
+                    label=" Sign up here"
+                    removeTranslation
+                    fontSize={12}
+                    fontFamily={fonts.medium}
+                    color={COLORS.primaryColor}
+                    onPress={handleClose}
+                  />
+                </View>
+              </>
+            )}
+          </KeyboardAwareScrollView>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -177,7 +270,7 @@ export default Signinmodel;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(16, 19, 33, 0.87)',
     justifyContent: 'flex-end',
   },
   content: {
@@ -186,24 +279,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 12,
+    paddingHorizontal: 32,
+    paddingTop: 40,
     paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    alignSelf: 'stretch',
   },
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D0D5DD',
-    marginBottom: 20,
+  scrollContent: {
+    width: '100%',
+  },
+  phoneWrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: -8,
-    marginBottom: 8,
+    marginBottom: 24,
   },
   rememberLeft: {
     flexDirection: 'row',
@@ -212,12 +306,27 @@ const styles = StyleSheet.create({
   orRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    width: '100%',
+    alignSelf: 'stretch',
+    marginBottom: 32,
   },
   orLine: {
     flex: 1,
     height: 1,
     backgroundColor: '#E4E7EC',
+  },
+  orText: {
+    marginHorizontal: 12,
+    fontSize: 13,
+    color: '#98A2B3',
+    fontFamily: fonts.medium,
+    textAlign: 'center',
+  },
+  dualTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 22,
   },
   outlineButton: {
     flexDirection: 'row',

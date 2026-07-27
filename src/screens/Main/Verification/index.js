@@ -26,14 +26,6 @@ const Verification = ({ route }) => {
       paddingHorizontal={0}
       statusBarColor="transparent"
       translucent
-      scrollEnabled
-    //   footerUnScrollable={() => {
-    //     return (
-    //       <View style={styles.footerContainer}>
-    //         <GradientButton title="Download Card" onPress={() => { }} />
-    //       </View>
-    //     );
-    //   }}
       headerUnScrollable={() => {
         return (
           <View
@@ -57,7 +49,7 @@ const Verification = ({ route }) => {
                   style={{ width: 18, height: 18 }}
                 />
               </TouchableOpacity>
-              <CustomText label="Verification Status" fontSize={16} fontFamily={fonts.bold} color="#101828" />
+              <CustomText label={status === 'pending' ? 'Verification in Progress' : 'Verification Successfully'} fontSize={16} fontFamily={fonts.bold} color="#101828" />
             </View>
           </View>
         );
@@ -83,7 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     justifyContent: 'flex-start',
-    gap: 84,
+    gap: 54,
     borderBottomWidth: 1,
     borderBottomColor: '#EAECF0',
     paddingTop: 20,

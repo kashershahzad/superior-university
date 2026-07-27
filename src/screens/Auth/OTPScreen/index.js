@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Animated, Keyboard, StyleSheet, View} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
-import {useDispatch} from 'react-redux';
+import { Animated, Keyboard, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import SuccessModal from '../../../components/SuccessModal';
@@ -9,14 +9,15 @@ import CustomButton from '../../../components/CustomButton';
 import CustomText from '../../../components/CustomText';
 import OTPComponent from '../../../components/OTP';
 
-import {setUserData} from '../../../store/reducer/usersSlice';
-import {setToken} from '../../../store/reducer/AuthConfig';
-import {ToastMessage} from '../../../utils/ToastMessage';
-import {post} from '../../../services/ApiRequest';
-import {COLORS} from '../../../utils/COLORS';
+import { setUserData } from '../../../store/reducer/usersSlice';
+import { setToken } from '../../../store/reducer/AuthConfig';
+import { ToastMessage } from '../../../utils/ToastMessage';
+import { post } from '../../../services/ApiRequest';
+import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
+import GradientButton from '../../Main/Home/GradientButton';
 
-const OTPScreen = ({navigation, route}) => {
+const OTPScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const isAccountCreated = route.params?.isAccountCreated;
   const keyboardHeight = new Animated.Value(0);
@@ -71,37 +72,46 @@ const OTPScreen = ({navigation, route}) => {
   };
 
   const handleVerifyOtp = async () => {
-    const body = {
-      email: signupData?.email,
-      code: otp,
-    };
-    const bodyReset = {
-      token: token,
-      code: otp,
-    };
+    // const body = {
+    //   email: signupData?.email,
+    //   code: otp,
+    // };
+    // const bodyReset = {
+    //   token: token,
+    //   code: otp,
+    // };
 
-    const url = isAccountCreated
-      ? 'users/verify-otp/forget-password'
-      : 'users/verify-otp/registration';
+    // const url = isAccountCreated
+    //   ? 'users/verify-otp/forget-password'
+    //   : 'users/verify-otp/registration';
 
-    try {
-      const response = await post(url, isAccountCreated ? bodyReset : body);
-      ToastMessage(response.data.message);
-      if (isAccountCreated) {
-        if (response.data?.success) {
-          navigation.navigate('ResetPass', {token: token, code: otp});
-        }
-      } else {
-        if (response.data?.success) {
-          handleRegisterUser();
-        } else {
-          setLoading(false);
-          return;
-        }
-      }
-    } catch (error) {
-      ToastMessage(error.response.data.message);
-    }
+    // try {
+    //   const response = await post(url, isAccountCreated ? bodyReset : body);
+    //   ToastMessage(response.data.message);
+    //   if (isAccountCreated) {
+    //     if (response.data?.success) {
+    //       navigation.navigate('ResetPass', { token: token, code: otp });
+    //     }
+    //   } else {
+    //     if (response.data?.success) {
+    //       handleRegisterUser();
+    //     } else {
+    //       setLoading(false);
+    //       return;
+    //     }
+    //   }
+    // } catch (error) {
+    //   ToastMessage(error.response.data.message);
+    // }
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'MainStack',
+        },
+      ],
+    });
   };
 
   const handleRegisterUser = async () => {
@@ -168,64 +178,66 @@ const OTPScreen = ({navigation, route}) => {
   return (
     <ScreenWrapper
       scrollEnabled
-      footerUnScrollable={() => (
-        <Animated.View
-          style={{marginBottom: keyboardHeight, paddingHorizontal: 20}}>
-          <CustomButton
+      >
+      <View style={styles.container}>
+        <CustomText
+          label="Verify Account"
+          fontFamily={fonts.semiBold}
+          fontSize={24}
+          color={COLORS.black}
+          marginBottom={10}
+          textAlign="center"
+        />
+        <CustomText
+          label="Enter the verification code we just sent on your email address."
+          color={COLORS.black}
+          fontFamily={fonts.medium}
+          marginBottom={50}
+          textAlign="center"
+        />
+        <OTPComponent value={otp} setValue={setOtp} />
+        <View style={[styles.row, { marginBottom: 18 }]}>
+          <CustomText
+            label="Re-send code in"
+            fontSize={16}
+            onPress={handleResendOtp}
+            fontFamily={fonts.medium}
+            color={COLORS.gray1}
+            disabled={timer !== 0}
+          />
+          <CustomText
+            label={` 00 : ${String(timer).padStart(2, '0')}`}
+            color={COLORS.primaryColor}
+            marginBottom={-3}
+            fontSize={16}
+            marginLeft={4}
+          />
+        </View>
+
+        <GradientButton
             title="Verify"
             marginTop={40}
             marginBottom={20}
             loading={loading}
             disabled={!otp}
             onPress={handleVerifyOtp}
+            borderRadius={100}
           />
-        </Animated.View>
-      )}>
-      <CustomText
-        label="Verify Account"
-        fontFamily={fonts.semiBold}
-        fontSize={24}
-        color={COLORS.black}
-        marginTop={10}
-      />
-      <CustomText
-        label="Enter the verification code we just sent on your email address."
-        color={COLORS.black}
-        fontFamily={fonts.medium}
-        marginBottom={50}
-      />
-      <OTPComponent value={otp} setValue={setOtp} />
-      <View style={[styles.row, {marginBottom: 18}]}>
-        <CustomText
-          label="Re-send code in"
-          fontSize={16}
-          onPress={handleResendOtp}
-          fontFamily={fonts.medium}
-          color={COLORS.gray1}
-          disabled={timer !== 0}
-        />
-        <CustomText
-          label={` 00 : ${String(timer).padStart(2, '0')}`}
-          color={COLORS.primaryColor}
-          marginBottom={-3}
-          fontSize={16}
-          marginLeft={4}
+
+        <SuccessModal
+          isVisible={isResetModal}
+          title="Changed Successfully"
+          desc="Your password has been changed successfully."
+          buttonTitle="Sign In"
+          onDisable={() => setResetModal(false)}
+          onPress={() => {
+            setResetModal(false);
+            setTimeout(() => {
+              navigation.navigate('Login');
+            }, 100);
+          }}
         />
       </View>
-
-      <SuccessModal
-        isVisible={isResetModal}
-        title="Changed Successfully"
-        desc="Your password has been changed successfully."
-        buttonTitle="Sign In"
-        onDisable={() => setResetModal(false)}
-        onPress={() => {
-          setResetModal(false);
-          setTimeout(() => {
-            navigation.navigate('Login');
-          }, 100);
-        }}
-      />
     </ScreenWrapper>
   );
 };
@@ -233,6 +245,10 @@ const OTPScreen = ({navigation, route}) => {
 export default OTPScreen;
 
 const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 24,
+    paddingTop: 120,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',

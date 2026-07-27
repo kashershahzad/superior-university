@@ -28,10 +28,10 @@ const CARD_DATA = {
 const DetailRow = ({ label, value }) => (
     <View style={styles.detailRow}>
         <View style={styles.detailRowLabel}>
-        <CustomText label={label} fontSize={14} color="#3E4653" />
+        <CustomText label={label} fontSize={13} fontFamily={fonts.medium} color="#45495A" />
         </View>
         <View style={styles.detailRowValue}>
-        <CustomText label={value} fontSize={14} fontFamily={fonts.semiBold} color="#292E41" />
+        <CustomText label={value} fontSize={13} fontFamily={fonts.medium} color="#283342" />
         </View>
     </View>
 );
@@ -49,11 +49,11 @@ const StudentCard = ({ data = CARD_DATA }) => {
                     <ImageFast source={data.avatar} style={styles.avatar} />
                     <View style={styles.profileInfo}>
                         <CustomText label={data.name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
-                        <CustomText label={data.department} color="#701A73" fontSize={12} />
-                        <CustomText label={data.program} color="#667085" fontSize={12} />
+                        <CustomText label={data.department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
+                        <CustomText label={data.program} fontFamily={fonts.medium} color="#667085" fontSize={12} />
                     </View>
                     <View style={styles.idBox}>
-                        <CustomText label="STUDENT ID" fontSize={10} color="#667085" />
+                        <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />
                         <CustomText label={data.studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
                     </View>
                 </View>
