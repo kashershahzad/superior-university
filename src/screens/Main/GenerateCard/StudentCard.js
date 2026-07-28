@@ -19,7 +19,7 @@ const CARD_DATA = {
     issueDate: '15 May 2024',
     validUpto: '15 May 2025',
     studentCardHeader: Images.studentCardHeader,
-    avatar: Images.placeholderUser,
+    avatar: Images.profileimage,
     qrCode: Images.qrCode,
     signature: Images.signature,
     busLogo: Images.busLogo,

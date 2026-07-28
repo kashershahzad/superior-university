@@ -20,7 +20,7 @@ const Notifications = () => {
 
   const [data, setData] = useState([]);
   const [lastId, setLastId] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [bottomLoader, setBottomLoader] = useState(false);
 
   const handlePress = item => {
@@ -82,9 +82,9 @@ const Notifications = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData(true);
-  }, []);
+  // useEffect(() => {
+  //   fetchData(true);
+  // }, []);
   // useEffect(() => {
   //   if (socket) {
   //     socket.emit("seen-notification", {});

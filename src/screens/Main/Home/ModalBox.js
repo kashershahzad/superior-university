@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
+  ScrollView,
+  Keyboard,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { openPicker } from 'react-native-image-crop-picker';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import CustomModal from '../../../components/CustomModal';
 import CustomText from '../../../components/CustomText';
@@ -9,12 +18,14 @@ import CustomInput from '../../../components/CustomInput';
 import CustomButton from '../../../components/CustomButton';
 import ImageFast from '../../../components/ImageFast';
 import InfoCard from './InfoCard';
-import Icons from '../../../components/Icons';
 import GradientButton from './GradientButton';
 
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import { COLORS } from '../../../utils/COLORS';
+
+const TOP_IMAGE_OVERFLOW = 50;
+const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const SERVICE_DETAILS = [
   { item: 'Current Service', itemValue: 'Bus #03' },
@@ -22,15 +33,15 @@ const SERVICE_DETAILS = [
   { item: 'Effective Date', itemValue: '23 June 2025', itemValueColor: '#701A72' },
 ];
 
-const DiscontinueContent = ({ topImg, onConfirm, onKeepService, onClose }) => {
+const DiscontinueContent = ({ onConfirm, onKeepService, onClose }) => {
   const [reason, setReason] = useState('');
 
   return (
-    <KeyboardAwareScrollView
-      enableOnAndroid
-      extraScrollHeight={40}
+    <ScrollView
+      style={styles.scroll}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
+      bounces={false}
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.topWrap}>
@@ -57,7 +68,6 @@ const DiscontinueContent = ({ topImg, onConfirm, onKeepService, onClose }) => {
           multiline
           height={119}
           textAlignVertical="top"
-          marginBottom={0}
           borderColor="#98A2B3"
           placeholderTextColor="#98A2B3"
           marginBottom={10}
@@ -87,9 +97,9 @@ const DiscontinueContent = ({ topImg, onConfirm, onKeepService, onClose }) => {
           marginTop={24}
         />
       </View>
-    </KeyboardAwareScrollView>
-  )
-}
+    </ScrollView>
+  );
+};
 
 const UploadContent = ({ onUpload, onClose }) => {
   const [file, setFile] = useState(null);
@@ -228,6 +238,36 @@ const ModalBox = ({
   onKeepService,
   onUpload,
 }) => {
+  const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setKeyboardHeight(0);
+      return undefined;
+    }
+
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const onHide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, [isVisible]);
+
+  // Shrink sheet into the visible area above the keyboard (no translateY).
+  const availableHeight =
+    WINDOW_HEIGHT - keyboardHeight - insets.top - TOP_IMAGE_OVERFLOW - 8;
+  const sheetMaxHeight = Math.min(WINDOW_HEIGHT * 0.9, Math.max(availableHeight, 280));
+  const isKeyboardOpen = keyboardHeight > 0;
 
   return (
     <CustomModal
@@ -240,9 +280,19 @@ const ModalBox = ({
       animationOut="slideOutDown"
       statusBarTranslucent
       withBlur
-      avoidKeyboard
     >
-      <View style={styles.sheet}>
+      <View
+        style={[
+          styles.sheet,
+          {
+            maxHeight: sheetMaxHeight,
+            // Bound height while keyboard is open so inner ScrollView can scroll.
+            ...(isKeyboardOpen ? { height: sheetMaxHeight } : null),
+            marginBottom: keyboardHeight,
+            paddingBottom: Math.max(insets.bottom, 16) + 8,
+          },
+        ]}
+      >
         <View style={styles.topImgWrap}>
           <ImageFast source={topImg} style={styles.topImg} resizeMode="contain" />
         </View>
@@ -282,15 +332,19 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     paddingHorizontal: 12,
     paddingTop: 80,
-    paddingBottom: 24,
-    // maxHeight: '90%',   
+    width: '100%',
+    overflow: 'visible',
+  },
+  scroll: {
+    flexGrow: 1,
+    flexShrink: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   topImgWrap: {
     position: 'absolute',
-    top: -50,
+    top: -TOP_IMAGE_OVERFLOW,
     alignSelf: 'center',
     width: 100,
     height: 100,

@@ -8,6 +8,10 @@ import TabStack from './TabStack';
 import GenerateCard from '../screens/Main/GenerateCard';
 import Verification from '../screens/Main/Verification';
 import Fees from '../screens/Main/Fees';
+import ChangePassword from '../screens/Main/Profile/ChangePassword';
+import Help from '../screens/Main/Profile/Help';
+import PersonalData from '../screens/Main/Profile/PersonalData';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +30,9 @@ const MainStack = () => {
       <Stack.Screen name="GenerateCard" component={GenerateCard} />
       <Stack.Screen name="Verification" component={Verification} />
       <Stack.Screen name="Fees" component={Fees} />
+      <Stack.Screen name="ChangePassword" component={ChangePassword} />
+      <Stack.Screen name="Help" component={Help} />
+      <Stack.Screen name="PersonalData" component={PersonalData} />
     </Stack.Navigator>
   );
 };

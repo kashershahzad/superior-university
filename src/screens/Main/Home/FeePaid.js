@@ -10,6 +10,8 @@ import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
 import ModalBox from './ModalBox';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import CustomButton from '../../../components/CustomButton';
+import { COLORS } from '../../../utils/COLORS';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -18,7 +20,7 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = ({ feestatus }) => {
+const FeePaid = ({ feestatus, onShowUnpaid }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
   const navigation = useNavigation();
@@ -202,6 +204,19 @@ const FeePaid = ({ feestatus }) => {
             { item: 'Bus', itemValue: '#3 Jail Road' },
             { item: 'Submitted Date', itemValue: '21 May 2025' },
           ]}
+        />
+      </View>
+      <View style={{ marginHorizontal: 40 }}>
+        <CustomButton
+          title="Show Unpaid Screens"
+          backgroundColor="transparent"
+          color={COLORS.primaryColor}
+          borderWidth={1}
+          borderColor={COLORS.primaryColor}
+          borderRadius={24}
+          height={48}
+          marginTop={16}
+          onPress={onShowUnpaid}
         />
       </View>
       <TouchableOpacity

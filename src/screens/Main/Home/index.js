@@ -9,7 +9,10 @@ const Home = () => {
   return status === 'unpaid' ? (
     <Feeunpaid />
   ) : (
-    <FeePaid feestatus="unpaid" />
+    <FeePaid
+      feestatus="paid"
+      onShowUnpaid={() => setStatus('unpaid')}
+    />
   );
 };
 

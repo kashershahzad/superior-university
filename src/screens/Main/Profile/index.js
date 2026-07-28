@@ -35,6 +35,7 @@ const ACCOUNT_ROWS = [
     Icons: Images.user,
     label: 'Personal Data',
     showArrow: true,
+    actionKey: 'personal-data',
   },
   {
     key: 'generate-card',
@@ -58,12 +59,14 @@ const SETTINGS_ROWS = [
     Icons: Images.passwordforget,
     label: 'Change Password',
     showArrow: true,
+    actionKey: 'password',
   },
   {
     key: 'faq',
     Icons: Images.faqs,
     label: 'FAQ and Help',
     showArrow: true,
+    actionKey: 'faq',
   },
   {
     key: 'logout',
@@ -170,6 +173,15 @@ const Profile = () => {
     if (actionKey === 'fee-status') {
       navigation.navigate('Verification', { status: 'pending' });
     }
+    if (actionKey === 'password') {
+      navigation.navigate('ChangePassword');
+    }
+    if (actionKey === 'faq') {
+      navigation.navigate('Help');
+    }
+    if (actionKey === 'personal-data') {
+      navigation.navigate('PersonalData');
+    }
     if (actionKey === 'logout') {
       dispatch(logout());
 
@@ -245,7 +257,7 @@ const Profile = () => {
                   source={
                     avatarUri
                       ? { uri: avatarUri }
-                      : Images.placeholderUser
+                      : Images.profileimage
                   }
                   style={styles.avatar}
                   resizeMode="cover"

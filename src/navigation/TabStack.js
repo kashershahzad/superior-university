@@ -22,7 +22,7 @@ const TabStack = () => {
         //   fontFamily: fonts.regular,
         // },
         tabBarStyle: {
-          height: Platform.OS == 'android' ? 80 : 80,
+          height: Platform.OS == 'android' ? 88 : 88,
           backgroundColor: COLORS.primaryColor,
           elevation: 10,
           paddingBottom: Platform.OS == 'android' ? 18 : 22,
