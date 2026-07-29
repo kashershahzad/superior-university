@@ -1,5 +1,5 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -25,6 +25,46 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
   const [isSheetVisible, setSheetVisible] = useState(false);
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const anims = useRef({
+    header: new Animated.Value(0),
+    card: new Animated.Value(0),
+    map: new Animated.Value(0),
+    details: new Animated.Value(0),
+    actions: new Animated.Value(0),
+  }).current;
+
+  useEffect(() => {
+    const createAnimation = value =>
+      Animated.timing(value, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      });
+
+    const entranceAnimation = Animated.stagger(100, [
+      createAnimation(anims.header),
+      createAnimation(anims.card),
+      createAnimation(anims.map),
+      createAnimation(anims.details),
+      createAnimation(anims.actions),
+    ]);
+
+    entranceAnimation.start();
+
+    return () => entranceAnimation.stop();
+  }, [anims]);
+
+  const getFadeUpStyle = (animation, distance = 20) => ({
+    opacity: animation,
+    transform: [
+      {
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [distance, 0],
+        }),
+      },
+    ],
+  });
 
   return (
     <ScreenWrapper
@@ -38,7 +78,10 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
           styles.headerWrapper,
           { marginTop: -insets.top, paddingTop: insets.top + 16 },
         ]}>
-        <View style={styles.headerContent}>
+        <Animated.View style={[
+          styles.headerContent,
+          getFadeUpStyle(anims.header, -16),
+        ]}>
           <View style={{ marginTop: -20 }}>
             <CustomText
               label="My Transport"
@@ -58,8 +101,28 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
             style={styles.busImage}
             resizeMode="contain"
           />
-        </View>
-        <View style={styles.cardOverlay}>
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.cardOverlay,
+            {
+              opacity: anims.card,
+              transform: [
+                {
+                  translateY: anims.card.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [24, 0],
+                  }),
+                },
+                {
+                  scale: anims.card.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.96, 1],
+                  }),
+                },
+              ],
+            },
+          ]}>
           <View style={styles.card}>
             <CustomText
               label="Total Expense"
@@ -155,9 +218,13 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
       </View>
-      <View style={styles.busLiveLocation}>
+      <Animated.View
+        style={[
+          styles.busLiveLocation,
+          getFadeUpStyle(anims.map, 24),
+        ]}>
         <CustomText
           label="Bus Live Location"
           color="#101828"
@@ -193,8 +260,12 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
             />
           </View>
         ) : null}
-      </View>
-      <View style={styles.feeDetails}>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.feeDetails,
+          getFadeUpStyle(anims.details, 24),
+        ]}>
         <InfoCard
           title="Fee Details"
           titleStatusType="pending"
@@ -205,8 +276,12 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
             { item: 'Submitted Date', itemValue: '21 May 2025' },
           ]}
         />
-      </View>
-      <View style={{ marginHorizontal: 40 }}>
+      </Animated.View>
+      <Animated.View
+        style={[
+          { marginHorizontal: 40 },
+          getFadeUpStyle(anims.actions, 18),
+        ]}>
         <CustomButton
           title="Show Unpaid Screens"
           backgroundColor="transparent"
@@ -218,24 +293,37 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
           marginTop={16}
           onPress={onShowUnpaid}
         />
-      </View>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => setSheetVisible(true)}>
-        <View style={styles.footerContainer}>
-          <ImageFast
-            source={Images.discontinue}
-            style={styles.discontinueIcon}
-            resizeMode="contain"
-          />
-          <CustomText
-            label="Discontinue Service"
-            color="#701A73"
-            fontSize={14}
-            fontFamily={fonts.medium}
-          />
-        </View>
-      </TouchableOpacity>
+      </Animated.View>
+      <Animated.View
+        style={{
+          opacity: anims.actions,
+          transform: [
+            {
+              translateY: anims.actions.interpolate({
+                inputRange: [0, 1],
+                outputRange: [24, 0],
+              }),
+            },
+          ],
+        }}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setSheetVisible(true)}>
+          <View style={styles.footerContainer}>
+            <ImageFast
+              source={Images.discontinue}
+              style={styles.discontinueIcon}
+              resizeMode="contain"
+            />
+            <CustomText
+              label="Discontinue Service"
+              color="#701A73"
+              fontSize={14}
+              fontFamily={fonts.medium}
+            />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
       <ModalBox
         type="discontinue"
         isVisible={isSheetVisible}

@@ -5,7 +5,6 @@ import React, {useEffect} from 'react';
 //screens
 import AuthStack from './AuthStack';
 import MainStack from './MainStack';
-import Splash from '../screens/Main/Splash';
 import i18n from '../language/i18n';
 
 const Stack = createNativeStackNavigator();
@@ -24,7 +23,7 @@ const RootNavigation = () => {
   }, []);
   return (
     <Stack.Navigator
-      initialRouteName="Splash"
+      initialRouteName={'MainStack' }
       screenOptions={{
         headerShown: false,
         animation: 'fade',
@@ -40,9 +39,10 @@ const RootNavigation = () => {
           <Stack.Screen name="MainStack" component={MainStack} />
         </>
       )} */}
-      <Stack.Screen name="Splash" component={Splash} />
-      <Stack.Screen name="MainStack" component={MainStack} />
-      <Stack.Screen name="AuthStack" component={AuthStack} />
+
+<Stack.Screen name="MainStack" component={MainStack} />
+<Stack.Screen name="AuthStack" component={AuthStack} />
+
     </Stack.Navigator>
   );
 };

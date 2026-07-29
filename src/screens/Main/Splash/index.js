@@ -1,21 +1,16 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, StatusBar, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
 
 import { Images } from '../../../assets/images';
 
-const Splash = () => {
-  const navigation = useNavigation();
-  const token = useSelector(state => state.authConfig?.token);
-
+const Splash = ({ onFinish }) => {
   useEffect(() => {
     const t = setTimeout(() => {
-      navigation.replace(token ? 'MainStack' : 'AuthStack');
+      onFinish?.();
     }, 2500);
 
     return () => clearTimeout(t);
-  }, [navigation, token]);
+  }, [onFinish]);
 
   return (
     <View style={styles.container}>
