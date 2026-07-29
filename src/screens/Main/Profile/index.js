@@ -9,6 +9,11 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import Icons from '../../../components/Icons';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { post } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
+import { setUserData } from '../../../store/reducer/usersSlice';
+
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 
@@ -166,7 +171,7 @@ const Profile = () => {
   const dispatch = useDispatch();
   const [avatarUri, setAvatarUri] = useState(null);
 
-  const handleRowPress = actionKey => {
+  const handleRowPress = async actionKey => {
     if (actionKey === 'generate-card') {
       navigation.navigate('GenerateCard');
     }
@@ -183,14 +188,34 @@ const Profile = () => {
       navigation.navigate('PersonalData');
     }
     if (actionKey === 'logout') {
-      dispatch(logout());
+      try {
+        const token = await AsyncStorage.getItem('token');
+        console.log('Token before logout:', token);
 
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'AuthStack' }],
-        }),
-      );
+        const res = await post('auth/logout');
+        console.log('Logout full response:', JSON.stringify(res));
+
+        if (res?.data?.success) {
+          ToastMessage(res.data?.message || 'Logged out successfully', 'success');
+        } else {
+          ToastMessage(res?.error?.message || 'Logout API failed', 'error');
+          console.log('Logout failed:', res?.error || res?.data);
+        }
+      } catch (err) {
+        console.log('Logout error:', err);
+        ToastMessage('Logout failed', 'error');
+      } finally {
+        // API success/fail dono pe local clear
+        await AsyncStorage.multiRemove(['token', 'refreshToken']);
+        dispatch(logout());
+        dispatch(setUserData({}));
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'AuthStack' }],
+          }),
+        );
+      }
     }
   };
 

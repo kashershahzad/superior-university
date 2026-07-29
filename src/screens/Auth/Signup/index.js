@@ -10,6 +10,11 @@ import CustomText from '../../../components/CustomText';
 import CustomCheckbox from '../../../components/CustomCheckBox';
 import DualText from '../../../components/DualText';
 import CountryPhoneInput from '../../../components/CountryPhoneInput';
+import { post } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
+import { setToken } from '../../../store/reducer/AuthConfig';
 
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
@@ -29,9 +34,11 @@ const initialForm = {
   semester: '',
   route: '',
   busNumber: '',
+  routeId: null,
 };
 
 const Signup = ({ navigation }) => {
+  const dispatch = useDispatch();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [agreed, setAgreed] = useState(false);
@@ -41,7 +48,8 @@ const Signup = ({ navigation }) => {
 
   const handleSelectRoute = (route) => {
     updateField('route', route.name);
-    updateField('busNumber', route.busNumber); // auto-fill bus
+    updateField('routeId', Number(route.id));
+    updateField('busNumber', route.busNumber);
     setRouteModalVisible(false);
   };
 
@@ -59,20 +67,118 @@ const Signup = ({ navigation }) => {
     }, []),
   );
 
-  const handleNext = useCallback(() => {
-    setStep(2);
-  }, []);
+  // const handleNext = useCallback(() => {
+  //   setStep(2);
+  // }, []);
 
-  const handleSignUp = useCallback(() => {
+  const handleNext = useCallback(async () => {
+    if (!form.studentId || !form.fullName || !form.program || !form.semester || !form.routeId) {
+      ToastMessage('Please fill all student details', 'error');
+      return;
+    }
+    if (!agreed) {
+      ToastMessage('Please accept terms & conditions', 'error');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => setLoading(false), 500);
-    navigation.getParent()?.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'MainStack' }],
-      }),
-    );
-  }, []);
+    try {
+      const payload = {
+        student_id: form.studentId,
+        name: form.fullName,
+        program: form.program,
+        semester: form.semester,
+        route_id: form.routeId,
+        terms: agreed,
+      };
+
+      const res = await post('auth/register/validate', payload);
+
+      if (res?.data?.success && res?.data?.data?.valid) {
+        updateField('route', res.data.data.route?.name || form.route);
+        updateField('busNumber', res.data.data.bus?.bus_number || form.busNumber);
+        ToastMessage(res.data.message || 'Step 1 validated.', 'success');
+        setStep(2);
+      } else {
+        ToastMessage(res?.data?.message || 'Validation failed', 'error');
+      }
+    } catch (err) {
+      console.log('Step1 validate error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [form, agreed, updateField]);
+
+  // const handleSignUp = useCallback(() => {
+  //   setLoading(true);
+  //   setTimeout(() => setLoading(false), 500);
+  //   navigation.getParent()?.dispatch(
+  //     CommonActions.reset({
+  //       index: 0,
+  //       routes: [{ name: 'MainStack' }],
+  //     }),
+  //   );
+  // }, []);
+
+  const handleSignUp = useCallback(async () => {
+    if (!form.email || !form.phone || !form.password || !form.confirmPassword) {
+      ToastMessage('Please fill all fields', 'error');
+      return;
+    }
+  
+    if (form.password !== form.confirmPassword) {
+      ToastMessage('Passwords do not match', 'error');
+      return;
+    }
+  
+    if (!agreed) {
+      ToastMessage('Please accept terms & conditions', 'error');
+      return;
+    }
+  
+    setLoading(true);
+    try {
+      const payload = {
+        student_id: form.studentId,
+        name: form.fullName,
+        program: form.program,
+        semester: form.semester,
+        route_id: form.routeId,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        password_confirmation: form.confirmPassword,
+        terms: agreed,
+      };
+  
+      const res = await post('auth/register', payload);
+  
+      if (res?.data?.success) {
+        const token = res.data?.data?.token; // important: data.token
+  
+        if (token) {
+          await AsyncStorage.setItem('token', token);
+          dispatch(setToken(token));
+        }
+  
+        ToastMessage(res.data?.message || 'Registration successful.', 'success');
+  
+        navigation.getParent()?.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'MainStack' }],
+          }),
+        );
+      } else {
+        ToastMessage(res?.data?.message || 'Registration failed', 'error');
+      }
+    } catch (err) {
+      console.log('Register error:', err);
+      ToastMessage('Registration failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [form, agreed, dispatch, navigation]);
 
   const renderStudentCardFields = () => (
     <>
@@ -207,86 +313,86 @@ const Signup = ({ navigation }) => {
       }
     >
       <KeyboardAwareScrollView
-      enableOnAndroid
-      extraScrollHeight={25}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}>
+        enableOnAndroid
+        extraScrollHeight={25}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
 
-      <View style={styles.header}>
-        <ImageFast source={Images.signin_img} style={styles.logo} />
-        <CustomText
-          label="Registration"
-          fontSize={20}
-          marginTop={5}
-          fontFamily={fonts.semiBold}
-        />
-        <CustomText
-          label={
-            isStudentStep
-              ? 'Enter Your Student Details'
-              : 'Register Using Your Credentials'
-          }
-          fontSize={14}
-          marginTop={5}
-          fontFamily={fonts.regular}
-          color="#393B41"
-        />
-      </View>
-
-      <View style={styles.form}>
-        {isStudentStep ? renderStudentCardFields() : renderEmailFields()}
-      </View>
-
-      <View style={[styles.termsRow, isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 }]}>
-        <CustomCheckbox value={agreed} onValueChange={setAgreed} />
-        <Text style={styles.termsText}>
-          I agree with{' '}
-          <Text style={styles.termsLink}>terms & conditions</Text>
-          {' and '}
-          <Text style={styles.termsLink}>privacy policy</Text>
-        </Text>
-      </View>
-
-      <CustomButton
-        title={isStudentStep ? 'Next' : 'Sign Up'}
-        onPress={isStudentStep ? handleNext : handleSignUp}
-        loading={loading}
-        marginTop={10}
-        marginBottom={20}
-        borderRadius={30}
-        color='#ffffff'
-      />
-
-      {isStudentStep && (
-        <View style={styles.dualTextContainer}>
+        <View style={styles.header}>
+          <ImageFast source={Images.signin_img} style={styles.logo} />
           <CustomText
-            label="Already have an account?"
-            fontSize={12}
-            fontFamily={fonts.medium}
+            label="Registration"
+            fontSize={20}
+            marginTop={5}
+            fontFamily={fonts.semiBold}
+          />
+          <CustomText
+            label={
+              isStudentStep
+                ? 'Enter Your Student Details'
+                : 'Register Using Your Credentials'
+            }
+            fontSize={14}
+            marginTop={5}
+            fontFamily={fonts.regular}
             color="#393B41"
           />
-          <CustomText
-            label=" Sign in here"
-            fontSize={12}
-            fontFamily={fonts.medium}
-            color={COLORS.primaryColor}
-            onPress={handleSigninModel}
-          />
         </View>
-      )}
 
-      <Signinmodel
-        visible={signinModelVisible}
-        onClose={() => setSigninModelVisible(false)}
-        navigation={navigation}
-      />
+        <View style={styles.form}>
+          {isStudentStep ? renderStudentCardFields() : renderEmailFields()}
+        </View>
 
-      <SelectRoute
-        visible={routeModalVisible}
-        onClose={() => setRouteModalVisible(false)}
-        selectedRoute={form.route}
-        onSelectRoute={handleSelectRoute}
-      />
+        <View style={[styles.termsRow, isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 }]}>
+          <CustomCheckbox value={agreed} onValueChange={setAgreed} />
+          <Text style={styles.termsText}>
+            I agree with{' '}
+            <Text style={styles.termsLink}>terms & conditions</Text>
+            {' and '}
+            <Text style={styles.termsLink}>privacy policy</Text>
+          </Text>
+        </View>
+
+        <CustomButton
+          title={isStudentStep ? 'Next' : 'Sign Up'}
+          onPress={isStudentStep ? handleNext : handleSignUp}
+          loading={loading}
+          marginTop={10}
+          marginBottom={20}
+          borderRadius={30}
+          color='#ffffff'
+        />
+
+        {isStudentStep && (
+          <View style={styles.dualTextContainer}>
+            <CustomText
+              label="Already have an account?"
+              fontSize={12}
+              fontFamily={fonts.medium}
+              color="#393B41"
+            />
+            <CustomText
+              label=" Sign in here"
+              fontSize={12}
+              fontFamily={fonts.medium}
+              color={COLORS.primaryColor}
+              onPress={handleSigninModel}
+            />
+          </View>
+        )}
+
+        <Signinmodel
+          visible={signinModelVisible}
+          onClose={() => setSigninModelVisible(false)}
+          navigation={navigation}
+        />
+
+        <SelectRoute
+          visible={routeModalVisible}
+          onClose={() => setRouteModalVisible(false)}
+          selectedRoute={form.route}
+          onSelectRoute={handleSelectRoute}
+        />
       </KeyboardAwareScrollView>
     </ScreenWrapper>
   );

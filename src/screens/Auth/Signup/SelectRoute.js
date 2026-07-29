@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Images } from '../../../assets/images';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { get } from '../../../services/ApiRequest';
 import CustomModal from '../../../components/CustomModal';
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
+import { Images } from '../../../assets/images';
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 
@@ -20,22 +20,19 @@ import fonts from '../../../assets/fonts';
 const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
 
   const insets = useSafeAreaInsets();
-
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     if (visible && routes.length === 0) {
       fetchRoutes();
     }
   }, [visible]);
-
   const fetchRoutes = async () => {
     setLoading(true);
     try {
       const res = await get('routes');
       if (res?.data?.success) {
-        setRoutes(res.data.data);
+        setRoutes(res.data.data || []);
       }
     } catch (err) {
       console.log('Routes fetch error:', err);
@@ -92,35 +89,36 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
         ) : (
           routes.map(route => {
             const busDisplay = route.buses?.[0]?.display_name || '';
+            const busNumber = route.buses?.[0]?.bus_number || '';
             const selected = selectedRoute === route.name;
+
             return (
               <TouchableOpacity
                 key={route.id}
                 style={[styles.routeItem, selected && styles.routeItemSelected]}
                 activeOpacity={0.7}
-                onPress={() => onSelectRoute?.({
-                  id: route.id,
-                  name: route.name,
-                  busNumber: route.buses?.[0]?.bus_number || '',
-                  busDisplayName: busDisplay,
-                })}
+                onPress={() =>
+                  onSelectRoute?.({
+                    id: route.id,
+                    name: route.name,
+                    busNumber,
+                  })
+                }
               >
                 <CustomText
                   label={route.name}
-                  fontFamily={fonts.bold}
+                  removeTranslation
+                  fontFamily={selected ? fonts.semiBold : fonts.regular}
                   color={selected ? COLORS.primaryColor : '#101828'}
                 />
+
                 <View style={styles.metaRow}>
                   <ImageFast source={Images.busIcon} style={styles.metaIcon} />
-                  <CustomText
-                    label={busDisplay || 'N/A'}
-                    removeTranslation
-                    fontSize={12}
-                    color="#667085"
-                  />
+                  <CustomText label={busDisplay || 'N/A'} removeTranslation fontSize={12} color="#667085" />
                 </View>
+
                 <View style={styles.metaRow}>
-                  <ImageFast source={Images.feeStatus} style={styles.metaIcon} />
+                  <ImageFast source={Images.monthlyFee} style={styles.metaIcon} />
                   <CustomText
                     label={`PKR ${route.monthly_fee ?? 0}/month`}
                     removeTranslation
@@ -128,6 +126,7 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
                     color="#667085"
                   />
                 </View>
+
                 <View style={styles.metaRow}>
                   <ImageFast source={Images.clock} style={styles.metaIcon} />
                   <CustomText

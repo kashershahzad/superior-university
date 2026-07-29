@@ -58,4 +58,5 @@ export const Images = {
   serviceFee: require('./service-fee.png'),
   splash: require('./splash.png'),
   profileimage: require('./profile-image.png'),
+  monthlyFee: require('./icons/monthly-fee.png'),
 };

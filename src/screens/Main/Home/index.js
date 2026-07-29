@@ -1,21 +1,42 @@
-import React, { useState } from 'react';
+// import React, { useState } from 'react';
+
+// import Feeunpaid from './Feeunpaid';
+// import FeePaid from './FeePaid';
+
+// const Home = () => {
+//   const [status, setStatus] = useState('paid');
+
+//   return status === 'unpaid' ? (
+//     <Feeunpaid />
+//   ) : (
+//     <FeePaid
+//       feestatus="paid"
+//       onShowUnpaid={() => setStatus('unpaid')}
+//     />
+//   );
+// };
+
+// export default Home;
+
+
+import React from 'react';
+import { useSelector } from 'react-redux';
 
 import Feeunpaid from './Feeunpaid';
 import FeePaid from './FeePaid';
 
 const Home = () => {
-  const [status, setStatus] = useState('paid');
+  const feeStatus = useSelector(
+    state => state.users?.userData?.student_profile?.fee_status,
+  );
 
-  if (status === 'unpaid') {
-    return <Feeunpaid key="fee-unpaid" />;
-  }
+  // API: "pending" | "paid" | ...
+  const isUnpaid = feeStatus !== 'paid';
 
-  return (
-    <FeePaid
-      key="fee-paid"
-      feestatus="paid"
-      onShowUnpaid={() => setStatus('unpaid')}
-    />
+  return isUnpaid ? (
+    <Feeunpaid />
+  ) : (
+    <FeePaid feestatus="paid" />
   );
 };
 
