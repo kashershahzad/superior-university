@@ -1,43 +1,56 @@
-// import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, View, StyleSheet} from 'react-native';
 
-// import Feeunpaid from './Feeunpaid';
-// import FeePaid from './FeePaid';
-
-// const Home = () => {
-//   const [status, setStatus] = useState('paid');
-
-//   return status === 'unpaid' ? (
-//     <Feeunpaid />
-//   ) : (
-//     <FeePaid
-//       feestatus="paid"
-//       onShowUnpaid={() => setStatus('unpaid')}
-//     />
-//   );
-// };
-
-// export default Home;
-
-
-import React from 'react';
-import { useSelector } from 'react-redux';
-
+import {get} from '../../../services/ApiRequest';
+import {COLORS} from '../../../utils/COLORS';
 import Feeunpaid from './Feeunpaid';
 import FeePaid from './FeePaid';
 
 const Home = () => {
-  const feeStatus = useSelector(
-    state => state.users?.userData?.student_profile?.fee_status,
-  );
+  const [feeStatus, setFeeStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
 
-  // API: "pending" | "paid" | ...
-  const isUnpaid = feeStatus !== 'paid';
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await get('student/dashboard');
+        if (res?.data?.success) {
+          const data = res.data.data ?? null;
+          setDashboardData(data);
+          setFeeStatus(data?.fee_status ?? null);
+        }
+      } catch (err) {
+        console.log('Dashboard fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return isUnpaid ? (
-    <Feeunpaid />
-  ) : (
-    <FeePaid feestatus="paid" />
-  );
+    fetchDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      </View>
+    );
+  }
+
+  if (feeStatus === 'paid') {
+    return <FeePaid key="fee-paid" data={dashboardData} />;
+  }
+
+  return <Feeunpaid key="fee-unpaid" data={dashboardData} />;
 };
 
 export default Home;
+
+const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

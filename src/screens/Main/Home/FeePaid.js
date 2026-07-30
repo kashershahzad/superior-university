@@ -10,8 +10,6 @@ import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
 import ModalBox from './ModalBox';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import CustomButton from '../../../components/CustomButton';
-import { COLORS } from '../../../utils/COLORS';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -20,7 +18,7 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = ({ feestatus, onShowUnpaid }) => {
+const FeePaid = ({ data }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
   const navigation = useNavigation();
@@ -32,6 +30,11 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
     details: new Animated.Value(0),
     actions: new Animated.Value(0),
   }).current;
+
+  const user = data?.user || {};
+  const transport = data?.transport_service || {};
+  const feeStatus = data?.fee_status || 'paid';
+  const busLabel = transport.bus || '-';
 
   useEffect(() => {
     const createAnimation = value =>
@@ -66,6 +69,12 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
     ],
   });
 
+  const feeDetailsItems = [
+    { item: 'Route', itemValue: transport.route || '-' },
+    { item: 'Bus', itemValue: busLabel },
+    { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
+  ];
+
   return (
     <ScreenWrapper
       backgroundColor="#F1F3F8"
@@ -90,7 +99,7 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
               fontFamily={fonts.bold}
             />
             <CustomText
-              label="Welcome Back!"
+              label={user.name ? `Welcome ${user.name}!` : 'Welcome Back!'}
               color="#D9D6FE"
               fontSize={14}
               fontFamily={fonts.medium}
@@ -138,8 +147,8 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
             />
             <View style={styles.infoContainer}>
               <TouchableOpacity style={styles.infoWrapper} activeOpacity={0.8} onPress={() => navigation.navigate('Fees', {
-                status: feestatus,
-                unlockText: feestatus === 'unpaid' ? 'Pay fee to unlock track' : 'Bus #03 2.3km away',
+                status: feeStatus,
+                unlockText: feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} nearby`,
               })}>
                 <View>
                   <View style={styles.feeRow}>
@@ -156,7 +165,7 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
                     />
                   </View>
                   <CustomText
-                    label="Paid"
+                    label={feeStatus === 'paid' ? 'Paid' : 'Unpaid'}
                     color="#101828"
                     fontSize={22}
                     fontFamily={fonts.regular}
@@ -182,9 +191,9 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
                   />
                 </View>
                 <CustomText
-                  label="03"
+                  label={busLabel}
                   color="#101828"
-                  fontSize={22}
+                  fontSize={16}
                   fontFamily={fonts.regular}
                   marginTop={3}
                   marginLeft={2}
@@ -249,11 +258,11 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
             </MapView>
           </View>
         )}
-        {feestatus ? (
+        {feeStatus ? (
           <View style={styles.busLocationInfo}>
             <View style={styles.dot} />
             <CustomText
-              label={feestatus === 'unpaid' ? 'Pay fee to unlock track' : 'Bus #03 2.3km away'}
+              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} nearby`}
               color="#701A73"
               fontSize={12}
               fontFamily={fonts.medium}
@@ -268,30 +277,9 @@ const FeePaid = ({ feestatus, onShowUnpaid }) => {
         ]}>
         <InfoCard
           title="Fee Details"
-          titleStatusType="pending"
-          items={[
-            { item: 'Route', itemValue: '3-Faisalabad' },
-            { item: 'Driver Name', itemValue: 'Tariq Mehmood' },
-            { item: 'Bus', itemValue: '#3 Jail Road' },
-            { item: 'Submitted Date', itemValue: '21 May 2025' },
-          ]}
-        />
-      </Animated.View>
-      <Animated.View
-        style={[
-          { marginHorizontal: 40 },
-          getFadeUpStyle(anims.actions, 18),
-        ]}>
-        <CustomButton
-          title="Show Unpaid Screens"
-          backgroundColor="transparent"
-          color={COLORS.primaryColor}
-          borderWidth={1}
-          borderColor={COLORS.primaryColor}
-          borderRadius={24}
-          height={48}
-          marginTop={16}
-          onPress={onShowUnpaid}
+          titleStatus={transport.status_label}
+          titleStatusType={transport.status || 'pending'}
+          items={feeDetailsItems}
         />
       </Animated.View>
       <Animated.View

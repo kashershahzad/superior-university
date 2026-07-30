@@ -93,6 +93,8 @@ const Signup = ({ navigation }) => {
       };
 
       const res = await post('auth/register/validate', payload);
+      console.log('payload', payload);
+      console.log('res', res);
 
       if (res?.data?.success && res?.data?.data?.valid) {
         updateField('route', res.data.data.route?.name || form.route);
@@ -152,6 +154,7 @@ const Signup = ({ navigation }) => {
       };
   
       const res = await post('auth/register', payload);
+      console.log('register', res);
   
       if (res?.data?.success) {
         const token = res.data?.data?.token; // important: data.token

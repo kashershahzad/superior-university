@@ -1,14 +1,10 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
-
-import { setLocation } from '../../../store/reducer/usersSlice';
-import GetLocation from '../../../utils/GetLocation';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
@@ -18,16 +14,80 @@ import ModalBox from './ModalBox';
 import CustomButton from '../../../components/CustomButton';
 import { COLORS } from '../../../utils/COLORS';
 
-const Feeunpaid = () => {
-  const dispatch = useDispatch();
-  // const locationData = GetLocation();
+const TIMELINE_STATUS = {
+  done: { label: 'Done', type: 'done' },
+  in_progress: { label: 'In Progress', type: 'inProgress' },
+  waiting: { label: 'Waiting', type: 'waiting' },
+};
+
+const Feeunpaid = ({ data }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const anims = useRef({
+    header: new Animated.Value(0),
+    cover: new Animated.Value(0),
+    service: new Animated.Value(0),
+    steps: new Animated.Value(0),
+    actions: new Animated.Value(0),
+  }).current;
 
-  // useEffect(() => {
-  //   dispatch(setLocation(locationData));
-  // }, [locationData]);
+  const user = data?.user || {};
+  const transport = data?.transport_service || {};
+  const actions = data?.actions || {};
+  const timeline = data?.timeline || [];
+
+  useEffect(() => {
+    const animate = value =>
+      Animated.timing(value, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      });
+
+    const entranceAnimation = Animated.stagger(110, [
+      animate(anims.header),
+      animate(anims.cover),
+      animate(anims.service),
+      animate(anims.steps),
+      animate(anims.actions),
+    ]);
+
+    entranceAnimation.start();
+
+    return () => entranceAnimation.stop();
+  }, [anims]);
+
+  const fadeUpStyle = (animation, distance = 20) => ({
+    opacity: animation,
+    transform: [
+      {
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [distance, 0],
+        }),
+      },
+    ],
+  });
+
+  const profileSource = user.profile_photo
+    ? { uri: user.profile_photo }
+    : Images.placeholderUser;
+
+  const serviceItems = [
+    { item: 'Route', itemValue: transport.route || '-' },
+    { item: 'Bus', itemValue: transport.bus || '-' },
+    { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
+  ];
+
+  const timelineItems = timeline.map(step => {
+    const status = TIMELINE_STATUS[step.state] || TIMELINE_STATUS.waiting;
+    return {
+      item: step.label,
+      itemStatus: status.label,
+      statusType: status.type,
+    };
+  });
 
   return (
     <ScreenWrapper
@@ -43,14 +103,18 @@ const Feeunpaid = () => {
               styles.headerWrapper,
               { marginTop: -insets.top, paddingTop: insets.top },
             ]}>
-            <View style={styles.headerContainer}>
+            <Animated.View
+              style={[
+                styles.headerContainer,
+                fadeUpStyle(anims.header, -14),
+              ]}>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('Profile')}
               >
                 <View style={styles.profileContainer}>
                   <ImageFast
-                    source={Images.placeholderUser}
+                    source={profileSource}
                     style={styles.profileImage}
                     resizeMode="contain"
                   />
@@ -67,14 +131,16 @@ const Feeunpaid = () => {
                         fontFamily={fonts.medium}
                         color="#2D2D2D"
                       />
-                      <ImageFast
-                        source={Images.verfied}
-                        style={styles.verfiedImage}
-                        resizeMode="contain"
-                      />
+                      {user.is_verified ? (
+                        <ImageFast
+                          source={Images.verfied}
+                          style={styles.verfiedImage}
+                          resizeMode="contain"
+                        />
+                      ) : null}
                     </View>
                     <CustomText
-                      label="Nimra Sultan"
+                      label={user.name || '-'}
                       fontSize={12}
                       fontFamily={fonts.medium}
                       color="#701A73"
@@ -99,61 +165,78 @@ const Feeunpaid = () => {
                   resizeMode="contain"
                 />
               </View>
-            </View>
+            </Animated.View>
           </View>
         );
       }}>
       <View style={styles.container}>
-        <ImageFast
-          source={Images.cover2}
-          style={{ height: 120, width: '100%', marginBottom: 4 }}
-          resizeMode="contain"
-        />
-
-        <InfoCard
-          title="Transport Service"
-          titleStatus="Pending"
-          titleStatusType="pending"
-          items={[
-            { item: 'Route', itemValue: '3-Faisalabad' },
-            { item: 'Bus', itemValue: '#3 Jail Road' },
-            { item: 'Submitted Date', itemValue: '21 May 2025' },
-          ]}
-        />
-
-        <InfoCard
-          title="What happens next"
-          items={[
-            { item: 'Request Submitted', itemStatus: 'Done', statusType: 'done' },
-            {
-              item: 'Under Review',
-              itemStatus: 'In Progress',
-              statusType: 'inProgress',
-            },
-            {
-              item: 'Transport Assignment',
-              itemStatus: 'Waiting',
-              statusType: 'waiting',
-            },
-          ]}
-        />
-        <View style={styles.footerContainer}>
-          <CustomButton
-            title="Upload Fee Voucher"
-            backgroundColor="transparent"
-            color={COLORS.primaryColor}
-            borderWidth={1}
-            borderColor={COLORS.primaryColor}
-            borderRadius={24}
-            height={48}
-            marginBottom={8}
-            onPress={() => setIsModalVisible(true)}
+        <Animated.View style={fadeUpStyle(anims.cover, 18)}>
+          <ImageFast
+            source={Images.cover2}
+            style={{ height: 120, width: '100%', marginBottom: 4 }}
+            resizeMode="contain"
           />
-          <GradientButton
-            title="Generate Fee Voucher"
-            onPress={() => navigation.navigate('FeeVoucher')}
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            fadeUpStyle(anims.service, 22),
+            {
+              transform: [
+                {
+                  translateY: anims.service.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [22, 0],
+                  }),
+                },
+                {
+                  scale: anims.service.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.97, 1],
+                  }),
+                },
+              ],
+            },
+          ]}>
+          <InfoCard
+            title="Transport Service"
+            titleStatus={transport.status_label || transport.status || 'Pending'}
+            titleStatusType={transport.status || 'pending'}
+            items={serviceItems}
           />
-        </View>
+        </Animated.View>
+
+        <Animated.View style={fadeUpStyle(anims.steps, 22)}>
+          <InfoCard
+            title="What happens next"
+            items={timelineItems}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.footerContainer,
+            fadeUpStyle(anims.actions, 18),
+          ]}>
+          {actions.can_upload_voucher ? (
+            <CustomButton
+              title="Upload Fee Voucher"
+              backgroundColor="transparent"
+              color={COLORS.primaryColor}
+              borderWidth={1}
+              borderColor={COLORS.primaryColor}
+              borderRadius={24}
+              height={48}
+              marginBottom={8}
+              onPress={() => setIsModalVisible(true)}
+            />
+          ) : null}
+          {actions.can_generate_voucher ? (
+            <GradientButton
+              title="Generate Fee Voucher"
+              onPress={() => navigation.navigate('FeeVoucher')}
+            />
+          ) : null}
+        </Animated.View>
       </View>
 
       <ModalBox
@@ -207,7 +290,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    // paddingVertical: 16,
     paddingHorizontal: 20,
   },
   footerContainer: {

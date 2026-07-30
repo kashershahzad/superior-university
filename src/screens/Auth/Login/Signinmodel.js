@@ -129,6 +129,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
           password,
         });
       }
+      console.log('res', res);
 
       if (res?.data?.success) {
         const token = res.data?.data?.token;

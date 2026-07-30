@@ -51,7 +51,7 @@ const ChangePassword = () => {
                                     style={{ width: 18, height: 18 }}
                                 />
                             </TouchableOpacity>
-                            <CustomText label="Chnage Password" fontSize={16} fontFamily={fonts.bold} color="#101828" />
+                            <CustomText label="Change Password" fontSize={16} fontFamily={fonts.bold} color="#101828" />
                         </View>
                     </View>
                 );

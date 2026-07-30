@@ -31,6 +31,7 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
     setLoading(true);
     try {
       const res = await get('routes');
+      console.log('res', res);
       if (res?.data?.success) {
         setRoutes(res.data.data || []);
       }
