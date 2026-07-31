@@ -1,87 +1,64 @@
-import React from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
-import {Images} from '../../../assets/images';
+import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
-import {COLORS} from '../../../utils/COLORS';
+import { COLORS } from '../../../utils/COLORS';
 import GradientButton from '../Home/GradientButton';
-import { useNavigation } from '@react-navigation/native';
 import i18n from '../../../language/i18n';
-
-const VERIFICATION_CONFIG = {
-  pending: {
-    heroImage: Images.verificationPending,
-    title: 'Fee Voucher Verification \n in Progress',
-    description:
-      'Your fee voucher has been uploaded \n successfully and is currently under verification. \n Our system is processing your request. \n You will be notified once the verification \n process is completed.',
-    cards: [
-      {
-        variant: 'processing',
-        title: 'Processing...',
-        subtitle: 'We are verifying your document.',
-      },
-      {
-        variant: 'time',
-        title: 'Estimated Time',
-        subtitle: 'Verification may take 1-2 business days.',
-      },
-    ],
-    primaryButton: 'OK',
-    secondaryButton: 'View Status',
-  },
-  success: {
-    heroImage: Images.verificationSuccess,
-    title: 'Fee Voucher Verified \nSuccessfully',
-    description:
-      'Your uploaded fee voucher has been \n verified successfully. \n Your transport service account is now active \n and you can access all transport-related \n features.',
-    cards: [
-      {
-        variant: 'success',
-        title: 'Verification Complete',
-        subtitle: 'Your document has been verified.',
-      },
-    ],
-    primaryButton: 'Go to Home',
-    secondaryButton: 'Close',
-  },
-};
+import { get } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
 
 const VARIANT_STYLES = {
   processing: {
-    bg: '#FDF7ED',         
+    bg: '#FDF7ED',
     cardBorder: '#FCEDD8',
     image: Images.loading,
+    color: '#F8A837',
   },
   time: {
-    bg: '#F5F2FB',          
+    bg: '#F5F2FB',
     cardBorder: '#E9DEFF',
     image: Images.clock,
+    color: '#995DB4',
   },
   success: {
-    bg: '#F1FAF2',        
+    bg: '#F1FAF2',
     cardBorder: '#E3F1E5',
     image: Images.success,
+    color: '#6CC268',
   },
 };
 
-const SmallStatusCard = ({variant, title, subtitle}) => {
+const SmallStatusCard = ({ variant, title, subtitle }) => {
   const variantStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.processing;
-  const {bg, image, cardBorder} = variantStyle;
 
   return (
-    <View style={[styles.card, {backgroundColor: bg, borderColor: cardBorder}]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: variantStyle.bg,
+          borderColor: variantStyle.cardBorder,
+        },
+      ]}>
       <View style={styles.iconWrap}>
-        <ImageFast source={image} style={styles.cardIcon} />
+        <ImageFast source={variantStyle.image} style={styles.cardIcon} />
       </View>
       <View style={styles.textWrap}>
         <CustomText
           label={title}
           fontSize={16}
           fontFamily={fonts.bold}
-          color={
-            variant === 'time' ? '#995DB4' : variant === 'success' ? '#6CC268' : '#F8A837'
-          }
+          color={variantStyle.color}
         />
         <CustomText
           label={subtitle}
@@ -95,92 +72,205 @@ const SmallStatusCard = ({variant, title, subtitle}) => {
   );
 };
 
-const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
-  const config = VERIFICATION_CONFIG[status] || VERIFICATION_CONFIG.pending;
+const isSuccess = data => {
+  if (!data) {
+    return false;
+  }
+  if (data.account_active) {
+    return true;
+  }
+  const status = String(data.status || '').toLowerCase();
+  return ['verified', 'success', 'approved', 'completed', 'active'].includes(
+    status,
+  );
+};
+
+const VerificationContent = ({ onStatusChange }) => {
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [noVoucher, setNoVoucher] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      setLoading(true);
+      try {
+        const res = await get('student/vouchers/upload/status');
+
+        if (res?.error) {
+          const message = String(
+            res.error?.message || res.error?.data?.message || '',
+          ).toLowerCase();
+          if (message.includes('no voucher')) {
+            setNoVoucher(true);
+            setData(null);
+            onStatusChange?.('no_voucher');
+          } else {
+            ToastMessage(res.error?.message || 'Something went wrong', 'error');
+          }
+          return;
+        }
+
+        if (res?.data?.success) {
+          const apiData = res.data.data || null;
+          setNoVoucher(false);
+          setData(apiData);
+          onStatusChange?.(isSuccess(apiData) ? 'success' : 'processing');
+        }
+      } catch (err) {
+        console.log('Voucher status error:', err);
+        ToastMessage('Failed to load verification status', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatus();
+  }, []);
+
+  const goHome = () => {
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'TabStack',
+          params: { screen: i18n.t('Home') },
+        },
+      ],
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      </View>
+    );
+  }
+
+  if (noVoucher || !data) {
+    return (
+      <View style={styles.content}>
+        <View style={styles.top}>
+          <View style={styles.heroWrap}>
+            {/* <ImageFast
+              source={Images.verificationPending}
+              style={styles.heroImage}
+              resizeMode="contain"
+            /> */}
+            <CustomText
+              label="Haven't uploaded voucher yet"
+              fontSize={19}
+              fontFamily={fonts.bold}
+              color="#363D4B"
+              textAlign="center"
+              marginTop={24}
+              lineHeight={26}
+            />
+            <CustomText
+              label="Please upload your fee voucher to start the verification process."
+              fontSize={13}
+              fontFamily={fonts.regular}
+              color="#A3A3A4"
+              textAlign="center"
+              marginTop={12}
+              lineHeight={20}
+            />
+          </View>
+        </View>
+
+        <View style={[styles.buttonsWrap, { marginTop: 64 }]}>
+          <GradientButton title="Go to Home" onPress={goHome} />
+          <View style={{ height: 12 }} />
+          {/* <TouchableOpacity onPress={goHome}>
+            <View style={styles.outlineBtn}>
+              <CustomText
+                label="Close"
+                fontSize={15}
+                fontFamily={fonts.semiBold}
+                color={COLORS.primaryColor}
+              />
+            </View>
+          </TouchableOpacity> */}
+        </View>
+      </View>
+    );
+  }
+
+  const success = isSuccess(data);
 
   return (
     <View style={styles.content}>
       <View style={styles.top}>
-      {/* Hero image + texts */}
-      <View style={styles.heroWrap}>
-        <ImageFast
-          source={config.heroImage}
-          style={styles.heroImage}
-          resizeMode="contain"
-        />
-        <CustomText
-          label={config.title}
-          fontSize={19}
-          fontFamily={fonts.bold}
-          color="#363D4B"
-          textAlign="center"
-          marginTop={24}
-          lineHeight={26}
-        />
-        <CustomText
-          label={config.description}
-          fontSize={13}
-          fontFamily={fonts.regular}
-          color="#A3A3A4"
-          textAlign="center"
-          marginTop={12}
-          lineHeight={20}
-        />
-      </View>
-
-      {/* Cards */}
-      <View style={styles.cardsWrap}>
-        {config.cards.map(card => (
-          <SmallStatusCard
-            key={card.title}
-            variant={card.variant}
-            title={card.title}
-            subtitle={card.subtitle}
+        <View style={styles.heroWrap}>
+          <ImageFast
+            source={
+              success ? Images.verificationSuccess : Images.verificationPending
+            }
+            style={styles.heroImage}
+            resizeMode="contain"
           />
-        ))}
-      </View>
-      </View>
-
-      {/* Buttons */}
-      <View style={[styles.buttonsWrap, {marginTop: status === 'success' ? 64 : status === 'pending' ? 12 : 0}]}>
-        <GradientButton
-          title={config.primaryButton}
-          onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [
-                {
-                  name: 'TabStack',
-                  params: { screen: i18n.t('Home') },
-                },
-              ],
-            });
-          }}
-        />
-        <View style={{height: 12}} />
-        <TouchableOpacity
-        onPress={() => {
-          if (status === 'pending') {
-            navigation.setParams({ status: 'success' });
-          } else {
-            navigation.reset({
-              index: 0,
-              routes: [
-                { name: 'TabStack', params: { screen: i18n.t('Home') } },
-              ],
-            });
-          }
-        }}>
-        <View style={styles.outlineBtn}>
           <CustomText
-            label={config.secondaryButton}
-            fontSize={15}
-            fontFamily={fonts.semiBold}
-            color={COLORS.primaryColor}
+            label={data.headline}
+            fontSize={19}
+            fontFamily={fonts.bold}
+            color="#363D4B"
+            textAlign="center"
+            marginTop={24}
+            lineHeight={26}
+          />
+          <CustomText
+            label={data.message}
+            fontSize={13}
+            fontFamily={fonts.regular}
+            color="#A3A3A4"
+            textAlign="center"
+            marginTop={12}
+            lineHeight={20}
           />
         </View>
-        </TouchableOpacity>
+
+        <View style={styles.cardsWrap}>
+          {success ? (
+            <SmallStatusCard
+              variant="success"
+              title="Verification Complete"
+              subtitle="Your document has been verified."
+            />
+          ) : (
+            <>
+              {data.processing ? (
+                <SmallStatusCard
+                  variant="processing"
+                  title="Processing..."
+                  subtitle="We are verifying your document."
+                />
+              ) : null}
+              {data.estimated_time ? (
+                <SmallStatusCard
+                  variant="time"
+                  title="Estimated Time"
+                  subtitle={data.estimated_time}
+                />
+              ) : null}
+            </>
+          )}
+        </View>
+      </View>
+
+      <View style={[styles.buttonsWrap, { marginTop: success ? 64 : 12 }]}>
+        <GradientButton title="Go to Home" onPress={goHome} />
+        <View style={{ height: 12 }} />
+        {/* <TouchableOpacity onPress={goHome}>
+          <View style={styles.outlineBtn}>
+            <CustomText
+              label="Close"
+              fontSize={15}
+              fontFamily={fonts.semiBold}
+              color={COLORS.primaryColor}
+            />
+          </View>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -189,6 +279,12 @@ const VerificationContent = ({status, onPrimaryPress, onSecondaryPress}) => {
 export default VerificationContent;
 
 const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,7 +311,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 6,
     paddingBottom: 24,
-    // backgroundColor: 'red',
     justifyContent: 'space-between',
   },
   heroWrap: {

@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
-import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../../store/reducer/AuthConfig';
 
-
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
-import Icons from '../../../components/Icons';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { post } from '../../../services/ApiRequest';
+import { get, post } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import { setUserData } from '../../../store/reducer/usersSlice';
 
@@ -20,67 +25,6 @@ import fonts from '../../../assets/fonts';
 import { Images } from '../../../assets/images';
 import ImageFast from '../../../components/ImageFast';
 import UploadImage from '../../../components/UploadImage';
-
-const CONTACT_ROWS = [
-  {
-    key: 'email',
-    Icons: Images.email,
-    label: 'YourServo@uni.com',
-  },
-  {
-    key: 'phone',
-    Icons: Images.phone,
-    label: '+923457071709',
-  },
-];
-
-const ACCOUNT_ROWS = [
-  {
-    key: 'personal-data',
-    Icons: Images.user,
-    label: 'Personal Data',
-    showArrow: true,
-    actionKey: 'personal-data',
-  },
-  {
-    key: 'generate-card',
-    Icons: Images.generateCard,
-    label: 'Generate Card',
-    badge: { text: 'Generate Card', variant: 'primary' },
-    actionKey: 'generate-card',
-  },
-  {
-    key: 'fee-status',
-    Icons: Images.feeStatus,
-    label: 'Fee Status',
-    badge: { variant: 'danger', text: 'Pending' },
-    actionKey: 'fee-status',
-  },
-];
-
-const SETTINGS_ROWS = [
-  {
-    key: 'password',
-    Icons: Images.passwordforget,
-    label: 'Change Password',
-    showArrow: true,
-    actionKey: 'password',
-  },
-  {
-    key: 'faq',
-    Icons: Images.faqs,
-    label: 'FAQ and Help',
-    showArrow: true,
-    actionKey: 'faq',
-  },
-  {
-    key: 'logout',
-    Icons: Images.logout,
-    label: 'Logout',
-    showArrow: true,
-    actionKey: 'logout',
-  },
-];
 
 const ProfileRow = ({ item, onPress }) => {
   const rowLabel = item.label || '';
@@ -92,10 +36,7 @@ const ProfileRow = ({ item, onPress }) => {
       onPress={onPress}
       style={styles.rowContainer}>
       <View style={styles.rowLeft}>
-        <Image
-          source={item.Icons}
-          style={{ width: 18, height: 18 }}
-        />
+        <Image source={item.Icons} style={{ width: 18, height: 18 }} />
         <CustomText
           label={rowLabel}
           fontFamily={fonts.medium}
@@ -109,7 +50,9 @@ const ProfileRow = ({ item, onPress }) => {
         <View
           style={[
             styles.badge,
-            item.badge.variant === 'danger' ? styles.dangerBadge : styles.primaryBadge,
+            item.badge.variant === 'danger'
+              ? styles.dangerBadge
+              : styles.primaryBadge,
           ]}>
           <CustomText
             label={badgeText}
@@ -124,10 +67,7 @@ const ProfileRow = ({ item, onPress }) => {
       ) : null}
 
       {item.showArrow ? (
-        <Image
-          source={Images.rightArrow}
-          style={{ width: 16, height: 16 }}
-        />
+        <Image source={Images.rightArrow} style={{ width: 16, height: 16 }} />
       ) : null}
     </TouchableOpacity>
   );
@@ -166,17 +106,46 @@ const ProfileSection = ({ title, rows, onRowPress }) => {
   );
 };
 
+const getFeeBadge = feeStatus => {
+  const status = String(feeStatus || '').toLowerCase();
+  if (status === 'paid') {
+    return { text: 'Paid', variant: 'primary' };
+  }
+  return { text: 'Pending', variant: 'danger' };
+};
+
 const Profile = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [avatarUri, setAvatarUri] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await get('student/profile');
+      if (res?.data?.success) {
+        setProfile(res.data.data || null);
+      }
+    } catch (err) {
+      console.log('Profile fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const handleRowPress = async actionKey => {
     if (actionKey === 'generate-card') {
       navigation.navigate('GenerateCard');
     }
     if (actionKey === 'fee-status') {
-      navigation.navigate('Verification', { status: 'pending' });
+      navigation.navigate('Verification', {
+        status: profile?.fee_status || 'pending',
+      });
     }
     if (actionKey === 'password') {
       navigation.navigate('ChangePassword');
@@ -185,27 +154,20 @@ const Profile = () => {
       navigation.navigate('Help');
     }
     if (actionKey === 'personal-data') {
-      navigation.navigate('PersonalData');
+      navigation.navigate('PersonalData', { profile });
     }
     if (actionKey === 'logout') {
       try {
-        const token = await AsyncStorage.getItem('token');
-        console.log('Token before logout:', token);
-
         const res = await post('auth/logout');
-        console.log('Logout full response:', JSON.stringify(res));
-
         if (res?.data?.success) {
           ToastMessage(res.data?.message || 'Logged out successfully', 'success');
         } else {
           ToastMessage(res?.error?.message || 'Logout API failed', 'error');
-          console.log('Logout failed:', res?.error || res?.data);
         }
       } catch (err) {
         console.log('Logout error:', err);
         ToastMessage('Logout failed', 'error');
       } finally {
-        // API success/fail dono pe local clear
         await AsyncStorage.multiRemove(['token', 'refreshToken']);
         dispatch(logout());
         dispatch(setUserData({}));
@@ -219,11 +181,96 @@ const Profile = () => {
     }
   };
 
-  const sectionData = [
-    { key: 'contact', title: 'CONTACT', rows: CONTACT_ROWS },
-    { key: 'account', title: 'ACCOUNT', rows: ACCOUNT_ROWS },
-    { key: 'settings', title: 'SETTINGS', rows: SETTINGS_ROWS },
+  const contactRows = [
+    {
+      key: 'email',
+      Icons: Images.email,
+      label: profile?.email || '-',
+    },
+    {
+      key: 'phone',
+      Icons: Images.phone,
+      label: profile?.phone || '-',
+    },
   ];
+
+  const accountRows = [
+    profile?.account?.personal_data
+      ? {
+          key: 'personal-data',
+          Icons: Images.user,
+          label: 'Personal Data',
+          showArrow: true,
+          actionKey: 'personal-data',
+        }
+      : null,
+    profile?.account?.generate_card
+      ? {
+          key: 'generate-card',
+          Icons: Images.generateCard,
+          label: 'Generate Card',
+          badge: { text: 'Generate Card', variant: 'primary' },
+          actionKey: 'generate-card',
+        }
+      : null,
+    {
+      key: 'fee-status',
+      Icons: Images.feeStatus,
+      label: 'Fee Status',
+      badge: getFeeBadge(profile?.account?.fee_status || profile?.fee_status),
+      actionKey: 'fee-status',
+    },
+  ].filter(Boolean);
+
+  const settingsRows = [
+    profile?.settings?.change_password
+      ? {
+          key: 'password',
+          Icons: Images.passwordforget,
+          label: 'Change Password',
+          showArrow: true,
+          actionKey: 'password',
+        }
+      : null,
+    profile?.settings?.faq_and_help
+      ? {
+          key: 'faq',
+          Icons: Images.faqs,
+          label: 'FAQ and Help',
+          showArrow: true,
+          actionKey: 'faq',
+        }
+      : null,
+    profile?.settings?.logout
+      ? {
+          key: 'logout',
+          Icons: Images.logout,
+          label: 'Logout',
+          showArrow: true,
+          actionKey: 'logout',
+        }
+      : null,
+  ].filter(Boolean);
+
+  const sectionData = [
+    { key: 'contact', title: 'CONTACT', rows: contactRows },
+    { key: 'account', title: 'ACCOUNT', rows: accountRows },
+    { key: 'settings', title: 'SETTINGS', rows: settingsRows },
+  ];
+
+  const avatarSource = avatarUri
+    ? { uri: avatarUri }
+    : profile?.profile_photo
+      ? { uri: profile.profile_photo }
+      : Images.profileimage;
+
+  if (loading && !profile) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      </View>
+    );
+  }
 
   return (
     <ScreenWrapper
@@ -259,17 +306,15 @@ const Profile = () => {
 
       <View style={styles.contentCard}>
         <View style={styles.avatarWrap} pointerEvents="box-none">
-
           <UploadImage
             options={{
               cropping: true,
               width: 400,
               height: 400,
-              cropperCircleOverlay: false, // square avatar ke liye
+              cropperCircleOverlay: false,
               compressImageQuality: 0.8,
             }}
             handleChange={result => {
-              // image-crop-picker → path
               const uri = result?.path || result?.uri;
               if (uri) setAvatarUri(uri);
             }}
@@ -279,11 +324,7 @@ const Profile = () => {
                 onPress={openPickerModal}
                 style={styles.avatarTouch}>
                 <Image
-                  source={
-                    avatarUri
-                      ? { uri: avatarUri }
-                      : Images.profileimage
-                  }
+                  source={avatarSource}
                   style={styles.avatar}
                   resizeMode="cover"
                 />
@@ -293,19 +334,18 @@ const Profile = () => {
 
           <View style={styles.nameRow}>
             <CustomText
-              label="Nimra Sultan"
+              label={profile?.name || '-'}
               removeTranslation
               color="#101828"
               fontFamily={fonts.semiBold}
               fontSize={18}
             />
-            <Image
-              source={Images.verify}
-              style={{ width: 18, height: 18 }}
-            />
+            {profile?.is_verified ? (
+              <Image source={Images.verify} style={{ width: 18, height: 18 }} />
+            ) : null}
           </View>
           <CustomText
-            label="Computer Science"
+            label={profile?.department || '-'}
             removeTranslation
             color={COLORS.primaryColor}
             fontFamily={fonts.medium}
@@ -337,6 +377,11 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   topBackground: {
     position: 'absolute',
     top: -220,

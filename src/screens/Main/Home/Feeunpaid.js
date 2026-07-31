@@ -244,8 +244,8 @@ const Feeunpaid = ({ data }) => {
         isVisible={isModalVisible}
         topImg={Images.uploadImg}
         onClose={() => setIsModalVisible(false)}
-        onUpload={(file) => {
-          console.log('Uploaded file:', file);
+        onUpload={(data) => {
+          console.log('Voucher uploaded:', data);
           setIsModalVisible(false);
         }}
       />

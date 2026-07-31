@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { openPicker } from 'react-native-image-crop-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 import CustomModal from '../../../components/CustomModal';
 import CustomText from '../../../components/CustomText';
@@ -23,6 +25,8 @@ import GradientButton from './GradientButton';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import { COLORS } from '../../../utils/COLORS';
+import { endPoints } from '../../../services/ENV';
+import { ToastMessage } from '../../../utils/ToastMessage';
 
 const TOP_IMAGE_OVERFLOW = 50;
 const WINDOW_HEIGHT = Dimensions.get('window').height;
@@ -104,31 +108,13 @@ const DiscontinueContent = ({ onConfirm, onKeepService, onClose }) => {
 const UploadContent = ({ onUpload, onClose }) => {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
 
-  const clearProgressTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-  useEffect(() => () => clearProgressTimer(), []);
-  const startProgress = () => {
-    clearProgressTimer();
-    setProgress(0);
-    timerRef.current = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearProgressTimer();
-          return 100;
-        }
-        // thoda random feel — live upload jaisa
-        const next = prev + Math.floor(Math.random() * 8) + 4;
-        return next >= 100 ? 100 : next;
-      });
-    }, 120);
-  };
   const handleBrowse = async () => {
+    if (uploading) {
+      return;
+    }
+
     try {
       const result = await openPicker({
         mediaType: 'photo',
@@ -138,14 +124,14 @@ const UploadContent = ({ onUpload, onClose }) => {
       });
       if (result) {
         const fileName =
-          result.filename || result.path?.split('/').pop() || 'selected-file.jpg';
+          result.filename || result.path?.split('/').pop() || 'voucher.jpg';
         setFile({
           name: fileName,
           uri: result.path,
-          type: result.mime,
+          type: result.mime || 'image/jpeg',
           size: result.size,
         });
-        startProgress(); // 65 mat set karo — animate start
+        setProgress(0);
       }
     } catch (error) {
       if (error?.code !== 'E_PICKER_CANCELLED') {
@@ -153,22 +139,85 @@ const UploadContent = ({ onUpload, onClose }) => {
       }
     }
   };
+
   const handleRemoveFile = () => {
-    clearProgressTimer();
-    setFile(null);
-    setProgress(0);
-  };
-  const handleUploadPress = () => {
-    if (!file || progress < 100) return; // incomplete pe disable
-    onUpload?.(file);
-    clearProgressTimer();
+    if (uploading) {
+      return;
+    }
     setFile(null);
     setProgress(0);
   };
 
+  const handleUploadPress = async () => {
+    if (!file) {
+      ToastMessage('Please select a file first', 'error');
+      return;
+    }
+    if (uploading) {
+      return;
+    }
+
+    setUploading(true);
+    setProgress(0);
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', {
+        uri: file.uri,
+        type: file.type || 'image/jpeg',
+        name: file.name || 'voucher.jpg',
+      });
+
+      const res = await axios.post(
+        `${endPoints.BASE_URL}/student/vouchers/upload`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+          onUploadProgress: event => {
+            if (!event.total) {
+              return;
+            }
+            const percent = Math.round((event.loaded * 100) / event.total);
+            setProgress(percent > 100 ? 100 : percent);
+          },
+        },
+      );
+
+      if (res?.data?.success) {
+        setProgress(100);
+        ToastMessage(
+          res.data?.data?.message || res.data?.message || 'Upload successful.',
+          'success',
+        );
+        onUpload?.(res.data?.data || res.data);
+        setFile(null);
+        setProgress(0);
+        onClose?.();
+      } else {
+        ToastMessage(res?.data?.message || 'Upload failed', 'error');
+      }
+    } catch (error) {
+      console.log('Voucher upload error:', error?.response?.data || error);
+      ToastMessage(
+        error?.response?.data?.message || 'Upload failed. Please try again.',
+        'error',
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <View style={styles.uploadWrap}>
-      <TouchableOpacity style={styles.dropZone} onPress={handleBrowse} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.dropZone}
+        onPress={handleBrowse}
+        activeOpacity={0.8}
+        disabled={uploading}>
         <ImageFast source={Images.uploadIcon} style={styles.uploadIcon} resizeMode="contain" />
         <CustomText
           label="Drag & drop files or "
@@ -176,7 +225,10 @@ const UploadContent = ({ onUpload, onClose }) => {
           fontFamily={fonts.medium}
           color="#101828"
           marginTop={8}
-        ><Text style={{ color: COLORS.primaryColor, textDecorationLine: 'underline' }}>Browse</Text>
+        >
+          <Text style={{ color: COLORS.primaryColor, textDecorationLine: 'underline' }}>
+            Browse
+          </Text>
         </CustomText>
         <CustomText
           label="Supported formats: JPEG, PNG, PDF"
@@ -188,7 +240,13 @@ const UploadContent = ({ onUpload, onClose }) => {
 
       {file ? (
         <View style={styles.uploadingSection}>
-          <CustomText label="Uploading" fontSize={14} fontFamily={fonts.bold} color="#676767" marginBottom={8} />
+          <CustomText
+            label={uploading ? 'Uploading' : 'Selected File'}
+            fontSize={14}
+            fontFamily={fonts.bold}
+            color="#676767"
+            marginBottom={8}
+          />
           <View style={styles.fileRow}>
             <CustomText
               label={file.name}
@@ -198,20 +256,24 @@ const UploadContent = ({ onUpload, onClose }) => {
               numberOfLines={1}
               style={{ flex: 1 }}
             />
-            <TouchableOpacity onPress={handleRemoveFile} hitSlop={10}>
+            <TouchableOpacity onPress={handleRemoveFile} hitSlop={10} disabled={uploading}>
               <ImageFast source={Images.closeIcon} style={styles.closeIcon} resizeMode="contain" />
             </TouchableOpacity>
           </View>
-          <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
+          {(uploading || progress > 0) ? (
+            <View style={styles.progressBg}>
+              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+            </View>
+          ) : null}
         </View>
       ) : null}
 
       <View style={[styles.buttonWrap, { marginTop: file ? 12 : 24 }]}>
         <GradientButton
           title="Upload"
-          onPress={() => onUpload?.(file)}
+          onPress={handleUploadPress}
+          loading={uploading}
+          disabled={!file || uploading}
         />
         <CustomButton
           title="Cancel"
@@ -223,6 +285,7 @@ const UploadContent = ({ onUpload, onClose }) => {
           borderRadius={24}
           height={48}
           marginTop={8}
+          disabled={uploading}
         />
       </View>
     </View>
@@ -394,8 +457,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 3,
     borderRadius: 4,
-    position: 'absolute',
-    transform: [{ translateY: 62 }],
+    marginTop: 8,
+    backgroundColor: '#E3E3E3',
+    overflow: 'hidden',
   },
   progressFill: {
     height: 3,
@@ -408,5 +472,8 @@ const styles = StyleSheet.create({
   },
   buttonWrap: {
     paddingHorizontal: 20,
+  },
+  uploadWrap: {
+    width: '100%',
   },
 });
