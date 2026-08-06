@@ -75,6 +75,13 @@ instance.interceptors.request.use(
         config.headers['Authorization'] = `Bearer ${token}`;
         config.headers['socket-id'] = socketId;
       }
+      // FormData needs multipart boundary — don't force application/json
+      if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        if (config.headers) {
+          delete config.headers['Content-Type'];
+          delete config.headers['content-type'];
+        }
+      }
       return config;
     } catch (error) {
       return Promise.reject(error);
@@ -145,7 +152,18 @@ const requestGet = async (url, params = {}) => {
 
 const requestPost = async (url, data = {}) => {
   try {
-    const response = await instance.post(url, data);
+    const isFormData =
+      typeof FormData !== 'undefined' && data instanceof FormData;
+    const response = await instance.post(
+      url,
+      data,
+      isFormData
+        ? {
+            headers: {'Content-Type': 'multipart/form-data'},
+            timeout: 60000,
+          }
+        : undefined,
+    );
     return response;
   } catch (error) {
     const errorInfo = handleApiError(error, 'POST', url);
@@ -186,7 +204,7 @@ const requestDelete = async (url, data = {}) => {
 const renewAuthToken = async refreshToken => {
   try {
     const response = await axios.post(
-      `${endPoints.BASE_URL}auth/refresh-token`,
+      `${endPoints.BASE_URL}/auth/refresh-token`,
       { refreshToken },
       {
         headers: { 'Content-Type': 'application/json' },

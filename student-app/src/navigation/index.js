@@ -23,7 +23,7 @@ const RootNavigation = () => {
   }, []);
   return (
     <Stack.Navigator
-      initialRouteName={'MainStack' }
+      initialRouteName={'AuthStack'}
       screenOptions={{
         headerShown: false,
         animation: 'fade',
@@ -39,10 +39,6 @@ const RootNavigation = () => {
           <Stack.Screen name="MainStack" component={MainStack} />
         </>
       )}
-
-{/* <Stack.Screen name="MainStack" component={MainStack} />
-<Stack.Screen name="AuthStack" component={AuthStack} /> */}
-
     </Stack.Navigator>
   );
 };

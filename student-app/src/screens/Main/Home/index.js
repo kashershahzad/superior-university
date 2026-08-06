@@ -11,22 +11,22 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await get('student/dashboard');
-        if (res?.data?.success) {
-          const data = res.data.data ?? null;
-          setDashboardData(data);
-          setFeeStatus(data?.fee_status ?? null);
-        }
-      } catch (err) {
-        console.log('Dashboard fetch error:', err);
-      } finally {
-        setLoading(false);
+  const fetchDashboard = async () => {
+    try {
+      const res = await get('student/dashboard');
+      if (res?.data?.success) {
+        const data = res.data.data ?? null;
+        setDashboardData(data);
+        setFeeStatus(data?.fee_status ?? null);
       }
-    };
+    } catch (err) {
+      console.log('Dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDashboard();
   }, []);
 

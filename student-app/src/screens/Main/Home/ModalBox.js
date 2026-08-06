@@ -9,7 +9,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { openPicker } from 'react-native-image-crop-picker';
+import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -111,30 +111,23 @@ const UploadContent = ({ onUpload, onClose }) => {
   const [uploading, setUploading] = useState(false);
 
   const handleBrowse = async () => {
-    if (uploading) {
-      return;
-    }
-
+    if (uploading) return;
     try {
-      const result = await openPicker({
-        mediaType: 'photo',
-        cropping: false,
-        compressImageQuality: 0.8,
-        includeBase64: false,
+      const [result] = await pick({
+        type: [types.images, types.pdf], // gallery images + PDF
+        allowMultiSelection: false,
       });
       if (result) {
-        const fileName =
-          result.filename || result.path?.split('/').pop() || 'voucher.jpg';
         setFile({
-          name: fileName,
-          uri: result.path,
-          type: result.mime || 'image/jpeg',
+          name: result.name || 'voucher',
+          uri: result.uri,
+          type: result.type || 'application/pdf',
           size: result.size,
         });
         setProgress(0);
       }
     } catch (error) {
-      if (error?.code !== 'E_PICKER_CANCELLED') {
+      if (!isErrorWithCode(error) || error.code !== errorCodes.OPERATION_CANCELED) {
         console.log('Picker error:', error);
       }
     }
@@ -457,7 +450,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 3,
     borderRadius: 4,
-    marginTop: 8,
+    // marginTop: 8,
     backgroundColor: '#E3E3E3',
     overflow: 'hidden',
   },

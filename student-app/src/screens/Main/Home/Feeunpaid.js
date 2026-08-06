@@ -14,16 +14,20 @@ import ModalBox from './ModalBox';
 import CustomButton from '../../../components/CustomButton';
 import { COLORS } from '../../../utils/COLORS';
 
+import { post } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
+
 const TIMELINE_STATUS = {
   done: { label: 'Done', type: 'done' },
   in_progress: { label: 'In Progress', type: 'inProgress' },
   waiting: { label: 'Waiting', type: 'waiting' },
 };
 
-const Feeunpaid = ({ data }) => {
+const Feeunpaid = ({ data, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const anims = useRef({
     header: new Animated.Value(0),
     cover: new Animated.Value(0),
@@ -57,6 +61,32 @@ const Feeunpaid = ({ data }) => {
 
     return () => entranceAnimation.stop();
   }, [anims]);
+
+  const handleGenerateVoucher = async () => {
+    if (generating) return;
+    setGenerating(true);
+    try {
+      const res = await post('student/vouchers/generate');
+      if (res?.data?.success) {
+        const voucherId = res.data.data?.id;
+        ToastMessage(res.data?.message || 'Fee voucher generated.', 'success');
+        onRefresh();
+        const parent = navigation.getParent();
+        if (parent) {
+          parent.navigate('FeeVoucher', { voucherId });
+        } else {
+          navigation.navigate('FeeVoucher', { voucherId });
+        }
+      } else {
+        ToastMessage(res?.error?.message || 'Failed to generate voucher', 'error');
+      }
+    } catch (err) {
+      console.log('Generate voucher error:', err);
+      ToastMessage('Failed to generate voucher', 'error');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const fadeUpStyle = (animation, distance = 20) => ({
     opacity: animation,
@@ -149,15 +179,15 @@ const Feeunpaid = ({ data }) => {
                 </View>
               </TouchableOpacity>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('Profile')}
-              >
-                <ImageFast
-                  source={Images.profile}
-                  style={styles.notificationImage}
-                  resizeMode="contain"
-                />
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Profile')}
+                >
+                  <ImageFast
+                    source={Images.profile}
+                    style={styles.notificationImage}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
                 <ImageFast
                   source={Images.notification}
@@ -233,7 +263,8 @@ const Feeunpaid = ({ data }) => {
           {actions.can_generate_voucher ? (
             <GradientButton
               title="Generate Fee Voucher"
-              onPress={() => navigation.navigate('FeeVoucher')}
+              loading={generating}
+              onPress={handleGenerateVoucher}
             />
           ) : null}
         </Animated.View>

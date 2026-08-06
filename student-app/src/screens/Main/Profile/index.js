@@ -52,14 +52,16 @@ const ProfileRow = ({ item, onPress }) => {
             styles.badge,
             item.badge.variant === 'danger'
               ? styles.dangerBadge
-              : styles.primaryBadge,
+              : item.badge.variant === 'success'
+                ? styles.successBadge
+                : styles.primaryBadge,
           ]}>
           <CustomText
             label={badgeText}
             removeTranslation
             fontFamily={fonts.bold}
             fontSize={10}
-            color={item.badge.variant === 'danger' ? '#EB5757' : COLORS.white}
+            color={item.badge.variant === 'danger' ? '#EB5757' : item.badge.variant === 'success' ? '#719055' : COLORS.white}
             lineHeight={16}
             letterSpacing={0.15}
           />
@@ -109,7 +111,7 @@ const ProfileSection = ({ title, rows, onRowPress }) => {
 const getFeeBadge = feeStatus => {
   const status = String(feeStatus || '').toLowerCase();
   if (status === 'paid') {
-    return { text: 'Paid', variant: 'primary' };
+    return { text: 'Paid', variant: 'success' };
   }
   return { text: 'Pending', variant: 'danger' };
 };
@@ -120,6 +122,8 @@ const Profile = () => {
   const [avatarUri, setAvatarUri] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingCard, setGeneratingCard] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -138,9 +142,78 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
+  const uploadProfilePhoto = async result => {
+    const uri = result?.path || result?.uri;
+    if (!uri || uploadingPhoto) return;
+
+    if (result?.size && result.size > 2 * 1024 * 1024) {
+      ToastMessage('Image must be under 2MB', 'error');
+      return;
+    }
+
+    const mime = result?.mime || 'image/jpeg';
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (result?.mime && !allowed.includes(String(mime).toLowerCase())) {
+      ToastMessage('Only JPEG, JPG, PNG or WEBP allowed', 'error');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setAvatarUri(uri);
+
+    try {
+      const formData = new FormData();
+      formData.append('profile_photo', {
+        uri,
+        type: mime,
+        name: result?.filename || `profile.${mime.split('/')[1] || 'jpg'}`,
+      });
+
+      const res = await post('student/profile/photo', formData);
+      console.log('Profile photo upload response:', res?.data);
+      if (res?.data?.success) {
+        const photoUrl = res.data.data?.profile_photo;
+        console.log('Profile photo upload successful:', photoUrl);
+        if (photoUrl) {
+          setAvatarUri(photoUrl);
+          setProfile(prev =>
+            prev ? {...prev, profile_photo: photoUrl} : prev,
+          );
+        }
+        ToastMessage(
+          res.data?.message || 'Profile image updated.',
+          'success',
+        );
+      } else {
+        console.log('Profile photo upload failed:', res?.error);
+        ToastMessage(res?.error?.message || 'Upload failed', 'error');
+      }
+    } catch (err) {
+      console.log('Profile photo upload error:', err);
+      ToastMessage('Upload failed', 'error');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleRowPress = async actionKey => {
     if (actionKey === 'generate-card') {
-      navigation.navigate('GenerateCard');
+      if (generatingCard) return;
+      setGeneratingCard(true);
+      try {
+        const res = await post('student/card/generate');
+        if (res?.data?.success) {
+          ToastMessage(res.data?.message || 'Card generated successfully', 'success');
+          navigation.navigate('GenerateCard');
+        } else {
+          console.log('Generate card failed:', res?.error);
+        }
+      } catch (err) {
+        console.log('Generate card error:', err);
+      } finally {
+        setGeneratingCard(false);
+      }
+      return;
     }
     if (actionKey === 'fee-status') {
       navigation.navigate('Verification', {
@@ -314,20 +387,23 @@ const Profile = () => {
               cropperCircleOverlay: false,
               compressImageQuality: 0.8,
             }}
-            handleChange={result => {
-              const uri = result?.path || result?.uri;
-              if (uri) setAvatarUri(uri);
-            }}
+            handleChange={uploadProfilePhoto}
             renderButton={openPickerModal => (
               <TouchableOpacity
                 activeOpacity={0.9}
-                onPress={openPickerModal}
+                onPress={uploadingPhoto ? undefined : openPickerModal}
+                disabled={uploadingPhoto}
                 style={styles.avatarTouch}>
                 <Image
                   source={avatarSource}
                   style={styles.avatar}
                   resizeMode="cover"
                 />
+                {uploadingPhoto ? (
+                  <View style={styles.avatarLoader}>
+                    <ActivityIndicator color={COLORS.white} />
+                  </View>
+                ) : null}
               </TouchableOpacity>
             )}
           />
@@ -422,6 +498,13 @@ const styles = StyleSheet.create({
   avatarTouch: {
     position: 'relative',
   },
+  avatarLoader: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   avatar: {
     width: 120,
     height: 120,
@@ -485,6 +568,9 @@ const styles = StyleSheet.create({
   },
   primaryBadge: {
     backgroundColor: '#6F1A73',
+  },
+  successBadge: {
+    backgroundColor: '#E7F1D9',
   },
   dangerBadge: {
     backgroundColor: '#FFE7E7',

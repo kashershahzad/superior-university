@@ -124,7 +124,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
           password,
         });
       } else if (mode === 'phone') {
-        res = await post('auth/student/login/phone', {
+        res = await post('/auth/student/login/phone', {
           phone,
           password,
         });
@@ -135,6 +135,8 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
         const token = res.data?.data?.token;
         const user = res.data?.data?.user;
         console.log('Login token:', token);
+
+        console.log('res', res)
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));

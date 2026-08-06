@@ -101,6 +101,7 @@ const CustomInput = ({
           />
         ) : null}
         <TextInput
+          key={secureTextEntry ? `secure-${hidePass}` : 'plain'}
           ref={ref}
           placeholder={i18n.t(placeholder)}
           style={[
@@ -140,7 +141,7 @@ const CustomInput = ({
 
         {secureTextEntry && (
           <Icons
-            name={!hidePass ? 'eye' : 'eye-off'}
+            name={hidePass ? 'eye' : 'eye-off'}
             color={eyeIconColor || COLORS.gray}
             size={20}
             family="Feather"

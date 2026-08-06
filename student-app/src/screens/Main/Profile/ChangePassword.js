@@ -146,16 +146,6 @@ const ChangePassword = () => {
             secureTextEntry
             eyeIconColor={COLORS.primaryColor}
           />
-
-          <CustomText
-            label="Forgot Password?"
-            fontFamily={fonts.semiBold}
-            color={COLORS.primaryColor}
-            fontSize={13}
-            alignSelf="flex-end"
-            marginTop={4}
-            // onPress={handleForgotPassword}
-          />
         </View>
 
         <View style={styles.buttonContainer}>

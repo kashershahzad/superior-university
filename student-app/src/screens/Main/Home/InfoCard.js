@@ -18,7 +18,7 @@ const getStatusStyle = (status, statusType) => {
 
   const normalized = String(status || '').toLowerCase();
 
-  if (normalized.includes('done')) return STATUS_STYLES.done;
+  if (normalized.includes('active')) return STATUS_STYLES.done;
   if (normalized.includes('progress')) return STATUS_STYLES.inProgress;
   if (normalized.includes('wait')) return STATUS_STYLES.waiting;
 

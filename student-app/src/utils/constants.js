@@ -23,7 +23,7 @@ export const uploadAndGetUrl = async file => {
       name: 'photo.jpg',
     });
     const res = await axios.post(
-      `${endPoints.BASE_URL}image/upload`,
+      `${endPoints.BASE_URL}/image/upload`,
       formData,
       {
         headers: {

@@ -7,36 +7,34 @@ import { COLORS } from '../../../utils/COLORS';
 import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
-
-const CARD_DATA = {
-    name: 'Nimra Sultan',
-    department: 'Computer Science',
-    program: 'BSCS - 4th Semester',
-    studentId: '23-CS-1027',
-    session: '2023 - 2027',
-    dob: '12 Feb 2003',
-    bloodGroup: 'B+',
-    issueDate: '15 May 2024',
-    validUpto: '15 May 2025',
-    studentCardHeader: Images.studentCardHeader,
-    avatar: Images.profileimage,
-    qrCode: Images.qrCode,
-    signature: Images.signature,
-    busLogo: Images.busLogo,
-};
+import QRCode from 'react-native-qrcode-svg';
 
 const DetailRow = ({ label, value }) => (
     <View style={styles.detailRow}>
         <View style={styles.detailRowLabel}>
-        <CustomText label={label} fontSize={13} fontFamily={fonts.medium} color="#45495A" />
+            <CustomText label={label} fontSize={13} fontFamily={fonts.medium} color="#45495A" />
         </View>
         <View style={styles.detailRowValue}>
-        <CustomText label={value} fontSize={13} fontFamily={fonts.medium} color="#283342" />
+            <CustomText label={value} fontSize={13} fontFamily={fonts.medium} color="#283342" />
         </View>
     </View>
 );
 
-const StudentCard = ({ data = CARD_DATA }) => {
+const StudentCard = ({ card }) => {
+
+    const name = card?.student?.name;
+    const department = card?.student?.department;
+    const program = card?.student?.semester;
+    const studentId = card?.student?.student_id;
+    const session = card?.student?.session;
+    const dob = card?.student?.date_of_birth;
+    const bloodGroup = card?.student?.blood_group;
+    const issueDate = card?.issue_date;
+    const validUpto = card?.valid_until;
+    const avatar = Images.profileimage;
+    const footerText = card?.valid_for;
+    const qrPayload = card?.qr_payload;
+
     return (
         <View style={styles.card}>
             {/* header */}
@@ -46,28 +44,35 @@ const StudentCard = ({ data = CARD_DATA }) => {
             {/* body */}
             <View style={styles.body}>
                 <View style={styles.profileRow}>
-                    <ImageFast source={data.avatar} style={styles.avatar} />
+                    <ImageFast source={avatar} style={styles.avatar} />
                     <View style={styles.profileInfo}>
-                        <CustomText label={data.name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
-                        <CustomText label={data.department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
-                        <CustomText label={data.program} fontFamily={fonts.medium} color="#667085" fontSize={12} />
+                        <CustomText label={name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
+                        <CustomText label={department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
+                        <CustomText label={program} fontFamily={fonts.medium} color="#667085" fontSize={12} />
                     </View>
                     <View style={styles.idBox}>
                         <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />
-                        <CustomText label={data.studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
+                        <CustomText label={studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
                     </View>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.detailsSection}>
                     <View style={styles.detailsLeft}>
-                        <DetailRow label="Department" value={data.department} />
-                        <DetailRow label="Session" value={data.session} />
-                        <DetailRow label="Date of Birth" value={data.dob} />
-                        <DetailRow label="Blood Group" value={data.bloodGroup} />
-                        <DetailRow label="Issue Date" value={data.issueDate} />
-                        <DetailRow label="Valid Upto" value={data.validUpto} />
+                        <DetailRow label="Department" value={department} />
+                        <DetailRow label="Session" value={session} />
+                        <DetailRow label="Date of Birth" value={dob} />
+                        <DetailRow label="Blood Group" value={bloodGroup} />
+                        <DetailRow label="Issue Date" value={issueDate} />
+                        <DetailRow label="Valid Upto" value={validUpto} />
                     </View>
-                    <ImageFast source={Images.qrCode} style={styles.qr} resizeMode="contain" />
+                    <View style={styles.qr}>
+                        <QRCode
+                            value={qrPayload}
+                            size={84}
+                            backgroundColor="#FFFFFF"
+                            color="#000000"
+                        />
+                    </View>
                 </View>
             </View>
             {/* footer */}
@@ -75,7 +80,7 @@ const StudentCard = ({ data = CARD_DATA }) => {
                 <View style={styles.footerContent}>
                     <View style={styles.footerLeft}>
                         <ImageFast source={Images.busLogo} style={styles.busIcon} />
-                        <CustomText label="Valid for University Transport" color="#fff" fontSize={12} />
+                        <CustomText label={footerText} color="#fff" fontSize={12} />
                     </View>
                     <View style={styles.footerRight}>
                         <ImageFast source={Images.signature} style={styles.signature} />
@@ -101,16 +106,16 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 87,
     },
-    body: { 
-        backgroundColor: '#fff', 
+    body: {
+        backgroundColor: '#fff',
         padding: 14,
     },
-    avatar: { 
-        width: 84, 
-        height: 84, 
+    avatar: {
+        width: 84,
+        height: 84,
         borderRadius: 8,
     },
-    profileRow: { 
+    profileRow: {
         flexDirection: 'row',
         gap: 10,
         alignItems: 'center',
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     divider: { height: 1, backgroundColor: '#EAECF0', },
-    detailsSection: { 
+    detailsSection: {
         marginTop: 18,
         marginBottom: 12,
         flexDirection: 'row',

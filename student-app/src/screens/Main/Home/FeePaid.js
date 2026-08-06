@@ -10,6 +10,9 @@ import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
 import ModalBox from './ModalBox';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { post, del, get } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -18,11 +21,18 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = ({ data }) => {
+const FeePaid = ({ data, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
+  const [discontinuing, setDiscontinuing] = useState(false);
+  const [discontinuePending, setDiscontinuePending] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [discontinueId, setDiscontinueId] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
+
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+
   const anims = useRef({
     header: new Animated.Value(0),
     card: new Animated.Value(0),
@@ -35,6 +45,8 @@ const FeePaid = ({ data }) => {
   const transport = data?.transport_service || {};
   const feeStatus = data?.fee_status || 'paid';
   const busLabel = transport.bus || '-';
+  const timePeriod = transport.active_period.label || '-';
+  const pickupETA = transport.pickup_time || '-';
 
   useEffect(() => {
     const createAnimation = value =>
@@ -74,6 +86,77 @@ const FeePaid = ({ data }) => {
     { item: 'Bus', itemValue: busLabel },
     { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
   ];
+
+  const handleDiscontinue = async (reason = '') => {
+    if (discontinuing) return;
+    setDiscontinuing(true);
+    try {
+      const res = await post('student/service/discontinue', {
+        reason: String(reason || '').trim(),
+      });
+      if (res?.data?.success) {
+        ToastMessage(
+          res.data?.message || 'Service discontinuation requested',
+          'success',
+        );
+        const id = res.data?.data?.id;
+        setDiscontinueId(id);
+        setSheetVisible(false);
+        setDiscontinuePending(true);
+
+        if (id != null) {
+          await AsyncStorage.setItem('discontinueId', String(id));
+          await AsyncStorage.setItem('discontinuePending', 'true');
+        }
+      } else {
+        console.log('Discontinue failed:', res?.error);
+      }
+    } catch (err) {
+      console.log('Discontinue error:', err);
+      ToastMessage('Failed to discontinue service', 'error');
+    } finally {
+      setDiscontinuing(false);
+    }
+  };
+
+  const handleCancelDiscontinue = async () => {
+    if (cancelling) return;
+    if (!discontinueId) {
+      ToastMessage('Discontinue request not found', 'error');
+      return;
+    }
+    setCancelling(true);
+    try {
+      const res = await del(`student/service/discontinue/${discontinueId}`);
+      if (res?.data?.success) {
+        ToastMessage(res.data?.message || 'Discontinuation cancelled', 'success');
+        setDiscontinuePending(false);
+        setDiscontinueId(null);
+      } else {
+        console.log('Cancel discontinue failed:', res?.error);
+      }
+    } catch (err) {
+      console.log('Cancel discontinue error:', err);
+      ToastMessage('Failed to cancel discontinuation', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const fetchTracking = async () => {
+    try {
+      const res = await get('student/transport/tracking');
+      if (res?.data?.success) {
+        setDistanceKm(res.data.data?.distance_km ?? null);
+      }
+    } catch (e) {
+      console.log('Tracking error:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchTracking();
+  }, []);
 
   return (
     <ScreenWrapper
@@ -140,7 +223,7 @@ const FeePaid = ({ data }) => {
               fontFamily={fonts.medium}
             />
             <CustomText
-              label="Period 1 Jan 2024 - 30 Dec 2024"
+              label={timePeriod}
               color="#101828"
               fontSize={12}
               fontFamily={fonts.regular}
@@ -184,7 +267,7 @@ const FeePaid = ({ data }) => {
                     resizeMode="contain"
                   />
                   <CustomText
-                    label="Buss"
+                    label="Bus"
                     color="#475467"
                     fontSize={12}
                     fontFamily={fonts.medium}
@@ -193,7 +276,7 @@ const FeePaid = ({ data }) => {
                 <CustomText
                   label={busLabel}
                   color="#101828"
-                  fontSize={16}
+                  fontSize={22}
                   fontFamily={fonts.regular}
                   marginTop={3}
                   marginLeft={2}
@@ -216,7 +299,7 @@ const FeePaid = ({ data }) => {
                   />
                 </View>
                 <CustomText
-                  label="08:15"
+                  label={pickupETA}
                   color="#101828"
                   fontSize={22}
                   fontFamily={fonts.regular}
@@ -248,7 +331,9 @@ const FeePaid = ({ data }) => {
               zoomEnabled={false}
               rotateEnabled={false}
               pitchEnabled={false}
-              initialRegion={DEFAULT_BUS_LOCATION}>
+              initialRegion={
+                DEFAULT_BUS_LOCATION
+              }>
               <Marker
                 coordinate={{
                   latitude: DEFAULT_BUS_LOCATION.latitude,
@@ -262,7 +347,7 @@ const FeePaid = ({ data }) => {
           <View style={styles.busLocationInfo}>
             <View style={styles.dot} />
             <CustomText
-              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} nearby`}
+              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`}
               color="#701A73"
               fontSize={12}
               fontFamily={fonts.medium}
@@ -278,7 +363,7 @@ const FeePaid = ({ data }) => {
         <InfoCard
           title="Fee Details"
           titleStatus={transport.status_label}
-          titleStatusType={transport.status || 'pending'}
+          titleStatusType={transport.status_label}
           items={feeDetailsItems}
         />
       </Animated.View>
@@ -296,7 +381,14 @@ const FeePaid = ({ data }) => {
         }}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => setSheetVisible(true)}>
+          disabled={discontinuing || cancelling}
+          onPress={() => {
+            if (discontinuePending) {
+              handleCancelDiscontinue();
+            } else {
+              setSheetVisible(true);
+            }
+          }}>
           <View style={styles.footerContainer}>
             <ImageFast
               source={Images.discontinue}
@@ -304,7 +396,7 @@ const FeePaid = ({ data }) => {
               resizeMode="contain"
             />
             <CustomText
-              label="Discontinue Service"
+              label={discontinuePending ? 'Cancel Discontinue' : 'Discontinue Service'}
               color="#701A73"
               fontSize={14}
               fontFamily={fonts.medium}
@@ -317,9 +409,7 @@ const FeePaid = ({ data }) => {
         isVisible={isSheetVisible}
         topImg={Images.modalImg}
         onClose={() => setSheetVisible(false)}
-        onConfirm={() => {
-          setSheetVisible(false);
-        }}
+        onConfirm={handleDiscontinue}
         onKeepService={() => setSheetVisible(false)}
       />
     </ScreenWrapper>
@@ -389,7 +479,7 @@ const styles = StyleSheet.create({
   feeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
   },
   feeImage: {
     width: 24,

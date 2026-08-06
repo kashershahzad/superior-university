@@ -1,7 +1,9 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { Buffer } from 'buffer';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
@@ -11,28 +13,138 @@ import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
+import { useRoute } from '@react-navigation/native';
+
+import { Linking } from 'react-native';
+import { get } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
+
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { endPoints } from '../../../services/ENV';
+
 
 const FeeVoucher = () => {
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const route = useRoute();
+  const [exporting, setExporting] = useState(false);
+  const [voucher, setVoucher] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const voucherId = route.params?.voucherId;
+
+  useEffect(() => {
+    const fetchVoucher = async () => {
+      if (!voucherId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await get(`student/vouchers/${voucherId}`);
+        if (res?.data?.success) {
+          setVoucher(res.data.data);
+        }
+      } catch (err) {
+        console.log('Voucher details error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVoucher();
+  }, [voucherId]);
+
+  const handleExportPdf = async () => {
+    const id = voucher?.id;
+    if (!id) {
+      ToastMessage('Voucher not found', 'error');
+      return;
+    }
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const rawName = voucher?.voucher_no;
+      const fileName = String(rawName).toLowerCase().endsWith('.pdf')
+        ? String(rawName)
+        : `${rawName}.pdf`;
+      const filePath = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
+      const response = await axios.get(
+        `${endPoints.BASE_URL}/student/vouchers/${id}/pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/pdf',
+          },
+          responseType: 'arraybuffer',
+          timeout: 60000,
+        },
+      );
+      if (response.status !== 200) {
+        throw new Error(`Server error ${response.status}`);
+      }
+      const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      await ReactNativeBlobUtil.fs.writeFile(filePath, base64, 'base64');
+      const stat = await ReactNativeBlobUtil.fs.stat(filePath);
+      if (!stat?.size || Number(stat.size) < 100) {
+        throw new Error('PDF file empty');
+      }
+      // Public Downloads (File Manager mein dikhegi)
+      if (Platform.OS === 'android') {
+        await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+          {
+            name: fileName,
+            parentFolder: '',
+            mimeType: 'application/pdf',
+          },
+          'Download',
+          filePath,
+        );
+        // Cleanup temporary file
+        await ReactNativeBlobUtil.fs.unlink(filePath).catch(() => { });
+      }
+      ToastMessage('PDF saved to Downloads', 'success');
+      // Open with
+      if (Platform.OS === 'android') {
+        await ReactNativeBlobUtil.android.actionViewIntent(
+          filePath,
+          'application/pdf',
+        );
+      } else {
+        ReactNativeBlobUtil.ios.openDocument(filePath);
+      }
+    } catch (error) {
+      console.log('Export PDF Error:', error?.message || error);
+      ToastMessage(error?.message || 'Failed to download PDF', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
 
   const VOUCHER_DETAILS = [
-    { label: 'Voucher No.', value: 'TFV-2025-001', wide: true },
-    { label: 'Route', value: 'Route 3' },
-    { label: 'Bus No.', value: 'Bus #3' },
-    { label: 'Due Date', value: '21 May 2026', wide: true },
-    { label: 'Monthly Fee', value: 'PKR 8,000', wide: true },
+    { label: 'Voucher No.', value: voucher?.voucher_no || '-', wide: true },
+    { label: 'Route', value: voucher?.route || '-' },
+    { label: 'Bus No.', value: voucher?.bus_no ? `Bus #${voucher.bus_no}` : '-' },
+    { label: 'Due Date', value: voucher?.due_date || '-', wide: true },
+    {
+      label: 'Monthly Fee',
+      value: voucher?.monthly_fee != null
+        ? `PKR ${Number(voucher.monthly_fee).toLocaleString()}`
+        : '-',
+      wide: true,
+    },
   ];
 
-  const DetailItem = ({label, value, style}) => (
-    <View style={[styles.detailItem, style]}>
+  const DetailItem = ({ label, value }) => (
+    <View style={styles.detailItem}>
       <CustomText
         label={label}
         fontSize={12}
         fontFamily={fonts.medium}
         color="#475467"
+        numberOfLines={1}
       />
       <CustomText
         label={value}
@@ -40,6 +152,7 @@ const FeeVoucher = () => {
         fontFamily={fonts.medium}
         color="#344054"
         marginTop={4}
+        numberOfLines={1}
       />
     </View>
   );
@@ -54,7 +167,10 @@ const FeeVoucher = () => {
       footerUnScrollable={() => {
         return (
           <View style={styles.footerContainer}>
-            <GradientButton title="Export as PDF" onPress={() => { }} />
+            <GradientButton title="Export as PDF"
+              loading={exporting}
+              onPress={handleExportPdf}
+            />
           </View>
         );
       }}
@@ -92,9 +208,9 @@ const FeeVoucher = () => {
           <View style={styles.voucherHeader}>
             <ImageFast
               source={Images.calender}
-              style={{ width: 16, height: 16}}
+              style={{ width: 16, height: 16 }}
             />
-            <CustomText label="30 May 2026" fontSize={14} fontFamily={fonts.semiBold} color="#101828" marginLeft={8} />
+            <CustomText label={voucher?.generated_date || '-'} fontSize={14} fontFamily={fonts.semiBold} color="#101828" marginLeft={8} />
           </View>
           <View style={styles.card}>
             <CustomText
@@ -125,7 +241,7 @@ const FeeVoucher = () => {
                   key={item.label}
                   label={item.label}
                   value={item.value}
-                  style={item.wide ? styles.detailColWide : styles.detailCol}
+                  // style={item.wide ? styles.detailColWide : styles.detailCol}
                 />
               ))}
             </View>
@@ -197,7 +313,7 @@ const styles = StyleSheet.create({
   detailsUnderline: {
     width: 16,
     height: 2,
-    backgroundColor: '#344054',  
+    backgroundColor: '#344054',
     borderRadius: 2,
     marginTop: 4,
   },
@@ -205,16 +321,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: 22,
+    // gap: 32,
     rowGap: 12,
   },
-  detailCol: {
-    width: '22%',
-  },
-  detailColWide: {
-    width: '38%', // Voucher No + Due Date
-  },
   detailItem: {
+    width: '50%',
     marginBottom: 2,
   },
   footerContainer: {

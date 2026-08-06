@@ -14,6 +14,7 @@ const CustomCheckbox = ({
       style={styles.checkboxContainer}
       onPress={() => onValueChange(!value)}
       activeOpacity={0.7}
+      hitSlop={{ top: 30, bottom: 30, left: 30, right: 30 }}
     >
       <View
         style={[

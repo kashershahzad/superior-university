@@ -1,5 +1,6 @@
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 
 import { Images } from '../../../assets/images';
 import ImageFast from '../../../components/ImageFast';
@@ -15,6 +16,7 @@ import CustomButton from '../../../components/CustomButton';
 import { COLORS } from '../../../utils/COLORS';
 import GradientButton from '../Home/GradientButton';
 import ModalBox from '../Home/ModalBox';
+import { get } from '../../../services/ApiRequest';
 
 const DEFAULT_BUS_LOCATION = {
     latitude: 31.4704,
@@ -28,12 +30,46 @@ const Fees = () => {
     const navigation = useNavigation();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const route = useRoute();
+    const [loading, setLoading] = useState(true);
+    const [fee, setFee] = useState(null);
+    const [distanceKm, setDistanceKm] = useState(null);
+    const [displayName, setDisplayName] = useState(null);
 
     const {
         status = 'unpaid',
         isMapLocked = true,
         unlockText = 'Pay fee to unlock track',
     } = route.params || {};
+
+    const fetchFee = async () => {
+        try {
+            const res = await get('student/fee');
+            if (res?.data?.success) {
+                setFee(res.data.data);
+            }
+        } catch (e) {
+            console.log('Fee fetch error:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTracking = async () => {
+        try {
+            const res = await get('student/transport/tracking');
+            if (res?.data?.success) {
+                setDistanceKm(res.data.data?.distance_km ?? null);
+                setDisplayName(res.data.data?.display_name ?? null);
+            }
+        } catch (e) {
+            console.log('Tracking error:', e);
+        }
+    };
+
+    useEffect(() => {
+        fetchFee();
+        fetchTracking();
+    }, []);
 
     return (
         <>
@@ -103,7 +139,7 @@ const Fees = () => {
                                 <View style={styles.busLocationInfo}>
                                     <View style={styles.dot} />
                                     <CustomText
-                                        label={unlockText}
+                                        label={fee?.fee_status === 'unpaid' ? 'Pay fee to unlock track' : `${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
                                         color="#701A73"
                                         fontSize={12}
                                         fontFamily={fonts.medium}
@@ -113,12 +149,12 @@ const Fees = () => {
                         </View>
                         <InfoCard
                             title="Fee Details"
-                            titleStatus="Pending"
-                            titleStatusType="pending"
+                            titleStatus={fee?.details?.status}
+                            titleStatusType={fee?.details?.status === 'active' ? 'done' : 'pending'}
                             items={[
-                                { item: 'Route', itemValue: '3-Faisalabad' },
-                                { item: 'Bus', itemValue: '#3 Jail Road' },
-                                { item: 'Submitted Date', itemValue: '21 May 2025' },
+                                { item: 'Route', itemValue: fee?.details?.route },
+                                { item: 'Bus', itemValue: fee?.details?.bus },
+                                { item: 'Submitted Date', itemValue: fee?.details?.submitted_date },
                             ]}
                         />
                     </View>
