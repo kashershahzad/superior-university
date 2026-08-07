@@ -53,6 +53,7 @@ const Signin = ({ navigation }) => {
       if (res?.error) {
         return;
       }
+      console.log('res', res);
       if (res?.data?.success) {
         const token = res.data?.data?.token;
         const user = res.data?.data?.user;

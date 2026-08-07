@@ -26,7 +26,9 @@ const RootNavigation = () => {
       screenOptions={{
         headerShown: false,
         animation: 'fade',
-      }}>
+      }}
+      // initialRouteName="MainStack"
+      >
       {isToken ? (
         <>
           <Stack.Screen name="MainStack" component={MainStack} />
@@ -38,8 +40,8 @@ const RootNavigation = () => {
           <Stack.Screen name="MainStack" component={MainStack} />
         </>
       )}
-{/* 
-      <Stack.Screen name="AuthStack" component={AuthStack} />
+
+      {/* <Stack.Screen name="AuthStack" component={AuthStack} />
       <Stack.Screen name="MainStack" component={MainStack} /> */}
 
     </Stack.Navigator>

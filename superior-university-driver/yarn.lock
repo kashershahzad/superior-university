@@ -4281,6 +4281,11 @@ event-target-shim@^5.0.0:
   resolved "https://registry.npmjs.org/event-target-shim/-/event-target-shim-5.0.1.tgz"
   integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
 
+eventemitter3@^4.0.7:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
+  integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
+
 execa@^5.0.0:
   version "5.1.1"
   resolved "https://registry.npmjs.org/execa/-/execa-5.1.1.tgz"
@@ -6731,6 +6736,13 @@ react-native-animatable@1.4.0:
   integrity sha512-DZwaDVWm2NBvBxf7I0wXKXLKb/TxDnkV53sWhCvei1pRyTX3MVFpkvdYBknNBqPrxYuAIlPxEp7gJOidIauUkw==
   dependencies:
     prop-types "^15.8.1"
+
+react-native-background-actions@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-background-actions/-/react-native-background-actions-4.1.0.tgz#07052551355ab31653c5d752c22ebbf312b9dc63"
+  integrity sha512-7dyTZOqX+CsskwAxTXj7zLMOSg/JP9Wf+smX7EoFTlqfChzDBlhGr+8Qc35ExXdoM+nUezb3DoHexNbDid2A9g==
+  dependencies:
+    eventemitter3 "^4.0.7"
 
 react-native-bootsplash@^7.1.0:
   version "7.3.2"

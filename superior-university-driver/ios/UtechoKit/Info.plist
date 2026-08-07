@@ -51,11 +51,11 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Used for secure authentication.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location in background for tracking.</string>
+	<string>UMS Driver needs continuous location access to share your live bus position with the university while you are on duty, even when the app is in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>We need your location in background for tracking.</string>
+	<string>UMS Driver needs continuous location access to share your live bus position with the university while you are on duty, even when the app is in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to show nearby services.</string>
+	<string>UMS Driver needs your location to share live bus position while you are on duty.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need microphone access for video recording.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -67,6 +67,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
+		<string>location</string>
 		<string>remote-notification</string>
 	</array>
 	<key>UILaunchStoryboardName</key>

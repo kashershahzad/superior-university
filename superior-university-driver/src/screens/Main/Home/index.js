@@ -11,6 +11,10 @@ import InfoCard from './InfoCard';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../utils/COLORS';
 import { get, post } from '../../../services/ApiRequest';
+import {
+  startLocationTracking,
+  stopLocationTracking,
+} from '../../../services/LocationTrackingService';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
@@ -26,36 +30,54 @@ const Home = () => {
   const [dashboard, setDashboard] = useState(null);
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [dutyLoading, setDutyLoading] = useState(false); 2
-  const locationTimerRef = useRef(null);
+  const [dutyLoading, setDutyLoading] = useState(false);
 
   const isOnDuty = dashboard?.duty_status === 'live';
 
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async ({ showLoader = true, withAssignment = true } = {}) => {
+    if (showLoader) {
+      setLoading(true);
+    }
     try {
       const res = await get('driver/dashboard');
       if (res?.error) return;
       if (res?.data?.success) {
         const data = res.data.data;
         setDashboard(data);
-        if (data?.duty_status === 'live') {
-          await fetchAssignment();
-        } else {
-          setAssignment(null);
+        if (withAssignment) {
+          if (data?.duty_status === 'live') {
+            await fetchAssignment();
+          } else {
+            setAssignment(null);
+          }
         }
       }
     } catch (err) {
       console.log('Dashboard error:', err);
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  // Poll dashboard every 5s while on duty so coordinates / map stay fresh
+  useEffect(() => {
+    if (!isOnDuty) {
+      return undefined;
+    }
+
+    const pollId = setInterval(() => {
+      fetchDashboard({ showLoader: false, withAssignment: false });
+    }, 5000);
+
+    return () => clearInterval(pollId);
+  }, [isOnDuty]);
 
   const fetchAssignment = async () => {
     try {
@@ -74,18 +96,32 @@ const Home = () => {
 
     setDutyLoading(true);
     try {
+      const trackingStarted = await startLocationTracking();
+      if (!trackingStarted) {
+        ToastMessage(
+          'Location permission is required to start duty.',
+          'error',
+        );
+        return;
+      }
+
       const res = await post('driver/duty/start');
-      if (res?.error) return;
+      if (res?.error) {
+        await stopLocationTracking();
+        return;
+      }
 
       if (res?.data?.success) {
         ToastMessage(res.data?.message || 'Duty started.', 'success');
         await fetchDashboard();
         await fetchAssignment();
       } else {
+        await stopLocationTracking();
         ToastMessage(res?.data?.message || 'Failed to start duty', 'error');
       }
     } catch (err) {
       console.log('Start duty error:', err);
+      await stopLocationTracking();
       ToastMessage('Failed to start duty. Please try again.', 'error');
     } finally {
       setDutyLoading(false);
@@ -99,6 +135,7 @@ const Home = () => {
       const res = await post('driver/duty/end');
       if (res?.error) return;
       if (res?.data?.success) {
+        await stopLocationTracking();
         ToastMessage(res.data?.message || 'Duty ended.', 'success');
         await fetchDashboard();
         setAssignment(null);
@@ -113,49 +150,29 @@ const Home = () => {
     }
   };
 
-  const stopLocationTracking = () => {
-    if (locationTimerRef.current) {
-      clearInterval(locationTimerRef.current);
-      locationTimerRef.current = null;
-    }
-  };
-
-  const sendDashboardLocation = async () => {
-    const lat = dashboard?.coordinates?.lat;
-    const lng = dashboard?.coordinates?.lng;
-
-    if (lat == null || lng == null) {
-      console.log('No dashboard coordinates to send');
-      return;
-    }
-
-    try {
-      await post('driver/location', {
-        latitude: lat,
-        longitude: lng,
-        heading: 0,
-        speed: 0,
-      });
-    } catch (err) {
-      console.log('Location post error:', err);
-    }
-  };
-
-  const startLocationTracking = () => {
-    stopLocationTracking();
-    sendDashboardLocation();
-    locationTimerRef.current = setInterval(sendDashboardLocation, 5000);
-  };
-
   useEffect(() => {
-    if (isOnDuty) {
-      startLocationTracking();
-    } else {
-      stopLocationTracking();
-    }
+    let cancelled = false;
 
-    return () => stopLocationTracking();
-  }, [isOnDuty, dashboard?.coordinates?.lat, dashboard?.coordinates?.lng]);
+    const syncTracking = async () => {
+      if (isOnDuty) {
+        const started = await startLocationTracking();
+        if (!started && !cancelled) {
+          ToastMessage(
+            'Allow location access to keep sharing while on duty.',
+            'error',
+          );
+        }
+      } else {
+        await stopLocationTracking();
+      }
+    };
+
+    syncTracking();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOnDuty]);
 
   const handleLogout = async () => {
     if (dutyLoading) return;
@@ -167,7 +184,7 @@ const Home = () => {
       if (res?.error) {
         return;
       }
-      stopLocationTracking();
+      await stopLocationTracking();
 
       if (res?.data?.success) {
         ToastMessage(res.data?.message || 'Logged out successfully.', 'success');
@@ -472,7 +489,7 @@ const Home = () => {
           <View style={styles.busLocationInfo}>
             <View style={styles.dot} />
             <CustomText
-              label={`Last updated ${dashboard.last_updated_seconds_ago}s ago` ?? 'No data available'}
+              label={"Transmitting every 5 seconds"}
               color="#701A73"
               fontSize={12}
               fontFamily={fonts.medium}

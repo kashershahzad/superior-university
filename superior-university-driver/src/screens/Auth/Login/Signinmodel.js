@@ -131,6 +131,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
       }
 
       if (res?.data?.success) {
+        console.log('Login response:', res.data);
         const token = res.data?.data?.token;
         const user = res.data?.data?.user;
         console.log('Login token:', token);
