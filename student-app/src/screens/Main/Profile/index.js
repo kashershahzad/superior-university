@@ -170,10 +170,10 @@ const Profile = () => {
       });
 
       const res = await post('student/profile/photo', formData);
-      console.log('Profile photo upload response:', res?.data);
+      // console.log('Profile photo upload response:', res?.data);
       if (res?.data?.success) {
         const photoUrl = res.data.data?.profile_photo;
-        console.log('Profile photo upload successful:', photoUrl);
+        // console.log('Profile photo upload successful:', photoUrl);
         if (photoUrl) {
           setAvatarUri(photoUrl);
           setProfile(prev =>

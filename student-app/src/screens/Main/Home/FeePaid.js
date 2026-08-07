@@ -69,6 +69,22 @@ const FeePaid = ({ data, onRefresh }) => {
     return () => entranceAnimation.stop();
   }, [anims]);
 
+  useEffect(() => {
+    const loadDiscontinueState = async () => {
+      try {
+        const pending = await AsyncStorage.getItem('discontinuePending');
+        const id = await AsyncStorage.getItem('discontinueId');
+        if (pending === 'true' && id) {
+          setDiscontinuePending(true);
+          setDiscontinueId(id);
+        }
+      } catch (e) {
+        console.log('Load discontinue state error:', e);
+      }
+    };
+    loadDiscontinueState();
+  }, []);
+
   const getFadeUpStyle = (animation, distance = 20) => ({
     opacity: animation,
     transform: [
@@ -132,6 +148,7 @@ const FeePaid = ({ data, onRefresh }) => {
         ToastMessage(res.data?.message || 'Discontinuation cancelled', 'success');
         setDiscontinuePending(false);
         setDiscontinueId(null);
+        await AsyncStorage.removeItem('discontinuePending');
       } else {
         console.log('Cancel discontinue failed:', res?.error);
       }
