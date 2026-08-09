@@ -1,7 +1,13 @@
-import {Animated, StyleSheet, View, TouchableOpacity} from 'react-native';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {
+  Animated,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
@@ -9,33 +15,15 @@ import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
 import {Images} from '../../../assets/images';
 import {COLORS} from '../../../utils/COLORS';
-
-const STUDENTS = [
-  {id: '1', name: 'Ahmad Raza', student_id: '2021-CS-045'},
-  {id: '2', name: 'M Abdullah', student_id: '2022-EE-012'},
-  {id: '3', name: 'Adeel Ali', student_id: '2025-CS-022'},
-  {id: '4', name: 'M Haroon', student_id: '2021-CS-078'},
-  {id: '5', name: 'Adeel Ali', student_id: '2025-CS-022'},
-  {id: '6', name: 'Hassan Ali', student_id: '2023-CS-011'},
-  {id: '7', name: 'Sara Khan', student_id: '2024-EE-009'},
-  {id: '8', name: 'Bilal Ahmed', student_id: '2022-CS-033'},
-];
-
-const TOTAL_STUDENTS = 38;
-
-// const INITIAL_ATTENDANCE = {
-//   '1': 'present',
-//   '2': 'present',
-//   '3': 'present',
-//   '4': 'present',
-//   '5': 'present',
-//   '6': 'absent',
-//   '7': 'absent',
-// };
+import {get, post} from '../../../services/ApiRequest';
+import {ToastMessage} from '../../../utils/ToastMessage';
 
 const Attendance = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
+  const [markingId, setMarkingId] = useState(null);
+  const [attendanceData, setAttendanceData] = useState(null);
   const [attendance, setAttendance] = useState({});
 
   const anims = useRef({
@@ -45,16 +33,49 @@ const Attendance = () => {
     actions: new Animated.Value(0),
   }).current;
 
-  const presentCount = useMemo(
-    () => Object.values(attendance).filter(status => status === 'present').length,
-    [attendance],
-  );
-  const absentCount = useMemo(
-    () => Object.values(attendance).filter(status => status === 'absent').length,
-    [attendance],
-  );
-  const pendingCount = Math.max(TOTAL_STUDENTS - presentCount - absentCount, 0);
-  const moreCount = Math.max(TOTAL_STUDENTS - STUDENTS.length, 0);
+  const students = attendanceData?.students || [];
+  const summary = attendanceData?.summary;
+
+  const presentCount = summary?.present ?? 0;
+  const absentCount = summary?.absent ?? 0;
+  const pendingCount = summary?.pending ?? 0;
+
+  const syncAttendanceMarks = data => {
+    const nextMarks = {};
+    (data?.students || []).forEach(s => {
+      if (s.status === 'present' || s.status === 'absent') {
+        nextMarks[s.id] = s.status;
+      }
+    });
+    setAttendance(nextMarks);
+  };
+
+  const fetchAttendance = async () => {
+    try {
+      const res = await get('uni-staff/attendance');
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        const data = res.data.data;
+        setAttendanceData(data);
+        syncAttendanceMarks(data);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to load attendance',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Attendance error:', err);
+      ToastMessage('Failed to load attendance', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (!isFocused) return;
+    fetchAttendance();
+  }, [isFocused]);
 
   useEffect(() => {
     const createAnimation = value =>
@@ -87,14 +108,55 @@ const Attendance = () => {
     ],
   });
 
-  const markAttendance = (studentId, status) => {
-    setAttendance(prev => {
-      if (prev[studentId] === status) {
-        const next = {...prev};
-        delete next[studentId];
-        return next;
+  const markAttendance = async (studentId, status) => {
+    if (attendanceData?.is_submitted || markingId != null) return;
+
+    const current =
+      attendance[studentId] ||
+      students.find(s => s.id === studentId)?.status;
+    const nextStatus = current === status ? 'pending' : status;
+
+    setMarkingId(studentId);
+    try {
+      const res = await post('uni-staff/attendance/mark', {
+        student_id: studentId,
+        status: nextStatus,
+      });
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        const data = res.data.data;
+        setAttendanceData(data);
+        syncAttendanceMarks(data);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to mark attendance',
+          'error',
+        );
       }
-      return {...prev, [studentId]: status};
+    } catch (err) {
+      console.log('Mark attendance error:', err);
+      ToastMessage('Failed to mark attendance', 'error');
+    } finally {
+      setMarkingId(null);
+    }
+  };
+
+  const handleReviewSubmit = () => {
+    navigation.navigate('ReviewAttendance', {
+      attendance,
+      students,
+      summary: {
+        present: presentCount,
+        absent: absentCount,
+        pending: pendingCount,
+        total: students.length,
+      },
+      bus: attendanceData?.bus,
+      date: attendanceData?.date,
+      is_submitted: attendanceData?.is_submitted,
+      message: attendanceData?.message,
     });
   };
 
@@ -122,15 +184,20 @@ const Attendance = () => {
   );
 
   const renderStudentRow = item => {
-    const status = attendance[item.id];
+    const status = attendance[item.id] || item.status;
     const isPresent = status === 'present';
     const isAbsent = status === 'absent';
+    const isMarking = markingId === item.id;
+    const isDisabled = !!attendanceData?.is_submitted || markingId != null;
+    const avatarSource = item.profile_photo
+      ? {uri: item.profile_photo}
+      : Images.placeholderUser;
 
     return (
-      <View key={item.id} style={styles.studentRow}>
+      <View key={item.id || item.attendance_id} style={styles.studentRow}>
         <View style={styles.studentInfo}>
           <ImageFast
-            source={Images.placeholderUser}
+            source={avatarSource}
             style={styles.avatar}
             resizeMode="cover"
           />
@@ -153,29 +220,37 @@ const Attendance = () => {
         </View>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[
-              styles.actionBtn,
-              isPresent && styles.actionBtnPresent,
-            ]}
-            onPress={() => markAttendance(item.id, 'present')}>
-            <ImageFast
-              source={Images.tickSquare}
-              style={styles.actionIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.actionBtn, isAbsent && styles.actionBtnAbsent]}
-            onPress={() => markAttendance(item.id, 'absent')}>
-            <ImageFast
-              source={Images.closeSquare}
-              style={styles.actionIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          {isMarking ? (
+            <ActivityIndicator size="small" color="#701A73" />
+          ) : (
+            <>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={isDisabled}
+                style={[
+                  styles.actionBtn,
+                  isPresent && styles.actionBtnPresent,
+                ]}
+                onPress={() => markAttendance(item.id, 'present')}>
+                <ImageFast
+                  source={Images.tickSquare}
+                  style={styles.actionIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={isDisabled}
+                style={[styles.actionBtn, isAbsent && styles.actionBtnAbsent]}
+                onPress={() => markAttendance(item.id, 'absent')}>
+                <ImageFast
+                  source={Images.closeSquare}
+                  style={styles.actionIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     );
@@ -245,10 +320,11 @@ const Attendance = () => {
               fontFamily={fonts.medium}
             />
             <CustomText
-              label="Your current date attendance"
+              label={attendanceData?.message || ''}
               color="#667085"
               fontSize={12}
               fontFamily={fonts.regular}
+              removeTranslation
             />
             <View style={styles.statsRow}>
               {renderStatCard(Images.userTick, 'Present', presentCount)}
@@ -269,18 +345,22 @@ const Attendance = () => {
             fontFamily={fonts.bold}
           />
         </View>
-        <View style={styles.listContent}>{STUDENTS.map(renderStudentRow)}</View>
-        {moreCount > 0 ? (
-          <CustomText
-            label={`--${moreCount} more students below--`}
-            color="#98A2B3"
-            fontSize={12}
-            fontFamily={fonts.medium}
-            textAlign="center"
-            marginTop={4}
-            removeTranslation
-          />
-        ) : null}
+        <View style={styles.listContent}>
+          {students.length === 0 ? (
+            <View style={styles.emptyList}>
+              <CustomText
+                label="No students found"
+                color="#667085"
+                fontSize={13}
+                fontFamily={fonts.medium}
+                textAlign="center"
+                removeTranslation
+              />
+            </View>
+          ) : (
+            students.map(renderStudentRow)
+          )}
+        </View>
       </Animated.View>
 
       <Animated.View
@@ -288,7 +368,7 @@ const Attendance = () => {
         <TouchableOpacity
           activeOpacity={0.8}
           style={styles.submitBtn}
-          onPress={() => navigation.navigate('ReviewAttendance')}>
+          onPress={handleReviewSubmit}>
           <ImageFast
             source={Images.review}
             style={styles.submitIcon}
@@ -309,6 +389,11 @@ const Attendance = () => {
 export default Attendance;
 
 const styles = StyleSheet.create({
+  emptyList: {
+    paddingVertical: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerWrapper: {
     paddingHorizontal: 16,
     paddingTop: 16,

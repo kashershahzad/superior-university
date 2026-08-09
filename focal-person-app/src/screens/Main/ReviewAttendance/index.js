@@ -1,34 +1,31 @@
-import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import {Animated, StyleSheet, View, TouchableOpacity} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  useNavigation,
+  CommonActions,
+  useIsFocused,
+} from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import CustomButton from '../../../components/CustomButton';
 import ImageFast from '../../../components/ImageFast';
 import fonts from '../../../assets/fonts';
-import { Images } from '../../../assets/images';
-import { COLORS } from '../../../utils/COLORS';
+import {Images} from '../../../assets/images';
+import {COLORS} from '../../../utils/COLORS';
 import InfoCard from '../Home/InfoCard';
 import GradientButton from '../Home/GradientButton';
 import ModalBox from '../Home/ModalBox';
-
-const SESSION_ITEMS = [
-  { item: 'Session', itemValue: 'Morning, 23 May 2026' },
-  { item: 'Bus', itemValue: '#3 Jail Road' },
-  { item: 'Marked by', itemValue: 'Dr Amina Siddiqui' },
-  { item: 'Time', itemValue: '7:42 AM' },
-];
-
-const SUMMARY = {
-  present: 32,
-  absent: 4,
-  blocked: 4,
-};
+import {get, post} from '../../../services/ApiRequest';
+import {ToastMessage} from '../../../utils/ToastMessage';
 
 const ReviewAttendance = () => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const [isAttendanceModalVisible, setAttendanceModalVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewData, setReviewData] = useState(null);
+  const [submitMessage, setSubmitMessage] = useState('');
 
   const anims = useRef({
     header: new Animated.Value(0),
@@ -38,6 +35,50 @@ const ReviewAttendance = () => {
     banner: new Animated.Value(0),
     actions: new Animated.Value(0),
   }).current;
+
+  const details = reviewData?.details || reviewData?.attendance_details;
+  const attendanceDetails =
+    reviewData?.attendance_details || reviewData?.details;
+  const summary = reviewData?.summary;
+
+  const sessionItems = [
+    {item: 'Session', itemValue: details?.session || ''},
+    {item: 'Bus', itemValue: details?.bus || ''},
+    {item: 'Marked by', itemValue: details?.marked_by || ''},
+    {item: 'Time', itemValue: details?.time || ''},
+  ];
+
+  const attendanceDetailItems = [
+    {item: 'Session', itemValue: attendanceDetails?.session || ''},
+    {item: 'Bus', itemValue: attendanceDetails?.bus || ''},
+    {item: 'Marked by', itemValue: attendanceDetails?.marked_by || ''},
+    {item: 'Time', itemValue: attendanceDetails?.time || ''},
+  ];
+
+  const fetchReview = async () => {
+    try {
+      const res = await get('uni-staff/attendance/review');
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        setReviewData(res.data.data);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to load review attendance',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Review attendance error:', err);
+      ToastMessage('Failed to load review attendance', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (!isFocused) return;
+    fetchReview();
+  }, [isFocused]);
 
   useEffect(() => {
     const createAnimation = value =>
@@ -84,7 +125,7 @@ const ReviewAttendance = () => {
         />
       </View>
       <CustomText
-        label={String(value)}
+        label={String(value ?? 0)}
         color="#101828"
         fontSize={20}
         fontFamily={fonts.regular}
@@ -94,6 +135,36 @@ const ReviewAttendance = () => {
       />
     </View>
   );
+
+  const canEdit = reviewData?.can_edit && !reviewData?.is_submitted;
+  const canSubmit = !reviewData?.is_submitted;
+
+  const handleSubmitAttendance = async () => {
+    if (submitting || reviewData?.is_submitted) return;
+
+    setSubmitting(true);
+    try {
+      const res = await post('uni-staff/attendance/submit', {marks: []});
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        setReviewData(res.data.data);
+        setSubmitMessage(res.data?.message || '');
+        setAttendanceModalVisible(true);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to submit attendance',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Submit attendance error:', err);
+      ToastMessage('Failed to submit attendance', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <ScreenWrapper
@@ -117,19 +188,20 @@ const ReviewAttendance = () => {
             />
           </TouchableOpacity>
           <CustomText
-            label="Review Attendance"
+            label={reviewData?.title || 'Review Attendance'}
             color="#04153F"
             fontSize={18}
             fontFamily={fonts.bold}
             textAlign="center"
             containerStyle={styles.headerTitle}
+            removeTranslation
           />
           <View style={styles.headerSpacer} />
         </Animated.View>
       )}>
       <View style={styles.container}>
         <Animated.View style={getFadeUpStyle(anims.session, 18)}>
-          <InfoCard title="Session Details" items={SESSION_ITEMS} />
+          <InfoCard title="Session Details" items={sessionItems} />
         </Animated.View>
 
         <Animated.View
@@ -141,56 +213,74 @@ const ReviewAttendance = () => {
             fontFamily={fonts.semiBold}
           />
           <CustomText
-            label="Your current date summary"
+            label={reviewData?.message || ''}
             color="#475467"
             fontSize={12}
             fontFamily={fonts.regular}
+            removeTranslation
           />
           <View style={styles.statsRow}>
-            {renderStatCard(Images.userTick, 'Present', SUMMARY.present)}
-            {renderStatCard(Images.userRemove, 'Absent', SUMMARY.absent)}
-            {renderStatCard(Images.userMinus, 'Blocked', SUMMARY.blocked)}
+            {renderStatCard(Images.userTick, 'Present', summary?.present)}
+            {renderStatCard(Images.userRemove, 'Absent', summary?.absent)}
+            {renderStatCard(Images.userMinus, 'Blocked', summary?.blocked)}
           </View>
         </Animated.View>
 
         <Animated.View style={getFadeUpStyle(anims.details, 20)}>
-          <InfoCard title="Attendance Details" items={SESSION_ITEMS} />
+          <InfoCard title="Attendance Details" items={attendanceDetailItems} />
         </Animated.View>
 
-        <Animated.View
-          style={[getFadeUpStyle(anims.banner, 18)]}>
+        <Animated.View style={[getFadeUpStyle(anims.banner, 18)]}>
           <ImageFast
             source={Images.submission}
-            style={{ height: 100, width: '100%' }}
+            style={{height: 100, width: '100%'}}
             resizeMode="contain"
           />
+          {!!reviewData?.warning && (
+            <CustomText
+              label={reviewData.warning}
+              color="#475467"
+              fontSize={12}
+              fontFamily={fonts.regular}
+              textAlign="center"
+              marginTop={8}
+              removeTranslation
+            />
+          )}
         </Animated.View>
 
         <Animated.View
           style={[styles.actions, getFadeUpStyle(anims.actions, 16)]}>
-          <GradientButton
-            title="Submit attendance"
-            borderRadius={100}
-            height={48}
-            fontSize={14}
-            onPress={() => setAttendanceModalVisible(true)}
-          />
-          <CustomButton
-            title="Go back & edit"
-            backgroundColor="#F1F3F8"
-            color={COLORS.primaryColor}
-            borderWidth={1}
-            borderColor={COLORS.primaryColor}
-            borderRadius={100}
-            height={48}
-            fontSize={14}
-            fontFamily={fonts.medium}
-            marginTop={12}
-            marginBottom={24}
-            onPress={() => {
-              if (navigation.canGoBack()) navigation.goBack();
-            }}
-          />
+          {canSubmit ? (
+            <GradientButton
+              title="Submit attendance"
+              borderRadius={100}
+              height={48}
+              fontSize={14}
+              loading={submitting}
+              onPress={handleSubmitAttendance}
+            />
+          ) : null}
+          {canEdit ? (
+            <CustomButton
+              title="Go back & edit"
+              backgroundColor="#F1F3F8"
+              color={COLORS.primaryColor}
+              borderWidth={1}
+              borderColor={COLORS.primaryColor}
+              borderRadius={100}
+              height={48}
+              fontSize={14}
+              fontFamily={fonts.medium}
+              marginTop={12}
+              marginBottom={24}
+              onPress={() => {
+                if (navigation.canGoBack()) navigation.goBack();
+              }}
+            />
+          ) : (
+            <View style={{marginBottom: 24}} />
+          )}
         </Animated.View>
       </View>
 
@@ -198,19 +288,21 @@ const ReviewAttendance = () => {
         type="attendance"
         isVisible={isAttendanceModalVisible}
         topImg={Images.attendanceRecorded}
+        attendanceData={reviewData}
+        successMessage={submitMessage}
         onClose={() => setAttendanceModalVisible(false)}
         onBackHome={() => {
           setAttendanceModalVisible(false);
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
-              routes: [{ name: 'TabStack' }],
+              routes: [{name: 'TabStack'}],
             }),
           );
         }}
         onViewHistory={() => {
           setAttendanceModalVisible(false);
-          navigation.navigate('TabStack', { screen: 'Attendance' });
+          navigation.navigate('TabStack', {screen: 'Attendance'});
         }}
       />
     </ScreenWrapper>

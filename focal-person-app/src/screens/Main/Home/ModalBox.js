@@ -39,19 +39,6 @@ const SERVICE_DETAILS = [
   },
 ];
 
-const ATTENDANCE_SUMMARY = {
-  present: 32,
-  absent: 4,
-  blocked: 4,
-};
-
-const ATTENDANCE_RECORD = [
-  {item: 'Submission ID', itemValue: '#ATT-20260523-003'},
-  {item: 'Faculty', itemValue: 'Dr Amina Siddiqui'},
-  {item: 'Session', itemValue: 'Morning'},
-  {item: 'Synced to', itemStatus: 'System', statusType: 'done'},
-];
-
 const DiscontinueContent = ({onConfirm, onKeepService, onClose}) => {
   const [reason, setReason] = useState('');
 
@@ -259,7 +246,29 @@ const UploadContent = ({onUpload, onClose}) => {
   );
 };
 
-const AttendanceContent = ({onBackHome, onViewHistory}) => {
+const AttendanceContent = ({
+  onBackHome,
+  onViewHistory,
+  attendanceData,
+  successMessage,
+}) => {
+  const details =
+    attendanceData?.details || attendanceData?.attendance_details;
+  const summary = attendanceData?.summary;
+  const subtitleParts = [
+    attendanceData?.date,
+    details?.time,
+    details?.bus,
+  ].filter(Boolean);
+  const subtitle = subtitleParts.join(', ');
+
+  const recordItems = [
+    {item: 'Session', itemValue: details?.session || ''},
+    {item: 'Bus', itemValue: details?.bus || ''},
+    {item: 'Marked by', itemValue: details?.marked_by || ''},
+    {item: 'Time', itemValue: details?.time || ''},
+  ];
+
   const renderStatCard = (icon, label, value) => (
     <View style={styles.statCard}>
       <View style={styles.statRow}>
@@ -272,7 +281,7 @@ const AttendanceContent = ({onBackHome, onViewHistory}) => {
         />
       </View>
       <CustomText
-        label={String(value)}
+        label={String(value ?? 0)}
         color="#101828"
         fontSize={20}
         fontFamily={fonts.regular}
@@ -290,31 +299,34 @@ const AttendanceContent = ({onBackHome, onViewHistory}) => {
       bounces={false}
       contentContainerStyle={styles.scrollContent}>
       <CustomText
-        label="Attendance Recorded"
+        label={successMessage || ''}
         fontSize={20}
         fontFamily={fonts.semiBold}
         color="#101828"
         textAlign="center"
-      />
-      <CustomText
-        label="23 May 2026, 7:42 AM, Bus#03"
-        fontSize={13}
-        fontFamily={fonts.medium}
-        color="#475467"
-        textAlign="center"
-        marginTop={4}
         removeTranslation
       />
+      {!!subtitle && (
+        <CustomText
+          label={subtitle}
+          fontSize={13}
+          fontFamily={fonts.medium}
+          color="#475467"
+          textAlign="center"
+          marginTop={4}
+          removeTranslation
+        />
+      )}
 
       <View style={styles.statsRow}>
-        {renderStatCard(Images.userTick, 'Present', ATTENDANCE_SUMMARY.present)}
-        {renderStatCard(Images.userRemove, 'Absent', ATTENDANCE_SUMMARY.absent)}
-        {renderStatCard(Images.userMinus, 'Blocked', ATTENDANCE_SUMMARY.blocked)}
+        {renderStatCard(Images.userTick, 'Present', summary?.present)}
+        {renderStatCard(Images.userRemove, 'Absent', summary?.absent)}
+        {renderStatCard(Images.userMinus, 'Blocked', summary?.blocked)}
       </View>
 
       <InfoCard
         title="Attendance record"
-        items={ATTENDANCE_RECORD}
+        items={recordItems}
         backgroundColor="#FAFAFF"
         bodyBackgroundColor="#FFFFFF"
       />
@@ -371,6 +383,8 @@ const ModalBox = ({
   onUpload,
   onBackHome,
   onViewHistory,
+  attendanceData,
+  successMessage,
 }) => {
   const insets = useSafeAreaInsets();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -420,6 +434,8 @@ const ModalBox = ({
         <AttendanceContent
           onBackHome={onBackHome || onClose}
           onViewHistory={onViewHistory || onClose}
+          attendanceData={attendanceData}
+          successMessage={successMessage}
         />
       );
     }

@@ -27,7 +27,7 @@ const RootNavigation = () => {
         headerShown: false,
         animation: 'fade',
       }}
-      // initialRouteName="MainStack"
+      initialRouteName={isToken ? "MainStack" : "AuthStack"}
       >
       {isToken ? (
         <>

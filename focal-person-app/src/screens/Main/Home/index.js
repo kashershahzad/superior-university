@@ -1,14 +1,21 @@
-import {Animated, StyleSheet, View, TouchableOpacity} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
-import MapView, {Marker} from 'react-native-maps';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useIsFocused} from '@react-navigation/native';
+import {
+  Animated,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import MapView, { Marker } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useIsFocused } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
-import {Images} from '../../../assets/images';
+import { Images } from '../../../assets/images';
+import { get } from '../../../services/ApiRequest';
+import { ToastMessage } from '../../../utils/ToastMessage';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -17,26 +24,14 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const STUDENTS = {
-  paid: [
-    {id: '1', name: 'Ahmad Raza', student_id: '2021-CS-045', status: 'paid'},
-    {id: '2', name: 'M Abdullah', student_id: '2022-EE-012', status: 'paid'},
-    {id: '3', name: 'Adeel Ali', student_id: '2025-CS-022', status: 'paid'},
-    {id: '4', name: 'M Haroon', student_id: '2021-CS-078', status: 'paid'},
-    {id: '5', name: 'Adeel Ali', student_id: '2025-CS-022', status: 'paid'},
-  ],
-  unpaid: [
-    {id: '6', name: 'Hassan Ali', student_id: '2023-CS-011', status: 'unpaid'},
-    {id: '7', name: 'Sara Khan', student_id: '2024-EE-009', status: 'unpaid'},
-    {id: '8', name: 'Bilal Ahmed', student_id: '2022-CS-033', status: 'unpaid'},
-    {id: '9', name: 'Usman Tariq', student_id: '2021-CS-088', status: 'unpaid'},
-  ],
-};
-
 const Home = () => {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const [activeTab, setActiveTab] = useState('paid');
+  const [dashboard, setDashboard] = useState(null);
+  const [paidStudents, setPaidStudents] = useState([]);
+  const [unpaidStudents, setUnpaidStudents] = useState([]);
+  const [studentCounts, setStudentCounts] = useState(null);
 
   const anims = useRef({
     header: new Animated.Value(0),
@@ -46,12 +41,95 @@ const Home = () => {
     list: new Animated.Value(0),
   }).current;
 
-  const busLabel = 'Bus #03';
-  const periodLabel = 'Period 1 Jan 2024 - 30 Dec 2024';
-  const totalStudents = 42;
-  const feePaidCount = 38;
-  const unpaidCount = 4;
-  const listStudents = activeTab === 'paid' ? STUDENTS.paid : STUDENTS.unpaid;
+  const fees = dashboard?.fees_summary;
+  const bus = dashboard?.bus;
+  const period = dashboard?.expense_period;
+  const title = dashboard?.title || '';
+  const periodLabel =
+    period?.from && period?.to
+      ? `Period ${period.from} - ${period.to}`
+      : '';
+  const totalStudents = fees?.total_student ?? 0;
+  const feePaidCount = fees?.fee_paid ?? 0;
+  const unpaidCount = fees?.unpaid ?? 0;
+  const busLabel = bus?.display_name || '';
+  const dutyStatus = bus?.duty_status || '';
+  const isLocationActive = bus?.location_sharing === 'active';
+  const locationSharingTitle = isLocationActive
+    ? 'Location sharing active'
+    : 'Location sharing paused';
+  const locationSharingSubtitle = bus?.message || '';
+  const listStudents =
+    activeTab === 'paid' ? paidStudents : unpaidStudents;
+  const tabPaidCount = studentCounts?.paid ?? paidStudents.length;
+  const tabUnpaidCount = studentCounts?.unpaid ?? unpaidStudents.length;
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await get('uni-staff/dashboard');
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        setDashboard(res.data.data);
+      } else {
+        ToastMessage(res?.data?.message || 'Failed to load dashboard', 'error');
+      }
+    } catch (err) {
+      console.log('Dashboard error:', err);
+      ToastMessage('Failed to load dashboard', 'error');
+    }
+  };
+
+  const fetchPaidStudents = async () => {
+    try {
+      const res = await get('uni-staff/students/paid');
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        const data = res.data.data;
+        setPaidStudents(data?.students || []);
+        setStudentCounts(data?.counts || null);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to load paid students',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Paid students error:', err);
+      ToastMessage('Failed to load paid students', 'error');
+    }
+  };
+
+  const fetchUnpaidStudents = async () => {
+    try {
+      const res = await get('uni-staff/students/unpaid');
+
+      if (res?.error) return;
+
+      if (res?.data?.success) {
+        const data = res.data.data;
+        setUnpaidStudents(data?.students || []);
+        setStudentCounts(data?.counts || null);
+      } else {
+        ToastMessage(
+          res?.data?.message || 'Failed to load unpaid students',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Unpaid students error:', err);
+      ToastMessage('Failed to load unpaid students', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (!isFocused) return;
+    fetchDashboard();
+    Promise.all([fetchPaidStudents(), fetchUnpaidStudents()]);
+  }, [isFocused]);
 
   useEffect(() => {
     const createAnimation = value =>
@@ -111,9 +189,15 @@ const Home = () => {
   );
 
   const renderStudentCard = item => {
-    const isPaid = item.status === 'paid' || activeTab === 'paid';
+    const isPaid =
+      item.is_paid ||
+      item.fee_status === 'paid' ||
+      item.status === 'paid' ||
+      activeTab === 'paid';
+    const statusLabel =
+      item.status_label || (isPaid ? 'Paid' : 'Blocked');
     const avatarSource = item.profile_photo
-      ? {uri: item.profile_photo}
+      ? { uri: item.profile_photo }
       : Images.placeholderUser;
 
     return (
@@ -152,10 +236,11 @@ const Home = () => {
             isPaid ? styles.statusBadgePaid : styles.statusBadgeUnpaid,
           ]}>
           <CustomText
-            label={isPaid ? 'Paid' : 'Blocked'}
+            label={statusLabel}
             color={isPaid ? '#719055' : '#AB2D2D'}
             fontSize={10}
             fontFamily={fonts.bold}
+            removeTranslation
           />
         </View>
       </View>
@@ -172,22 +257,28 @@ const Home = () => {
       <View
         style={[
           styles.headerWrapper,
-          {marginTop: -insets.top, paddingTop: insets.top + 16},
+          { marginTop: -insets.top, paddingTop: insets.top + 16 },
         ]}>
         <Animated.View
           style={[styles.headerContent, getFadeUpStyle(anims.header, -16)]}>
-          <View style={{marginTop: -20}}>
+          <View style={{ marginTop: -20 }}>
             <CustomText
-              label="My Transport"
+              label={title}
               color="#FEFEFE"
               fontSize={24}
               fontFamily={fonts.semiBold}
+              removeTranslation
             />
             <CustomText
-              label="Welcome Back!"
+              label={
+                dashboard?.user?.name
+                  ? `Welcome Back, ${dashboard.user.name}!`
+                  : 'Welcome Back!'
+              }
               color="#D9D6FE"
               fontSize={14}
               fontFamily={fonts.medium}
+              removeTranslation
             />
           </View>
           <ImageFast
@@ -251,37 +342,62 @@ const Home = () => {
               resizeMode="contain"
             />
             <CustomText
-              label={`${busLabel} . on duty`}
+              label={
+                busLabel && dutyStatus
+                  ? `${busLabel} . ${dutyStatus}`
+                  : busLabel || dutyStatus
+              }
               color="#101828"
               fontSize={14}
               fontFamily={fonts.semiBold}
               removeTranslation
             />
           </View>
-          <View style={styles.liveBadge}>
-            <CustomText
-              label="Live"
-              color="#719055"
-              fontSize={10}
-              fontFamily={fonts.bold}
-            />
-          </View>
+          {isLocationActive ? (
+            <View style={styles.liveBadge}>
+              <CustomText
+                label="Live"
+                color="#719055"
+                fontSize={10}
+                fontFamily={fonts.bold}
+              />
+            </View>
+          ) : (
+            <View style={styles.offlineBadge}>
+              <CustomText
+                label={dutyStatus || 'Offline'}
+                color="#EB5757"
+                fontSize={10}
+                fontFamily={fonts.bold}
+                removeTranslation
+              />
+            </View>
+          )}
         </View>
         <View style={styles.locationSharingBox}>
-          <View style={styles.liveDot} />
+          <View
+            style={[
+              styles.liveDot,
+              !isLocationActive && styles.liveDotInactive,
+            ]}
+          />
           <View style={styles.locationSharingText}>
             <CustomText
-              label="Location sharing active"
+              label={locationSharingTitle}
               color="#101828"
               fontSize={14}
               fontFamily={fonts.medium}
+              removeTranslation
             />
-            <CustomText
-              label="GPS signal strong. Last updated 2s ago"
-              color="#667085"
-              fontSize={12}
-              fontFamily={fonts.regular}
-            />
+            {!!locationSharingSubtitle && (
+              <CustomText
+                label={locationSharingSubtitle}
+                color="#667085"
+                fontSize={12}
+                fontFamily={fonts.regular}
+                removeTranslation
+              />
+            )}
           </View>
         </View>
       </Animated.View>
@@ -315,7 +431,7 @@ const Home = () => {
         <View style={styles.busLocationInfo}>
           <View style={styles.dot} />
           <CustomText
-            label={`${busLabel} 2.3km away`}
+            label="Bus #03 2.3km away"
             color="#701A73"
             fontSize={14}
             fontFamily={fonts.medium}
@@ -344,7 +460,7 @@ const Home = () => {
                   : styles.tabBadgeInactive,
               ]}>
               <CustomText
-                label={String(feePaidCount)}
+                label={String(tabPaidCount)}
                 color="#FEFEFE"
                 fontSize={10}
                 fontFamily={fonts.medium}
@@ -371,7 +487,7 @@ const Home = () => {
                   : styles.tabBadgeInactive,
               ]}>
               <CustomText
-                label={String(unpaidCount)}
+                label={String(tabUnpaidCount)}
                 color="#FEFEFE"
                 fontSize={10}
                 fontFamily={fonts.medium}
@@ -391,7 +507,24 @@ const Home = () => {
             />
           </View>
           <View style={styles.listContent}>
-            {listStudents.map(renderStudentCard)}
+            {listStudents.length === 0 ? (
+              <View style={styles.emptyList}>
+                <CustomText
+                  label={
+                    activeTab === 'paid'
+                      ? 'No students have paid fees'
+                      : 'No students have unpaid fees'
+                  }
+                  color="#667085"
+                  fontSize={13}
+                  fontFamily={fonts.medium}
+                  textAlign="center"
+                  removeTranslation
+                />
+              </View>
+            ) : (
+              listStudents.map(renderStudentCard)
+            )}
           </View>
         </View>
       </Animated.View>
@@ -402,6 +535,11 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
+  emptyList: {
+    paddingVertical: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerWrapper: {
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -496,6 +634,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
+  offlineBadge: {
+    backgroundColor: '#FFE7E7',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   locationSharingBox: {
     backgroundColor: '#FAFAFF',
     borderWidth: 1,
@@ -512,6 +656,9 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#701A73',
+  },
+  liveDotInactive: {
+    backgroundColor: '#98A2B3',
   },
   locationSharingText: {
     flex: 1,

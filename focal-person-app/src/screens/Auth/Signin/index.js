@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {StyleSheet, View} from 'react-native';
+import { useDispatch } from 'react-redux';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {CommonActions} from '@react-navigation/native';
 
@@ -10,34 +11,72 @@ import CustomText from '../../../components/CustomText';
 import CustomCheckbox from '../../../components/CustomCheckBox';
 import GradientButton from '../../Main/Home/GradientButton';
 
+import {post} from '../../../services/ApiRequest';
+import {ToastMessage} from '../../../utils/ToastMessage';
+import {setToken} from '../../../store/reducer/AuthConfig';
+import {setUserData} from '../../../store/reducer/usersSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 import {Images} from '../../../assets/images';
 
-const normalizeEmployeeId = value => {
-  const raw = value.trim().toUpperCase().replace(/[\s-]/g, '');
-  const match = raw.match(/^(DRV)(\d{4})(\d{3})$/);
-  if (match) {
-    return `${match[1]}-${match[2]}-${match[3]}`;
-  }
-  return value.trim().toUpperCase();
-};
-
 const Signin = ({navigation}) => {
+  const dispatch = useDispatch();
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = () => {
-    navigation.getParent()?.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{name: 'MainStack'}],
-      }),
-    );
-  };
+  // const handleSignIn = () => {
+  //   navigation.getParent()?.dispatch(
+  //     CommonActions.reset({
+  //       index: 0,
+  //       routes: [{name: 'MainStack'}],
+  //     }),
+  //   );
+  // };
 
   const handleForgotPassword = () => {};
+
+  const handleSignIn = async () => {
+    if (!employeeId.trim() || !password.trim()) {
+      ToastMessage('Please enter Employee ID and Password', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await post('auth/uni-staff/login', {
+        employee_id: employeeId.trim(),
+        password,
+      });
+      if (res?.error) return;
+      if (res?.data?.success) {
+        const token = res.data?.data?.token;
+        const user = res.data?.data?.user;
+        if (token) {
+          await AsyncStorage.setItem('token', token);
+          dispatch(setToken(token));
+          await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+        }
+        if (user) dispatch(setUserData(user));
+        ToastMessage(res.data?.message || 'Login successful.', 'success');
+        navigation.getParent()?.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{name: 'MainStack'}],
+          }),
+        );
+      } else {
+        ToastMessage(res?.data?.message || 'Login failed', 'error');
+      }
+    } catch (err) {
+      console.log('Uni staff login error:', err);
+      ToastMessage('Login failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScreenWrapper
@@ -71,7 +110,7 @@ const Signin = ({navigation}) => {
           <CustomInput
             placeholder="Enter Your ID"
             value={employeeId}
-            onChangeText={text => setEmployeeId(normalizeEmployeeId(text))}
+            onChangeText={setEmployeeId}
             autoCapitalize="characters"
             withLabel="Employee ID"
             labelColor="#475467"
@@ -125,6 +164,7 @@ const Signin = ({navigation}) => {
           marginBottom={20}
           borderRadius={30}
           color="#ffffff"
+          loading={loading}
         />
       </KeyboardAwareScrollView>
     </ScreenWrapper>
