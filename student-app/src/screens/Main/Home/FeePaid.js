@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,8 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { post, del, get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from '../../../utils/COLORS';
+
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -21,7 +23,7 @@ const DEFAULT_BUS_LOCATION = {
   longitudeDelta: 0.01,
 };
 
-const FeePaid = ({ data, onRefresh }) => {
+const FeePaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
@@ -181,6 +183,14 @@ const FeePaid = ({ data, onRefresh }) => {
       paddingHorizontal={0}
       statusBarColor="#701A73"
       scrollEnabled
+      refreshControl={
+        <RefreshControl
+          refreshing={!!refreshing}
+          onRefresh={onRefresh}
+          tintColor={COLORS.primaryColor}
+          colors={[COLORS.primaryColor]}
+        />
+      }
     >
       <View
         style={[

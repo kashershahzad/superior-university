@@ -63,13 +63,18 @@ const FeeVoucher = () => {
     }
     if (exporting) return;
     setExporting(true);
+  
+    let filePath = null;
+  
     try {
       const token = await AsyncStorage.getItem('token');
-      const rawName = voucher?.voucher_no;
+      const rawName = voucher?.voucher_no || `voucher-${id}`;
       const fileName = String(rawName).toLowerCase().endsWith('.pdf')
         ? String(rawName)
         : `${rawName}.pdf`;
-      const filePath = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
+  
+      filePath = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
+  
       const response = await axios.get(
         `${endPoints.BASE_URL}/student/vouchers/${id}/pdf`,
         {
@@ -81,17 +86,21 @@ const FeeVoucher = () => {
           timeout: 60000,
         },
       );
+  
       if (response.status !== 200) {
         throw new Error(`Server error ${response.status}`);
       }
+  
       const base64 = Buffer.from(response.data, 'binary').toString('base64');
       await ReactNativeBlobUtil.fs.writeFile(filePath, base64, 'base64');
+  
       const stat = await ReactNativeBlobUtil.fs.stat(filePath);
       if (!stat?.size || Number(stat.size) < 100) {
         throw new Error('PDF file empty');
       }
-      // Public Downloads (File Manager mein dikhegi)
+  
       if (Platform.OS === 'android') {
+        // 1) Public Downloads me copy
         await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
           {
             name: fileName,
@@ -101,27 +110,38 @@ const FeeVoucher = () => {
           'Download',
           filePath,
         );
-        // Cleanup temporary file
-        await ReactNativeBlobUtil.fs.unlink(filePath).catch(() => { });
-      }
-      ToastMessage('PDF saved to Downloads', 'success');
-      // Open with
-      if (Platform.OS === 'android') {
-        await ReactNativeBlobUtil.android.actionViewIntent(
-          filePath,
-          'application/pdf',
-        );
+  
+        ToastMessage('PDF saved to Downloads', 'success');
+  
+        // 2) Pehle temp file open karo (abhi delete mat karo)
+        try {
+          await ReactNativeBlobUtil.android.actionViewIntent(
+            filePath,
+            'application/pdf',
+          );
+        } catch (openErr) {
+          console.log('Open PDF error:', openErr?.message || openErr);
+          // Save ho chuki hai — open fail pe download fail mat dikhao
+        }
+  
+        // 3) Open ke baad cleanup
+        await ReactNativeBlobUtil.fs.unlink(filePath).catch(() => {});
       } else {
+        ToastMessage('PDF downloaded', 'success');
         ReactNativeBlobUtil.ios.openDocument(filePath);
       }
     } catch (error) {
       console.log('Export PDF Error:', error?.message || error);
-      ToastMessage(error?.message || 'Failed to download PDF', 'error');
+      // axios error pe better message
+      const msg =
+        error?.response?.status
+          ? `Download failed (${error.response.status})`
+          : error?.message || 'Failed to download PDF';
+      ToastMessage(msg, 'error');
     } finally {
       setExporting(false);
     }
   };
-
 
   const VOUCHER_DETAILS = [
     { label: 'Voucher No.', value: voucher?.voucher_no || '-', wide: true },

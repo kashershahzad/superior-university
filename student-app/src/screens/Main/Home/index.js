@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {ActivityIndicator, View, StyleSheet} from 'react-native';
 
 import {get} from '../../../services/ApiRequest';
@@ -10,9 +10,30 @@ const Home = () => {
   const [feeStatus, setFeeStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchDashboard = async () => {
+  // const fetchDashboard = async () => {
+  //   try {
+  //     const res = await get('student/dashboard');
+  //     if (res?.data?.success) {
+  //       const data = res.data.data ?? null;
+  //       setDashboardData(data);
+  //       setFeeStatus(data?.fee_status ?? null);
+  //     }
+  //   } catch (err) {
+  //     console.log('Dashboard fetch error:', err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchDashboard();
+  // }, []);
+
+  const fetchDashboard = useCallback(async (isPullRefresh = false) => {
     try {
+      if (isPullRefresh) setRefreshing(true);
       const res = await get('student/dashboard');
       if (res?.data?.success) {
         const data = res.data.data ?? null;
@@ -23,12 +44,12 @@ const Home = () => {
       console.log('Dashboard fetch error:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboard();
   }, []);
+  useEffect(() => {
+    fetchDashboard(false);
+  }, [fetchDashboard]);
 
   if (loading) {
     return (
@@ -39,10 +60,10 @@ const Home = () => {
   }
 
   if (feeStatus === 'paid') {
-    return <FeePaid key="fee-paid" data={dashboardData} />;
+    return <FeePaid key="fee-paid" data={dashboardData} refreshing={refreshing} onRefresh={fetchDashboard} />;
   }
 
-  return <Feeunpaid key="fee-unpaid" data={dashboardData} />;
+  return <Feeunpaid key="fee-unpaid" data={dashboardData} refreshing={refreshing} onRefresh={fetchDashboard}/>;
 };
 
 export default Home;

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Keyboard } from 'react-native';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import ImageFast from '../../../components/ImageFast';
@@ -22,6 +22,7 @@ import { Images } from '../../../assets/images';
 import Signinmodel from '../Login/Signinmodel';
 import SelectRoute from './SelectRoute';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 
 const initialForm = {
   email: '',
@@ -47,6 +48,7 @@ const Signup = ({ navigation }) => {
   const [routeModalVisible, setRouteModalVisible] = useState(false);
 
   const handleSelectRoute = (route) => {
+    Keyboard.dismiss();
     updateField('route', route.name);
     updateField('routeId', Number(route.id));
     updateField('busNumber', route.busNumber);
@@ -230,7 +232,10 @@ const Signup = ({ navigation }) => {
         borderColor="#98A2B3"
         icon={Images.route}
         rightIconName="chevron-right"
-        onPress={() => setRouteModalVisible(true)}
+        onPress={() => {
+          Keyboard.dismiss();
+          setRouteModalVisible(true);
+        }}
       />
 
       <CustomInput

@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -23,7 +23,7 @@ const TIMELINE_STATUS = {
   waiting: { label: 'Waiting', type: 'waiting' },
 };
 
-const Feeunpaid = ({ data, onRefresh }) => {
+const Feeunpaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -70,7 +70,6 @@ const Feeunpaid = ({ data, onRefresh }) => {
       if (res?.data?.success) {
         const voucherId = res.data.data?.id;
         ToastMessage(res.data?.message || 'Fee voucher generated.', 'success');
-        onRefresh();
         const parent = navigation.getParent();
         if (parent) {
           parent.navigate('FeeVoucher', { voucherId });
@@ -126,6 +125,14 @@ const Feeunpaid = ({ data, onRefresh }) => {
       statusBarColor="transparent"
       translucent
       scrollEnabled
+      refreshControl={
+        <RefreshControl
+          refreshing={!!refreshing}
+          onRefresh={onRefresh}
+          tintColor={COLORS.primaryColor}
+          colors={[COLORS.primaryColor]}
+        />
+      }
       headerUnScrollable={() => {
         return (
           <View
@@ -193,6 +200,7 @@ const Feeunpaid = ({ data, onRefresh }) => {
                   source={Images.notification}
                   style={styles.notificationImage}
                   resizeMode="contain"
+                  onPress={() => navigation.navigate('Reciepts')}
                 />
               </View>
             </Animated.View>
@@ -309,6 +317,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 20,
+    resizeMode: 'cover',
   },
   verfiedImage: {
     width: 20,

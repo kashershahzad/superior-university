@@ -9,6 +9,7 @@ import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import QRCode from 'react-native-qrcode-svg';
 
+
 const DetailRow = ({ label, value }) => (
     <View style={styles.detailRow}>
         <View style={styles.detailRowLabel}>
@@ -19,6 +20,23 @@ const DetailRow = ({ label, value }) => (
         </View>
     </View>
 );
+
+const getOrdinal = (n) => {
+    const num = Number(n);
+    if (!num || Number.isNaN(num)) return n;
+    const mod100 = num % 100;
+    if (mod100 >= 11 && mod100 <= 13) return `${num}th`; // 11th, 12th, 13th
+    switch (num % 10) {
+      case 1:
+        return `${num}st`;
+      case 2:
+        return `${num}nd`;
+      case 3:
+        return `${num}rd`;
+      default:
+        return `${num}th`;
+    }
+  };
 
 const StudentCard = ({ card }) => {
 
@@ -48,7 +66,7 @@ const StudentCard = ({ card }) => {
                     <View style={styles.profileInfo}>
                         <CustomText label={name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
                         <CustomText label={department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
-                        <CustomText label={program} fontFamily={fonts.medium} color="#667085" fontSize={12} />
+                        <CustomText label={`${getOrdinal(program)} Semester`} fontFamily={fonts.medium} color="#667085" fontSize={12} />
                     </View>
                     <View style={styles.idBox}>
                         <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />

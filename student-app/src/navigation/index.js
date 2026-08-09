@@ -23,7 +23,7 @@ const RootNavigation = () => {
   }, []);
   return (
     <Stack.Navigator
-      initialRouteName={'AuthStack'}
+      initialRouteName={isToken ? 'MainStack' : 'AuthStack'}
       screenOptions={{
         headerShown: false,
         animation: 'fade',

@@ -14,6 +14,7 @@ import GradientButton from '../Home/GradientButton';
 import CustomInput from '../../../components/CustomInput';
 import { get, put } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const PersonalData = () => {
   const insets = useSafeAreaInsets();
@@ -116,7 +117,7 @@ const PersonalData = () => {
       paddingHorizontal={0}
       statusBarColor="transparent"
       translucent
-      scrollEnabled
+      // scrollEnabled
       footerUnScrollable={() => {
         return (
           <View style={styles.footerContainer}>
@@ -167,6 +168,12 @@ const PersonalData = () => {
           <ActivityIndicator size="large" color={COLORS.primaryColor} />
         </View>
       ) : (
+        <KeyboardAwareScrollView
+        enableOnAndroid
+        extraScrollHeight={10}       
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        >
         <View style={styles.container}>
           <CustomInput
             placeholder="Enter Your ID"
@@ -245,6 +252,7 @@ const PersonalData = () => {
             iconName="user"
           />
         </View>
+        </KeyboardAwareScrollView>
       )}
     </ScreenWrapper>
   );

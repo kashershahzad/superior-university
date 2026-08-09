@@ -109,8 +109,7 @@ const ProfileSection = ({ title, rows, onRowPress }) => {
 };
 
 const getFeeBadge = feeStatus => {
-  const status = String(feeStatus || '').toLowerCase();
-  if (status === 'paid') {
+  if (feeStatus === 'paid') {
     return { text: 'Paid', variant: 'success' };
   }
   return { text: 'Pending', variant: 'danger' };

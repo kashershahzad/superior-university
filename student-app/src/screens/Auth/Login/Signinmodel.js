@@ -293,14 +293,14 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
                   fontFamily={fonts.regular}
                 />
               </View>
-              <CustomText
+              {/* <CustomText
                 label="Forgot Password"
                 removeTranslation
                 fontSize={13}
                 fontFamily={fonts.semiBold}
                 color={COLORS.primaryColor}
                 onPress={handleForgotPassword}
-              />
+              /> */}
             </View>
 
             <GradientButton
