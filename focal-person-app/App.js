@@ -77,7 +77,6 @@ const App = () => {
         <PersistGate
           loading={null}
           persistor={persistor}
-          onBeforeLift={onBeforeLift}
         >
           {showSplash ? (
             <Splash onFinish={() => setShowSplash(false)} />

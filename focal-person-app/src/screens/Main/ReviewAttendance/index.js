@@ -302,7 +302,7 @@ const ReviewAttendance = () => {
         }}
         onViewHistory={() => {
           setAttendanceModalVisible(false);
-          navigation.navigate('TabStack', {screen: 'AttendanceHistory'});
+          navigation.navigate('AttendanceHistory');
         }}
       />
     </ScreenWrapper>
