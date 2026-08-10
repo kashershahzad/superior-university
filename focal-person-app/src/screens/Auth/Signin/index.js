@@ -57,7 +57,7 @@ const Signin = ({navigation}) => {
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
-          await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+          // await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
         }
         if (user) dispatch(setUserData(user));
         ToastMessage(res.data?.message || 'Login successful.', 'success');

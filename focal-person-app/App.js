@@ -21,14 +21,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout } from './src/store/reducer/AuthConfig';
 import { setUserData } from './src/store/reducer/usersSlice';
 
-const onBeforeLift = async () => {
-  const remember = await AsyncStorage.getItem('rememberMe');
-  if (remember !== 'true') {
-    await AsyncStorage.multiRemove(['token', 'refreshToken']);
-    store.dispatch(logout());
-    store.dispatch(setUserData({}));
-  }
-};
+// const onBeforeLift = async () => {
+//   const remember = await AsyncStorage.getItem('rememberMe');
+//   if (remember !== 'true') {
+//     await AsyncStorage.multiRemove(['token', 'refreshToken']);
+//     store.dispatch(logout());
+//     store.dispatch(setUserData({}));
+//   }
+// };
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
