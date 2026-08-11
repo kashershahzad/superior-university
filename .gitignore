@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+**/.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.yarn/
+
+# Android / Gradle build caches (these are not source changes)
+**/.gradle/
+**/android/build/
+**/android/app/build/
+**/.cxx/
+local.properties
+*.iml
+*.hprof
+*.apk
+
+# iOS / Xcode
+DerivedData/
+*.xcuserstate
+ios/Pods/
+vendor/bundle/
+
+# IDE
+.idea/
+.cursor/
+.trae/
