@@ -7,7 +7,7 @@ import {
   ScrollView,
   Keyboard,
   Platform,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,7 +29,6 @@ import { endPoints } from '../../../services/ENV';
 import { ToastMessage } from '../../../utils/ToastMessage';
 
 const TOP_IMAGE_OVERFLOW = 50;
-const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const SERVICE_DETAILS = [
   { item: 'Current Service', itemValue: 'Bus #03' },
@@ -295,11 +294,15 @@ const ModalBox = ({
   onUpload,
 }) => {
   const insets = useSafeAreaInsets();
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const { height: windowHeight } = useWindowDimensions();
+  // Absolute Y of keyboard top; overlap is derived from live windowHeight so adjustResize can't double-lift.
+  const [keyboardTopY, setKeyboardTopY] = useState(null);
+  const [keyboardFallbackHeight, setKeyboardFallbackHeight] = useState(0);
 
   useEffect(() => {
     if (!isVisible) {
-      setKeyboardHeight(0);
+      setKeyboardTopY(null);
+      setKeyboardFallbackHeight(0);
       return undefined;
     }
 
@@ -307,10 +310,18 @@ const ModalBox = ({
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+      const coords = e?.endCoordinates;
+      if (typeof coords?.screenY === 'number') {
+        setKeyboardTopY(coords.screenY);
+        setKeyboardFallbackHeight(0);
+      } else {
+        setKeyboardTopY(null);
+        setKeyboardFallbackHeight(Math.max(0, Math.round(coords?.height ?? 0)));
+      }
     });
     const onHide = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
+      setKeyboardTopY(null);
+      setKeyboardFallbackHeight(0);
     });
 
     return () => {
@@ -319,11 +330,16 @@ const ModalBox = ({
     };
   }, [isVisible]);
 
-  // Shrink sheet into the visible area above the keyboard (no translateY).
+  const keyboardOverlap =
+    keyboardTopY != null
+      ? Math.max(0, Math.round(windowHeight - keyboardTopY))
+      : keyboardFallbackHeight;
+
+  // Fit sheet into visible area above the keyboard (overlap is 0 when adjustResize already shrunk the window).
   const availableHeight =
-    WINDOW_HEIGHT - keyboardHeight - insets.top - TOP_IMAGE_OVERFLOW - 8;
-  const sheetMaxHeight = Math.min(WINDOW_HEIGHT * 0.9, Math.max(availableHeight, 280));
-  const isKeyboardOpen = keyboardHeight > 0;
+    windowHeight - keyboardOverlap - insets.top - TOP_IMAGE_OVERFLOW - 8;
+  const sheetMaxHeight = Math.min(windowHeight * 0.9, Math.max(availableHeight, 280));
+  const isKeyboardOpen = keyboardTopY != null || keyboardFallbackHeight > 0;
 
   return (
     <CustomModal
@@ -344,7 +360,7 @@ const ModalBox = ({
             maxHeight: sheetMaxHeight,
             // Bound height while keyboard is open so inner ScrollView can scroll.
             ...(isKeyboardOpen ? { height: sheetMaxHeight } : null),
-            marginBottom: keyboardHeight,
+            marginBottom: keyboardOverlap,
             paddingBottom: Math.max(insets.bottom, 16) + 8,
           },
         ]}

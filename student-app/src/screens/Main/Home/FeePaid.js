@@ -86,10 +86,11 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   });
 
   const feeDetailsItems = [
-    { item: 'Route', itemValue: transport.route || '-' },
+    { item: 'Route', itemValue: transport.route},
+    { item: 'Driver', itemValue: transport.driver },
     { item: 'Bus', itemValue: busLabel },
-    { item: 'Pickup ETA', itemValue: pickupETA },
-    { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
+    // { item: 'Pickup ETA', itemValue: pickupETA },
+    { item: 'Submitted Date', itemValue: transport.submitted_date},
   ];
 
   const handleDiscontinue = async (reason = '') => {
@@ -343,7 +344,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
           <View style={styles.busLocationInfo}>
             <View style={styles.dot} />
             <CustomText
-              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`}
+              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `Bus#${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`}
               color="#701A73"
               fontSize={12}
               fontFamily={fonts.medium}

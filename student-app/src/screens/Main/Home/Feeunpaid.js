@@ -268,13 +268,11 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
               onPress={() => setIsModalVisible(true)}
             />
           ) : null}
-          {actions.can_generate_voucher ? (
             <GradientButton
               title="Generate Fee Voucher"
               loading={generating}
               onPress={handleGenerateVoucher}
             />
-          ) : null}
         </Animated.View>
       </View>
 
