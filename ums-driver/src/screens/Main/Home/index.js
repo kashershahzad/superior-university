@@ -33,9 +33,14 @@ const Home = () => {
   const [dutyLoading, setDutyLoading] = useState(false);
 
   const isOnDuty = dashboard?.duty_status === 'live';
-
+  const isFetchingDashboard = useRef(false);
 
   const fetchDashboard = async ({ showLoader = true, withAssignment = true } = {}) => {
+    if (isFetchingDashboard.current) {
+      return;
+    }
+
+    isFetchingDashboard.current = true;
     if (showLoader) {
       setLoading(true);
     }
@@ -56,6 +61,7 @@ const Home = () => {
     } catch (err) {
       console.log('Dashboard error:', err);
     } finally {
+      isFetchingDashboard.current = false;
       if (showLoader) {
         setLoading(false);
       }
@@ -64,20 +70,13 @@ const Home = () => {
 
   useEffect(() => {
     fetchDashboard();
-  }, []);
-
-  // Poll dashboard every 5s while on duty so coordinates / map stay fresh
-  useEffect(() => {
-    if (!isOnDuty) {
-      return undefined;
-    }
 
     const pollId = setInterval(() => {
-      fetchDashboard({ showLoader: false, withAssignment: false });
+      fetchDashboard({ showLoader: false, withAssignment: true });
     }, 5000);
 
     return () => clearInterval(pollId);
-  }, [isOnDuty]);
+  }, []);
 
   const fetchAssignment = async () => {
     try {
