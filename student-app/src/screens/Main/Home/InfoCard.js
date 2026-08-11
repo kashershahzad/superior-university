@@ -72,6 +72,7 @@ const InfoCard = ({title, titleStatus, titleStatusType, items = [], backgroundCo
                 {row.itemValue ? (
                   <CustomText
                     label={row.itemValue}
+                    removeTranslation
                     fontSize={13}
                     fontFamily={fonts.bold}
                     color={row.itemValueColor || '#0C1B54'}

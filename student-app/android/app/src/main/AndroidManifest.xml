@@ -35,18 +35,18 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
-        <service
+        <!-- <service
             android:name="app.notifee.core.ForegroundService"
             android:foregroundServiceType="dataSync"
-            android:exported="false" />
+            android:exported="false" /> -->
 
-        <service
+        <!-- <service
             android:name="io.invertase.firebase.messaging.ReactNativeFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
+        </service> -->
 
         <activity
             android:name=".MainActivity"

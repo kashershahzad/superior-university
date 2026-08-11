@@ -85,14 +85,6 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
     onClose?.();
   };
 
-  // const handleSignIn = () => {
-  //   setLoading(true);
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     navigation?.navigate('MainStack');
-  //   }, 500);
-  // };
-
   const handleSignIn = async () => {
     if (mode === 'student' && (!studentId || !password)) {
       ToastMessage('Please enter Student ID and Password', 'error');
@@ -156,7 +148,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
           }),
         );
       } else {
-        ToastMessage(res?.data?.message || 'Login failed', 'error');
+        console.log('Login failed:', res?.error);
       }
     } catch (err) {
       console.log('Login error:', err);

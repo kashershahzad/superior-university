@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {PermissionsAndroid, Platform} from 'react-native';
-import messaging from '@react-native-firebase/messaging';
+// import messaging from '@react-native-firebase/messaging';
 import axios from 'axios';
 
 import {setUserData} from '../store/reducer/usersSlice';
@@ -41,71 +41,71 @@ export const uploadAndGetUrl = async file => {
   }
 };
 
-export const getToken = async () => {
-  if (Platform.OS === 'android') {
-    const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    if (status !== PermissionsAndroid.RESULTS.GRANTED) {
-      console.error('Permission not granted for notifications');
-      return;
-    }
-  } else if (Platform.OS === 'ios') {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-    if (!enabled) {
-      console.error('Permission not granted for notifications');
-      return;
-    }
-  }
-  const fcmToken = await AsyncStorage.getItem('fcmToken');
-  // console.log('======fcmToken', fcmToken);
-  if (!fcmToken) {
-    const token = await messaging().getToken();
+// export const getToken = async () => {
+//   if (Platform.OS === 'android') {
+//     const status = await PermissionsAndroid.request(
+//       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+//     );
+//     if (status !== PermissionsAndroid.RESULTS.GRANTED) {
+//       console.error('Permission not granted for notifications');
+//       return;
+//     }
+//   } else if (Platform.OS === 'ios') {
+//     const authStatus = await messaging().requestPermission();
+//     const enabled =
+//       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+//       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+//     if (!enabled) {
+//       console.error('Permission not granted for notifications');
+//       return;
+//     }
+//   }
+//   const fcmToken = await AsyncStorage.getItem('fcmToken');
+//   // console.log('======fcmToken', fcmToken);
+//   if (!fcmToken) {
+//     const token = await messaging().getToken();
 
-    await AsyncStorage.setItem('fcmToken', token);
-  } else {
-    return;
-  }
-};
-const updateUserTokenApi = fcmtoken => async dispatch => {
-  try {
-    const body = {fcmtoken};
-    const res = await put('/users/update-user', body);
-    dispatch(setUserData(res?.data?.user));
-  } catch (error) {
-    console.error('Error updating user token on server:', error.response.data);
-  }
-};
-export const getTokenHome = async () => {
-  if (Platform.OS === 'android') {
-    const status = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    if (status !== PermissionsAndroid.RESULTS.GRANTED) {
-      console.error('Permission not granted for notifications');
-      return;
-    }
-  } else if (Platform.OS === 'ios') {
-    const authStatus = await messaging().requestPermission();
-    const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-    if (!enabled) {
-      console.error('Permission not granted for notifications');
-      return;
-    }
-  }
-  try {
-    const newToken = await messaging().getToken();
-    await AsyncStorage.setItem('fcmToken', newToken);
-    await updateUserTokenApi(newToken);
-  } catch (error) {
-    console.log('Error fetching FCM token:', error);
-  }
-};
+//     await AsyncStorage.setItem('fcmToken', token);
+//   } else {
+//     return;
+//   }
+// };
+// const updateUserTokenApi = fcmtoken => async dispatch => {
+//   try {
+//     const body = {fcmtoken};
+//     const res = await put('/users/update-user', body);
+//     dispatch(setUserData(res?.data?.user));
+//   } catch (error) {
+//     console.error('Error updating user token on server:', error.response.data);
+//   }
+// };
+// export const getTokenHome = async () => {
+//   if (Platform.OS === 'android') {
+//     const status = await PermissionsAndroid.request(
+//       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+//     );
+//     if (status !== PermissionsAndroid.RESULTS.GRANTED) {
+//       console.error('Permission not granted for notifications');
+//       return;
+//     }
+//   } else if (Platform.OS === 'ios') {
+//     const authStatus = await messaging().requestPermission();
+//     const enabled =
+//       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+//       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+//     if (!enabled) {
+//       console.error('Permission not granted for notifications');
+//       return;
+//     }
+//   }
+//   try {
+//     const newToken = await messaging().getToken();
+//     await AsyncStorage.setItem('fcmToken', newToken);
+//     await updateUserTokenApi(newToken);
+//   } catch (error) {
+//     console.log('Error fetching FCM token:', error);
+//   }
+// };
 
 export const getProfile = () => async dispatch => {
   try {

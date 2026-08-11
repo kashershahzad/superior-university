@@ -12,7 +12,6 @@ import ModalBox from './ModalBox';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { post, del, get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../../../utils/COLORS';
 
 
@@ -27,9 +26,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const [isSheetVisible, setSheetVisible] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
-  const [discontinuePending, setDiscontinuePending] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [discontinueId, setDiscontinueId] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
 
   const navigation = useNavigation();
@@ -48,7 +45,12 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   const feeStatus = data?.fee_status || 'paid';
   const busLabel = transport.bus || '-';
   const timePeriod = transport.active_period.label || '-';
-  const pickupETA = transport.pickup_time || '-';
+  const pickupETA = transport.pickup_time;
+
+  const actions = data?.actions || {};
+  const canDiscontinue = !!actions.can_discontinue;
+  const canCancelDiscontinue = !!actions.can_cancel_discontinue;
+  const discontinuationId = data?.discontinuation_id; // cancel API ke liye
 
   useEffect(() => {
     const createAnimation = value =>
@@ -71,22 +73,6 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
     return () => entranceAnimation.stop();
   }, [anims]);
 
-  useEffect(() => {
-    const loadDiscontinueState = async () => {
-      try {
-        const pending = await AsyncStorage.getItem('discontinuePending');
-        const id = await AsyncStorage.getItem('discontinueId');
-        if (pending === 'true' && id) {
-          setDiscontinuePending(true);
-          setDiscontinueId(id);
-        }
-      } catch (e) {
-        console.log('Load discontinue state error:', e);
-      }
-    };
-    loadDiscontinueState();
-  }, []);
-
   const getFadeUpStyle = (animation, distance = 20) => ({
     opacity: animation,
     transform: [
@@ -102,6 +88,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   const feeDetailsItems = [
     { item: 'Route', itemValue: transport.route || '-' },
     { item: 'Bus', itemValue: busLabel },
+    { item: 'Pickup ETA', itemValue: pickupETA },
     { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
   ];
 
@@ -113,24 +100,11 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
         reason: String(reason || '').trim(),
       });
       if (res?.data?.success) {
-        ToastMessage(
-          res.data?.message || 'Service discontinuation requested',
-          'success',
-        );
-        const id = res.data?.data?.id;
-        setDiscontinueId(id);
+        ToastMessage(res.data?.message || 'Service discontinuation requested', 'success');
         setSheetVisible(false);
-        setDiscontinuePending(true);
-
-        if (id != null) {
-          await AsyncStorage.setItem('discontinueId', String(id));
-          await AsyncStorage.setItem('discontinuePending', 'true');
-        }
-      } else {
-        console.log('Discontinue failed:', res?.error);
+        onRefresh?.(true); // dashboard dubara — flags update
       }
     } catch (err) {
-      console.log('Discontinue error:', err);
       ToastMessage('Failed to discontinue service', 'error');
     } finally {
       setDiscontinuing(false);
@@ -139,23 +113,18 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
 
   const handleCancelDiscontinue = async () => {
     if (cancelling) return;
-    if (!discontinueId) {
+    if (!discontinuationId) {
       ToastMessage('Discontinue request not found', 'error');
       return;
     }
     setCancelling(true);
     try {
-      const res = await del(`student/service/discontinue/${discontinueId}`);
+      const res = await del(`student/service/discontinue/${discontinuationId}`);
       if (res?.data?.success) {
         ToastMessage(res.data?.message || 'Discontinuation cancelled', 'success');
-        setDiscontinuePending(false);
-        setDiscontinueId(null);
-        await AsyncStorage.removeItem('discontinuePending');
-      } else {
-        console.log('Cancel discontinue failed:', res?.error);
+        onRefresh?.(true);
       }
     } catch (err) {
-      console.log('Cancel discontinue error:', err);
       ToastMessage('Failed to cancel discontinuation', 'error');
     } finally {
       setCancelling(false);
@@ -388,12 +357,13 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
           getFadeUpStyle(anims.details, 24),
         ]}>
         <InfoCard
-          title="Fee Details"
+          title="Bus Details"
           titleStatus={transport.status_label}
           titleStatusType={transport.status_label}
           items={feeDetailsItems}
         />
       </Animated.View>
+      {(canDiscontinue || canCancelDiscontinue) ? (
       <Animated.View
         style={{
           opacity: anims.actions,
@@ -410,7 +380,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
           activeOpacity={0.8}
           disabled={discontinuing || cancelling}
           onPress={() => {
-            if (discontinuePending) {
+            if (canCancelDiscontinue) {
               handleCancelDiscontinue();
             } else {
               setSheetVisible(true);
@@ -423,7 +393,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
               resizeMode="contain"
             />
             <CustomText
-              label={discontinuePending ? 'Cancel Discontinue' : 'Discontinue Service'}
+              label={canCancelDiscontinue ? 'Cancel Discontinue' : 'Discontinue Service'}
               color="#701A73"
               fontSize={14}
               fontFamily={fonts.medium}
@@ -431,6 +401,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
           </View>
         </TouchableOpacity>
       </Animated.View>
+      ) : null}
       <ModalBox
         type="discontinue"
         isVisible={isSheetVisible}

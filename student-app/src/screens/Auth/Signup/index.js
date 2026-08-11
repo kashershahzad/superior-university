@@ -129,17 +129,17 @@ const Signup = ({ navigation }) => {
       ToastMessage('Please fill all fields', 'error');
       return;
     }
-  
+
     if (form.password !== form.confirmPassword) {
       ToastMessage('Passwords do not match', 'error');
       return;
     }
-  
+
     if (!agreed) {
       ToastMessage('Please accept terms & conditions', 'error');
       return;
     }
-  
+
     setLoading(true);
     try {
       const payload = {
@@ -154,20 +154,20 @@ const Signup = ({ navigation }) => {
         password_confirmation: form.confirmPassword,
         terms: agreed,
       };
-  
+
       const res = await post('auth/register', payload);
       console.log('register', res);
-  
+
       if (res?.data?.success) {
         const token = res.data?.data?.token; // important: data.token
-  
+
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
         }
-  
+
         ToastMessage(res.data?.message || 'Registration successful.', 'success');
-  
+
         navigation.getParent()?.dispatch(
           CommonActions.reset({
             index: 0,
@@ -175,7 +175,7 @@ const Signup = ({ navigation }) => {
           }),
         );
       } else {
-        ToastMessage(res?.data?.message || 'Registration failed', 'error');
+        console.log('Register failed:', res?.error);
       }
     } catch (err) {
       console.log('Register error:', err);

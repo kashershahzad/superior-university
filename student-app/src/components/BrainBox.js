@@ -1,4 +1,4 @@
-import messaging from '@react-native-firebase/messaging';
+// import messaging from '@react-native-firebase/messaging';
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect} from 'react';
 import {View} from 'react-native';
@@ -7,9 +7,9 @@ import {getToken} from '../utils/constants';
 
 const BrainBox = ({children}) => {
   const navigation = useNavigation();
-  useEffect(() => {
-    getToken();
-  }, []);
+  // useEffect(() => {
+  //   getToken();
+  // }, []);
   const handlePress = data => {
     const item = JSON.parse(data?.recipient);
     if (data?.messageType === 'message') {
@@ -19,11 +19,11 @@ const BrainBox = ({children}) => {
       });
     }
   };
-  useEffect(() => {
-    messaging().onNotificationOpenedApp(remoteMessage => {
-      handlePress(remoteMessage?.data);
-    });
-  }, []);
+  // useEffect(() => {
+  //   messaging().onNotificationOpenedApp(remoteMessage => {
+  //     handlePress(remoteMessage?.data);
+  //   });
+  // }, []);
 
   return <View style={{flex: 1}}>{children}</View>;
 };

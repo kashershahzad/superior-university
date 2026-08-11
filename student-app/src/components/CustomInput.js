@@ -141,7 +141,7 @@ const CustomInput = ({
 
         {secureTextEntry && (
           <Icons
-            name={hidePass ? 'eye' : 'eye-off'}
+            name={!hidePass ? 'eye' : 'eye-off'}
             color={eyeIconColor || COLORS.gray}
             size={20}
             family="Feather"

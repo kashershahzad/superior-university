@@ -28,15 +28,6 @@ const Signin = ({navigation}) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // const handleSignIn = () => {
-  //   navigation.getParent()?.dispatch(
-  //     CommonActions.reset({
-  //       index: 0,
-  //       routes: [{name: 'MainStack'}],
-  //     }),
-  //   );
-  // };
-
   const handleForgotPassword = () => {};
 
   const handleSignIn = async () => {
@@ -68,7 +59,7 @@ const Signin = ({navigation}) => {
           }),
         );
       } else {
-        ToastMessage(res?.data?.message || 'Login failed', 'error');
+        console.log('Login failed:', res?.error);
       }
     } catch (err) {
       console.log('Uni staff login error:', err);
