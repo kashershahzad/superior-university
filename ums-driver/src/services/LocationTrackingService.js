@@ -7,6 +7,8 @@ import {endPoints} from './ENV';
 
 const LOCATION_INTERVAL_MS = 5000;
 
+// Play Services = real device GPS (fused). Do NOT call getCurrentPosition
+// while watchPosition is active — that crashes Play Services (null listener).
 Geolocation.setRNConfiguration({
   skipPermissionRequests: true,
   authorizationLevel: 'always',
@@ -16,16 +18,21 @@ Geolocation.setRNConfiguration({
 
 const GPS_OPTIONS = {
   enableHighAccuracy: true,
-  timeout: 25000,
-  maximumAge: 0,
-  distanceFilter: 0,
+  timeout: 30000,
+  // Real devices need a short cache window while GPS cold-starts
+  maximumAge: 10000,
+  distanceFilter: 5,
   interval: LOCATION_INTERVAL_MS,
-  fastestInterval: 2000,
+  fastestInterval: 3000,
 };
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 let watchId = null;
+let lastPostedAt = 0;
+let isPosting = false;
+let lastFixAt = 0;
+let watchStartedAt = 0;
 const locationListeners = new Set();
 
 const emitLocation = coords => {
@@ -43,19 +50,11 @@ export const subscribeLocationUpdates = listener => {
   return () => locationListeners.delete(listener);
 };
 
-const getCurrentPosition = (highAccuracy = true) =>
-  new Promise((resolve, reject) => {
-    Geolocation.getCurrentPosition(resolve, reject, {
-      ...GPS_OPTIONS,
-      enableHighAccuracy: highAccuracy,
-      timeout: highAccuracy ? 25000 : 15000,
-    });
-  });
-
 const postLocationSilent = async coords => {
   try {
     const token = await AsyncStorage.getItem('token');
     if (!token) {
+      console.log('[GPS] skip post — no token');
       return;
     }
 
@@ -76,53 +75,63 @@ const postLocationSilent = async coords => {
       },
     );
   } catch (error) {
-    console.log('Background location post error:', error?.message || error);
+    console.log(
+      'Background location post error:',
+      error?.response?.status || error?.message || error,
+    );
   }
 };
 
 const handleGpsFix = coords => {
-  console.log('[GPS] fix', {
+  if (coords?.latitude == null || coords?.longitude == null) {
+    return;
+  }
+
+  lastFixAt = Date.now();
+  emitLocation(coords);
+
+  const now = Date.now();
+  if (isPosting || now - lastPostedAt < LOCATION_INTERVAL_MS) {
+    return;
+  }
+
+  lastPostedAt = now;
+  isPosting = true;
+  console.log('[GPS] posting', {
     lat: coords.latitude,
     lng: coords.longitude,
     accuracyM: coords.accuracy,
   });
-  emitLocation(coords);
-  postLocationSilent(coords);
+  postLocationSilent(coords).finally(() => {
+    isPosting = false;
+  });
 };
 
 const startGpsWatch = () => {
   if (watchId != null) {
+    console.log('[GPS] watch already running, id=', watchId);
     return;
   }
 
+  console.log('[GPS] starting watchPosition (playServices)...');
+
   watchId = Geolocation.watchPosition(
-    position => handleGpsFix(position.coords),
+    position => {
+      console.log('[GPS] fix', {
+        lat: position?.coords?.latitude,
+        lng: position?.coords?.longitude,
+        accuracyM: position?.coords?.accuracy,
+      });
+      handleGpsFix(position.coords);
+    },
     error => {
-      console.log('GPS watch error:', error?.code, error?.message);
-      getCurrentPosition(false)
-        .then(position => handleGpsFix(position.coords))
-        .catch(fallbackError => {
-          console.log(
-            'GPS fallback error:',
-            fallbackError?.code,
-            fallbackError?.message,
-          );
-        });
+      console.log('[GPS] watch error:', error?.code, error?.message);
     },
     GPS_OPTIONS,
   );
 
-  getCurrentPosition(true)
-    .then(position => handleGpsFix(position.coords))
-    .catch(error => {
-      console.log('GPS first fix error:', error?.code, error?.message);
-      return getCurrentPosition(false).then(position =>
-        handleGpsFix(position.coords),
-      );
-    })
-    .catch(error => {
-      console.log('GPS network fallback error:', error?.code, error?.message);
-    });
+  watchStartedAt = Date.now();
+  console.log('[GPS] watch started, id=', watchId);
 };
 
 const stopGpsWatch = () => {
@@ -130,11 +139,32 @@ const stopGpsWatch = () => {
     Geolocation.clearWatch(watchId);
     watchId = null;
   }
+  lastPostedAt = 0;
+  lastFixAt = 0;
+  watchStartedAt = 0;
+  isPosting = false;
 };
 
+// Foreground service keeps the process alive; GPS still comes from watchPosition.
+// If no fix for a while, restart the watch (cold GPS / provider stall).
 const keepAliveTask = async () => {
   await new Promise(async () => {
     while (BackgroundService.isRunning()) {
+      const now = Date.now();
+      const stalled = lastFixAt > 0 && now - lastFixAt > 45000;
+      const neverGotFix =
+        lastFixAt === 0 && watchStartedAt > 0 && now - watchStartedAt > 45000;
+
+      if (stalled || neverGotFix) {
+        console.log('[GPS] no fix for 45s — restarting watch');
+        if (watchId != null) {
+          Geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+        watchStartedAt = 0;
+        startGpsWatch();
+      }
+
       await sleep(LOCATION_INTERVAL_MS);
     }
   });
@@ -143,7 +173,7 @@ const keepAliveTask = async () => {
 const openSettingsAlert = () => {
   Alert.alert(
     'Location Permission Required',
-    'Please allow location access (Always / Allow all the time) so we can share your live location while on duty.',
+    'Please allow location access (Always / Allow all the time) and turn ON Location / GPS in phone settings.',
     [
       {text: 'Cancel', style: 'cancel'},
       {text: 'Open Settings', onPress: () => Linking.openSettings()},
@@ -170,6 +200,8 @@ const requestAndroidPermissions = async () => {
     results[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
     PermissionsAndroid.RESULTS.GRANTED;
 
+  console.log('[GPS] permissions fine=', fine, 'coarse=', coarse);
+
   if (!fine && !coarse) {
     openSettingsAlert();
     return false;
@@ -187,9 +219,11 @@ const requestAndroidPermissions = async () => {
       },
     );
 
+    console.log('[GPS] background permission=', background);
+
     if (background !== PermissionsAndroid.RESULTS.GRANTED) {
       console.log(
-        'Background location not granted — foreground GPS will still run.',
+        '[GPS] background denied — foreground tracking will still run',
       );
     }
   }
@@ -237,13 +271,22 @@ export const startLocationTracking = async () => {
     return false;
   }
 
-  startGpsWatch();
+  try {
+    startGpsWatch();
 
-  if (!BackgroundService.isRunning()) {
-    await BackgroundService.start(keepAliveTask, serviceOptions);
+    if (!BackgroundService.isRunning()) {
+      await BackgroundService.start(keepAliveTask, serviceOptions);
+    }
+
+    return true;
+  } catch (error) {
+    console.log('startLocationTracking error:', error?.message || error);
+    stopGpsWatch();
+    if (BackgroundService.isRunning()) {
+      await BackgroundService.stop();
+    }
+    return false;
   }
-
-  return true;
 };
 
 export const stopLocationTracking = async () => {
