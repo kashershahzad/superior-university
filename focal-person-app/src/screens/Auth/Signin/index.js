@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import { useDispatch } from 'react-redux';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -21,12 +21,38 @@ import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 import {Images} from '../../../assets/images';
 
+const REMEMBER_KEYS = {
+  flag: 'rememberMe',
+  employeeId: 'rememberedEmployeeId',
+  password: 'rememberedPassword',
+};
+
 const Signin = ({navigation}) => {
   const dispatch = useDispatch();
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        const [flag, savedId, savedPassword] = await AsyncStorage.multiGet([
+          REMEMBER_KEYS.flag,
+          REMEMBER_KEYS.employeeId,
+          REMEMBER_KEYS.password,
+        ]);
+        if (flag?.[1] === 'true') {
+          setRememberMe(true);
+          if (savedId?.[1]) setEmployeeId(savedId[1]);
+          if (savedPassword?.[1]) setPassword(savedPassword[1]);
+        }
+      } catch (err) {
+        console.log('Load remembered credentials error:', err);
+      }
+    };
+    loadRememberedCredentials();
+  }, []);
 
   const handleForgotPassword = () => {};
 
@@ -48,7 +74,19 @@ const Signin = ({navigation}) => {
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
-          // await AsyncStorage.setItem('rememberMe', rememberMe ? 'true' : 'false');
+        }
+        if (rememberMe) {
+          await AsyncStorage.multiSet([
+            [REMEMBER_KEYS.flag, 'true'],
+            [REMEMBER_KEYS.employeeId, employeeId.trim()],
+            [REMEMBER_KEYS.password, password],
+          ]);
+        } else {
+          await AsyncStorage.multiRemove([
+            REMEMBER_KEYS.flag,
+            REMEMBER_KEYS.employeeId,
+            REMEMBER_KEYS.password,
+          ]);
         }
         if (user) dispatch(setUserData(user));
         ToastMessage(res.data?.message || 'Login successful.', 'success');
@@ -138,14 +176,14 @@ const Signin = ({navigation}) => {
               fontFamily={fonts.regular}
             />
           </View>
-          <CustomText
+          {/* <CustomText
             label="Forgot Password"
             removeTranslation
             fontSize={12}
             fontFamily={fonts.regular}
             color={COLORS.primaryColor}
             onPress={handleForgotPassword}
-          />
+          /> */}
         </View>
 
         <GradientButton

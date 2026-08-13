@@ -329,11 +329,7 @@ const Profile = () => {
             res.data?.message || 'Logged out successfully.',
             'success',
           );
-          await AsyncStorage.multiRemove([
-            'token',
-            'refreshToken',
-            'rememberMe',
-          ]);
+          await AsyncStorage.multiRemove(['token', 'refreshToken']);
           dispatch(logout());
           dispatch(setUserData({}));
           navigation.dispatch(

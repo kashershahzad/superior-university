@@ -207,7 +207,8 @@ const Home = () => {
       if (res?.data?.success) {
         ToastMessage(res.data?.message || 'Logged out successfully.', 'success');
 
-        await AsyncStorage.multiRemove(['token', 'refreshToken', 'rememberMe']);
+        // Keep rememberedEmployeeId / rememberedPassword / rememberMe for auto-fill
+        await AsyncStorage.multiRemove(['token', 'refreshToken']);
         dispatch(logout());
         dispatch(setUserData({}));
 

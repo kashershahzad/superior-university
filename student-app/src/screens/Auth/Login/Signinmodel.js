@@ -56,6 +56,8 @@ const OrRow = () => (
   </View>
 );
 
+const REMEMBER_CREDENTIALS_KEY = 'rememberedCredentials';
+
 const Signinmodel = ({ visible, onClose, navigation }) => {
 
   const dispatch = useDispatch();
@@ -71,18 +73,71 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
 
   useEffect(() => {
     if (!visible) {
-      setMode('student');
       setLoading(false);
-      setStudentId('');
-      setEmail('');
-      setPhone('');
-      setPassword('');
+      return;
     }
+
+    const loadRememberedCredentials = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(REMEMBER_CREDENTIALS_KEY);
+        if (!saved) {
+          setMode('student');
+          setStudentId('');
+          setEmail('');
+          setPhone('');
+          setPassword('');
+          setRememberMe(false);
+          return;
+        }
+
+        const credentials = JSON.parse(saved);
+        const savedMode = credentials?.mode || 'student';
+
+        setMode(savedMode);
+        setRememberMe(true);
+        setPassword(credentials?.password || '');
+
+        if (savedMode === 'email') {
+          setEmail(credentials?.username || '');
+          setStudentId('');
+          setPhone('');
+        } else if (savedMode === 'phone') {
+          setPhone(credentials?.username || '');
+          setStudentId('');
+          setEmail('');
+        } else {
+          setStudentId(credentials?.username || '');
+          setEmail('');
+          setPhone('');
+        }
+      } catch (err) {
+        console.log('Failed to load remembered credentials:', err);
+      }
+    };
+
+    loadRememberedCredentials();
   }, [visible]);
 
   const handleClose = () => {
-    setMode('student');
     onClose?.();
+  };
+
+  const saveOrClearRememberedCredentials = async () => {
+    if (rememberMe) {
+      const username =
+        mode === 'email' ? email : mode === 'phone' ? phone : studentId;
+
+      await AsyncStorage.setItem(
+        REMEMBER_CREDENTIALS_KEY,
+        JSON.stringify({
+          mode,
+          username,
+          password,
+        }),
+      );
+    } else {
+      await AsyncStorage.removeItem(REMEMBER_CREDENTIALS_KEY);
+    }
   };
 
   const handleSignIn = async () => {
@@ -137,6 +192,8 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
         if (user) {
           dispatch(setUserData(user));
         }
+
+        await saveOrClearRememberedCredentials();
 
         ToastMessage(res.data?.message || 'Login successful.', 'success');
         handleClose();
