@@ -14,6 +14,7 @@ import { get, post } from '../../../services/ApiRequest';
 import {
   startLocationTracking,
   stopLocationTracking,
+  subscribeLocationUpdates,
 } from '../../../services/LocationTrackingService';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +32,7 @@ const Home = () => {
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dutyLoading, setDutyLoading] = useState(false);
+  const [liveCoords, setLiveCoords] = useState(null);
 
   const isOnDuty = dashboard?.duty_status === 'live';
   const isFetchingDashboard = useRef(false);
@@ -173,6 +175,23 @@ const Home = () => {
     };
   }, [isOnDuty]);
 
+  useEffect(() => {
+    if (!isOnDuty) {
+      setLiveCoords(null);
+      return undefined;
+    }
+
+    return subscribeLocationUpdates(coords => {
+      if (coords?.latitude == null || coords?.longitude == null) {
+        return;
+      }
+      setLiveCoords({
+        lat: coords.latitude,
+        lng: coords.longitude,
+      });
+    });
+  }, [isOnDuty]);
+
   const handleLogout = async () => {
     if (dutyLoading) return;
 
@@ -221,9 +240,9 @@ const Home = () => {
     return `${fmt(start)}-${fmt(end)}`;
   };
 
-  const lastUpdatedText =
-    dashboard?.last_updated_seconds_ago != null
-      ? `Last updated ${dashboard.last_updated_seconds_ago}s ago` : 'No data available';
+  const currentLat = liveCoords?.lat ?? dashboard?.coordinates?.lat;
+  const currentLng = liveCoords?.lng ?? dashboard?.coordinates?.lng;
+  const hasLiveCoords = currentLat != null && currentLng != null;
 
 
   const dutyUI = isOnDuty
@@ -262,8 +281,8 @@ const Home = () => {
         },
         {
           item: 'Current coordinates',
-          itemValue: dashboard?.coordinates
-            ? `${dashboard.coordinates.lat}° N, ${dashboard.coordinates.lng}° E`
+          itemValue: hasLiveCoords
+            ? `${Number(currentLat).toFixed(6)}° N, ${Number(currentLng).toFixed(6)}° E`
             : '--',
         },
       ],
@@ -309,8 +328,8 @@ const Home = () => {
     };
 
   const mapRegion = {
-    latitude: dashboard?.coordinates?.lat ?? 0.00,
-    longitude: dashboard?.coordinates?.lng ?? 0.00,
+    latitude: Number(currentLat) || 0,
+    longitude: Number(currentLng) || 0,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };

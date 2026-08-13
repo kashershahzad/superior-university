@@ -8,21 +8,47 @@ import {endPoints} from './ENV';
 const LOCATION_INTERVAL_MS = 5000;
 
 Geolocation.setRNConfiguration({
-  skipPermissionRequests: false,
+  skipPermissionRequests: true,
   authorizationLevel: 'always',
   enableBackgroundLocationUpdates: true,
-  locationProvider: 'auto',
+  locationProvider: 'playServices',
 });
+
+const GPS_OPTIONS = {
+  enableHighAccuracy: true,
+  timeout: 25000,
+  maximumAge: 0,
+  distanceFilter: 0,
+  interval: LOCATION_INTERVAL_MS,
+  fastestInterval: 2000,
+};
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const getCurrentPosition = () =>
+let watchId = null;
+const locationListeners = new Set();
+
+const emitLocation = coords => {
+  locationListeners.forEach(listener => {
+    try {
+      listener(coords);
+    } catch (error) {
+      console.log('Location listener error:', error?.message || error);
+    }
+  });
+};
+
+export const subscribeLocationUpdates = listener => {
+  locationListeners.add(listener);
+  return () => locationListeners.delete(listener);
+};
+
+const getCurrentPosition = (highAccuracy = true) =>
   new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 5000,
-      distanceFilter: 0,
+      ...GPS_OPTIONS,
+      enableHighAccuracy: highAccuracy,
+      timeout: highAccuracy ? 25000 : 15000,
     });
   });
 
@@ -54,25 +80,62 @@ const postLocationSilent = async coords => {
   }
 };
 
-const trackingTask = async taskDataArguments => {
-  const delay = taskDataArguments?.delay ?? LOCATION_INTERVAL_MS;
+const handleGpsFix = coords => {
+  console.log('[GPS] fix', {
+    lat: coords.latitude,
+    lng: coords.longitude,
+    accuracyM: coords.accuracy,
+  });
+  emitLocation(coords);
+  postLocationSilent(coords);
+};
 
+const startGpsWatch = () => {
+  if (watchId != null) {
+    return;
+  }
+
+  watchId = Geolocation.watchPosition(
+    position => handleGpsFix(position.coords),
+    error => {
+      console.log('GPS watch error:', error?.code, error?.message);
+      getCurrentPosition(false)
+        .then(position => handleGpsFix(position.coords))
+        .catch(fallbackError => {
+          console.log(
+            'GPS fallback error:',
+            fallbackError?.code,
+            fallbackError?.message,
+          );
+        });
+    },
+    GPS_OPTIONS,
+  );
+
+  getCurrentPosition(true)
+    .then(position => handleGpsFix(position.coords))
+    .catch(error => {
+      console.log('GPS first fix error:', error?.code, error?.message);
+      return getCurrentPosition(false).then(position =>
+        handleGpsFix(position.coords),
+      );
+    })
+    .catch(error => {
+      console.log('GPS network fallback error:', error?.code, error?.message);
+    });
+};
+
+const stopGpsWatch = () => {
+  if (watchId != null) {
+    Geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+};
+
+const keepAliveTask = async () => {
   await new Promise(async () => {
     while (BackgroundService.isRunning()) {
-      try {
-        const position = await getCurrentPosition();
-        await postLocationSilent(position.coords);
-
-        if (Platform.OS === 'android') {
-          await BackgroundService.updateNotification({
-            taskDesc: `Last update ${new Date().toLocaleTimeString()}`,
-          });
-        }
-      } catch (error) {
-        console.log('Location track error:', error?.message || error);
-      }
-
-      await sleep(delay);
+      await sleep(LOCATION_INTERVAL_MS);
     }
   });
 };
@@ -95,18 +158,19 @@ const requestAndroidPermissions = async () => {
     );
   }
 
-  const fine = await PermissionsAndroid.request(
+  const results = await PermissionsAndroid.requestMultiple([
     PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    {
-      title: 'Location Permission',
-      message:
-        'UMS Driver needs your location to share live bus position while on duty.',
-      buttonPositive: 'OK',
-      buttonNegative: 'Cancel',
-    },
-  );
+    PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+  ]);
 
-  if (fine !== PermissionsAndroid.RESULTS.GRANTED) {
+  const fine =
+    results[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+    PermissionsAndroid.RESULTS.GRANTED;
+  const coarse =
+    results[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+    PermissionsAndroid.RESULTS.GRANTED;
+
+  if (!fine && !coarse) {
     openSettingsAlert();
     return false;
   }
@@ -124,8 +188,9 @@ const requestAndroidPermissions = async () => {
     );
 
     if (background !== PermissionsAndroid.RESULTS.GRANTED) {
-      openSettingsAlert();
-      return false;
+      console.log(
+        'Background location not granted — foreground GPS will still run.',
+      );
     }
   }
 
@@ -172,18 +237,21 @@ export const startLocationTracking = async () => {
     return false;
   }
 
-  if (BackgroundService.isRunning()) {
-    return true;
+  startGpsWatch();
+
+  if (!BackgroundService.isRunning()) {
+    await BackgroundService.start(keepAliveTask, serviceOptions);
   }
 
-  await BackgroundService.start(trackingTask, serviceOptions);
   return true;
 };
 
 export const stopLocationTracking = async () => {
+  stopGpsWatch();
   if (BackgroundService.isRunning()) {
     await BackgroundService.stop();
   }
 };
 
-export const isLocationTrackingRunning = () => BackgroundService.isRunning();
+export const isLocationTrackingRunning = () =>
+  watchId != null || BackgroundService.isRunning();
