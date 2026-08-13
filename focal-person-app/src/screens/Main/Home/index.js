@@ -324,7 +324,7 @@ const Home = () => {
               removeTranslation
             />
             <View style={styles.statsRow}>
-              {renderStatCard(Images.student, 'Total Student', totalStudents)}
+              {renderStatCard(Images.student, 'Students', totalStudents)}
               {renderStatCard(Images.briefcase, 'Fee Paid', feePaidCount)}
               {renderStatCard(Images.briefcase2, 'Unpaid', unpaidCount)}
             </View>
@@ -585,8 +585,8 @@ const styles = StyleSheet.create({
     width: '32%',
     borderRadius: 8,
     height: 72,
-    paddingVertical: 12,
-    paddingHorizontal: 5,
+    padding: 12,
+    // paddingHorizontal: 5,
     borderWidth: 1,
     borderColor: '#EBECEE',
     overflow: 'visible',

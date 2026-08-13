@@ -39,15 +39,11 @@ const CustomText = ({
   disabled,
   letterSpacing,
 }) => {
+
   const { t } = useTranslation();
-  return (
-    <TouchableOpacity
-      style={[containerStyle, { alignSelf }]}
-      onPress={onPress}
-      disabled={!onPress || disabled}
-      activeOpacity={activeOpacity || 0.6}
-    >
-      <Text
+
+  const content = (
+    <Text
         numberOfLines={numberOfLines}
         style={[
           {
@@ -80,7 +76,21 @@ const CustomText = ({
         {removeTranslation ? label : t(label)}
         {children}
       </Text>
-    </TouchableOpacity>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        style={[containerStyle, { alignSelf }]}
+        onPress={onPress}
+        disabled={!onPress || disabled}
+        activeOpacity={activeOpacity || 0.6}
+      >
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 };
 export default CustomText;

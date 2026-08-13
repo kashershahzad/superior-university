@@ -204,6 +204,7 @@ const PersonalData = () => {
             icon={Images.email}
             autoCapitalize="none"
             keyboardType="email-address"
+            editable={false}
           />
 
           <CustomInput
@@ -214,6 +215,7 @@ const PersonalData = () => {
             borderColor="#98A2B3"
             icon={Images.phone}
             keyboardType="phone-pad"
+            editable={false}
           />
 
           <CustomInput
@@ -223,6 +225,7 @@ const PersonalData = () => {
             withLabel="Program"
             borderColor="#98A2B3"
             icon={Images.program}
+            editable={false}
           />
 
           <CustomInput
@@ -232,6 +235,7 @@ const PersonalData = () => {
             withLabel="Semester"
             borderColor="#98A2B3"
             icon={Images.semester}
+            editable={false}
           />
 
           <CustomInput
@@ -241,6 +245,7 @@ const PersonalData = () => {
             withLabel="Session"
             borderColor="#98A2B3"
             icon={Images.semester}
+            editable={false}
           />
 
           <CustomInput

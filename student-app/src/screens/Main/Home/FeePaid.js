@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     width: '32%',
     borderRadius: 8,
     height: 72,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: '#EBECEE',
