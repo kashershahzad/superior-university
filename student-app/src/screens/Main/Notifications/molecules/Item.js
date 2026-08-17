@@ -8,7 +8,7 @@ import Icons from '../../../../components/Icons';
 import {COLORS} from '../../../../utils/COLORS';
 import fonts from '../../../../assets/fonts';
 
-const TYPE_META = {
+export const TYPE_META = {
   fee: {icon: 'cash-outline', color: '#B54708', bg: '#FEF0C7'},
   transport: {icon: 'bus-outline', color: '#026AA2', bg: '#E0F2FE'},
   general: {
@@ -18,7 +18,7 @@ const TYPE_META = {
   },
 };
 
-const getMetaLabel = data => {
+export const getMetaLabel = data => {
   if (!data || typeof data !== 'object') return '';
   if (data.voucher) return data.voucher;
   if (data.bus && data.stop) return `Bus #${data.bus} · ${data.stop}`;
@@ -35,7 +35,7 @@ const Item = ({item, onPress}) => {
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      // onPress={onPress}
+      onPress={onPress}
       style={[styles.card, isUnread && styles.unreadCard]}>
       <View style={[styles.iconWrap, {backgroundColor: meta.bg}]}>
         <Icons family="Ionicons" name={meta.icon} size={20} color={meta.color} />

@@ -3,6 +3,7 @@ import React from 'react';
 
 import InboxScreen from '../screens/Main/Chat/InboxScreen';
 import Notifications from '../screens/Main/Notifications';
+import NotificationDetail from '../screens/Main/Notifications/NotificationDetail';
 import FeeVoucher from '../screens/Main/FeeVoucher';
 import TabStack from './TabStack';
 import GenerateCard from '../screens/Main/GenerateCard';
@@ -26,6 +27,7 @@ const MainStack = () => {
       <Stack.Screen name="TabStack" component={TabStack} />
       <Stack.Screen name="InboxScreen" component={InboxScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="NotificationDetail" component={NotificationDetail} />
       <Stack.Screen name="FeeVoucher" component={FeeVoucher} />
       <Stack.Screen name="GenerateCard" component={GenerateCard} />
       <Stack.Screen name="Verification" component={Verification} />

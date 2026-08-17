@@ -9,7 +9,7 @@ import CustomText from '../../../components/CustomText';
 
 import Item from './molecules/Item';
 
-import {get} from '../../../services/ApiRequest';
+import {get, post} from '../../../services/ApiRequest';
 import {COLORS} from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
 
@@ -68,9 +68,21 @@ const Notifications = () => {
   };
 
   const handlePress = item => {
-    if (item?.type === 'fee') {
-      navigation.navigate('Fees');
+    const updated = {
+      ...item,
+      is_read: true,
+      read_at: item?.read_at || new Date().toISOString(),
+    };
+
+    if (!item?.is_read) {
+      setData(prev => prev.map(n => (n.id === item.id ? updated : n)));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      post(`student/notifications/${item.id}/read`).catch(err => {
+        console.log('Mark notification read error:', err);
+      });
     }
+
+    navigation.navigate('NotificationDetail', {item: updated});
   };
 
   return (
