@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "404153261358",
+    "project_id": "superior-university-72fbe",
+    "storage_bucket": "superior-university-72fbe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404153261358:android:a236aefda79f634f112ebf",
+        "android_client_info": {
+          "package_name": "com.superiorUniversity.student"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuhmTZ3d4PFY4Wi-1fPvhcY8T4fbsmgEE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:404153261358:android:778433b68f22c82e112ebf",
+        "android_client_info": {
+          "package_name": "com.umsstudent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuhmTZ3d4PFY4Wi-1fPvhcY8T4fbsmgEE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

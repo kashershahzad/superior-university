@@ -20,6 +20,7 @@ import CountryPhoneInput from '../../../components/CountryPhoneInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { post } from '../../../services/ApiRequest';
+import { registerFcmToken } from '../../../utils/fcm';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import { setToken } from '../../../store/reducer/AuthConfig';
 import { setUserData } from '../../../store/reducer/usersSlice';
@@ -36,7 +37,8 @@ const OutlineButton = ({ icon, title, onPress }) => (
   <TouchableOpacity
     style={styles.outlineButton}
     onPress={onPress}
-    activeOpacity={0.7}>
+    activeOpacity={0.7}
+  >
     <Image source={icon} style={styles.outlineIcon} />
     <CustomText
       label={title}
@@ -59,7 +61,6 @@ const OrRow = () => (
 const REMEMBER_CREDENTIALS_KEY = 'rememberedCredentials';
 
 const Signinmodel = ({ visible, onClose, navigation }) => {
-
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
 
@@ -183,7 +184,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
         const user = res.data?.data?.user;
         console.log('Login token:', token);
 
-        console.log('res', res)
+        console.log('res', res);
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
@@ -192,6 +193,8 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
         if (user) {
           dispatch(setUserData(user));
         }
+
+        await registerFcmToken();
 
         await saveOrClearRememberedCredentials();
 
@@ -225,18 +228,25 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
       transparent
       animationType="slide"
       statusBarTranslucent
-      onRequestClose={handleClose}>
+      onRequestClose={handleClose}
+    >
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
-        <View style={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 14 }]}>
+        <View
+          style={[
+            styles.content,
+            { paddingBottom: Math.max(insets.bottom, 16) + 14 },
+          ]}
+        >
           <KeyboardAwareScrollView
             enableOnAndroid
             extraScrollHeight={20}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             bounces={false}
-            contentContainerStyle={styles.scrollContent}>
+            contentContainerStyle={styles.scrollContent}
+          >
             <CustomText
               label="Sign In"
               removeTranslation
@@ -405,7 +415,7 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
           </KeyboardAwareScrollView>
         </View>
       </View>
-    </Modal >
+    </Modal>
   );
 };
 

@@ -11,6 +11,7 @@ import CustomCheckbox from '../../../components/CustomCheckBox';
 import DualText from '../../../components/DualText';
 import CountryPhoneInput from '../../../components/CountryPhoneInput';
 import { post } from '../../../services/ApiRequest';
+import { registerFcmToken } from '../../../utils/fcm';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
@@ -165,6 +166,8 @@ const Signup = ({ navigation }) => {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
         }
+
+        await registerFcmToken();
 
         ToastMessage(res.data?.message || 'Registration successful.', 'success');
 
