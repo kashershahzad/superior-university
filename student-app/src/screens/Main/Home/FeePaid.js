@@ -13,7 +13,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { post, del, get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import { COLORS } from '../../../utils/COLORS';
-
+import { getCurrentCoords } from '../../../utils/GetLocation';
 
 const DEFAULT_BUS_LOCATION = {
   latitude: 31.4704,
@@ -134,7 +134,11 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
 
   const fetchTracking = async () => {
     try {
-      const res = await get('student/transport/tracking');
+      const coords = await getCurrentCoords();
+      const res = await get('student/transport/tracking', {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
       if (res?.data?.success) {
         setDistanceKm(res.data.data?.distance_km ?? null);
       }
@@ -144,8 +148,9 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   };
 
   useEffect(() => {
+    if (!isFocused) return;
     fetchTracking();
-  }, []);
+  }, [isFocused]);
 
   return (
     <ScreenWrapper
@@ -344,10 +349,15 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
           <View style={styles.busLocationInfo}>
             <View style={styles.dot} />
             <CustomText
-              label={feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `Bus#${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`}
+              label={
+                feeStatus === 'unpaid'
+                  ? 'Pay fee to unlock track'
+                  : `Bus#${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`
+              }
               color="#701A73"
               fontSize={12}
               fontFamily={fonts.medium}
+              removeTranslation
             />
           </View>
         ) : null}

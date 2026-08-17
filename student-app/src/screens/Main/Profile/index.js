@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, CommonActions } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../../store/reducer/AuthConfig';
 
@@ -124,7 +124,7 @@ const Profile = () => {
   const [generatingCard, setGeneratingCard] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const res = await get('student/profile');
       if (res?.data?.success) {
@@ -135,11 +135,13 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProfile();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [fetchProfile]),
+  );
 
   const uploadProfilePhoto = async result => {
     const uri = result?.path || result?.uri;

@@ -9,7 +9,7 @@ import i18n from '../language/i18n';
 import fonts from '../assets/fonts';
 import {Images} from '../assets/images';
 
-const CustomInput = ({
+const CustomInput = React.forwardRef(({
   placeholder,
   secureTextEntry,
   value,
@@ -29,7 +29,6 @@ const CustomInput = ({
   width,
   onEndEditing,
   autoFocus,
-  ref,
   borderRadius,
   marginTop,
   withLabel,
@@ -44,7 +43,10 @@ const CustomInput = ({
   rightIconFamily = 'Feather',
   onPress,
   eyeIconColor,
-}) => {
+  returnKeyType,
+  onSubmitEditing,
+  blurOnSubmit = true,
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [hidePass, setHidePass] = useState(true);
 
@@ -126,6 +128,9 @@ const CustomInput = ({
           textAlignVertical={multiline ? 'top' : textAlignVertical}
           autoCapitalize={autoCapitalize}
           autoFocus={autoFocus}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={blurOnSubmit}
         />
 
         {rightIcon ? (
@@ -160,7 +165,9 @@ const CustomInput = ({
       )}
     </View>
   );
-};
+});
+
+CustomInput.displayName = 'CustomInput';
 
 export default CustomInput;
 

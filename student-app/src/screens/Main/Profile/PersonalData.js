@@ -1,6 +1,6 @@
-import { StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Keyboard, Dimensions, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -15,6 +15,8 @@ import CustomInput from '../../../components/CustomInput';
 import { get, put } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
+const EXTRA_SCROLL = 80;
 
 const PersonalData = () => {
   const insets = useSafeAreaInsets();
@@ -32,6 +34,80 @@ const PersonalData = () => {
   const [semester, setSemester] = useState(initialProfile?.semester || '');
   const [session, setSession] = useState(initialProfile?.session || '');
   const [bloodGroup, setBloodGroup] = useState(initialProfile?.blood_group || '');
+
+  const fullNameRef = useRef(null);
+  const bloodGroupRef = useRef(null);
+  const scrollViewRef = useRef(null);
+  const keyboardTopYRef = useRef(null);
+  const scrollOffsetRef = useRef(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = Keyboard.addListener(showEvent, e => {
+      keyboardTopYRef.current =
+        typeof e.endCoordinates?.screenY === 'number'
+          ? e.endCoordinates.screenY
+          : null;
+    });
+    const onHide = Keyboard.addListener(hideEvent, () => {
+      keyboardTopYRef.current = null;
+    });
+
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, []);
+
+  const scrollInputIntoView = useCallback((input) => {
+    const node = input?.current ?? input;
+    if (!node || typeof node.measureInWindow !== 'function') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      node.measureInWindow((_x, y, _width, height) => {
+        const scroller = scrollViewRef.current;
+        const keyboardTopY = keyboardTopYRef.current;
+        if (!scroller || keyboardTopY == null) {
+          return;
+        }
+
+        const windowHeight = Dimensions.get('window').height;
+        const overlap = Math.max(0, windowHeight - keyboardTopY);
+        const visibleBottom = windowHeight - overlap - EXTRA_SCROLL;
+        const overflow = y + height - visibleBottom;
+        if (overflow <= 0) {
+          return;
+        }
+
+        const nextY = Math.max(0, scrollOffsetRef.current + overflow);
+        if (typeof scroller.scrollToPosition === 'function') {
+          scroller.scrollToPosition(0, nextY, true);
+          return;
+        }
+        if (typeof scroller.scrollTo === 'function') {
+          scroller.scrollTo({ y: nextY, animated: true });
+        }
+      });
+    });
+  }, []);
+
+  const focusNext = useCallback((nextRef) => {
+    nextRef?.current?.focus();
+    setTimeout(() => {
+      scrollInputIntoView(nextRef.current);
+    }, 80);
+  }, [scrollInputIntoView]);
+
+  const handleFieldFocus = useCallback(() => {
+    setTimeout(() => {
+      const current = TextInput.State.currentlyFocusedInput?.();
+      scrollInputIntoView(current);
+    }, 80);
+  }, [scrollInputIntoView]);
 
   const fillForm = data => {
     if (!data) {
@@ -169,11 +245,18 @@ const PersonalData = () => {
         </View>
       ) : (
         <KeyboardAwareScrollView
-        enableOnAndroid
-        extraScrollHeight={10}       
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        >
+          ref={scrollViewRef}
+          enableOnAndroid
+          extraScrollHeight={EXTRA_SCROLL}
+          extraHeight={EXTRA_SCROLL}
+          keyboardOpeningTime={0}
+          enableResetScrollToCoords={false}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={e => {
+            scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+          }}>
         <View style={styles.container}>
           <CustomInput
             placeholder="Enter Your ID"
@@ -187,12 +270,17 @@ const PersonalData = () => {
           />
 
           <CustomInput
+            ref={fullNameRef}
             placeholder="Enter Your Full Name"
             value={fullName}
             onChangeText={text => setFullName(text)}
             withLabel="Full Name"
             borderColor="#98A2B3"
             iconName="user"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            isFocus={handleFieldFocus}
+            onSubmitEditing={() => focusNext(bloodGroupRef)}
           />
 
           <CustomInput
@@ -249,12 +337,16 @@ const PersonalData = () => {
           />
 
           <CustomInput
+            ref={bloodGroupRef}
             placeholder="Enter Blood Group"
             value={bloodGroup}
             onChangeText={text => setBloodGroup(text)}
             withLabel="Blood Group"
             borderColor="#98A2B3"
             iconName="user"
+            returnKeyType="done"
+            isFocus={handleFieldFocus}
+            onSubmitEditing={handleUpdate}
           />
         </View>
         </KeyboardAwareScrollView>
@@ -303,7 +395,7 @@ const styles = StyleSheet.create({
   footerContainer: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    paddingBottom: 26,
+    paddingBottom: 36,
     paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#D0D5DD',

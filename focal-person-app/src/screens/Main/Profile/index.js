@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState, useCallback} from 'react';
 import {
   FlatList,
   Image,
@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import {
+  useFocusEffect,
   useNavigation,
   CommonActions,
   useIsFocused,
@@ -173,7 +174,7 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const res = await get('uni-staff/profile');
 
@@ -188,7 +189,7 @@ const Profile = () => {
       console.log('Profile error:', err);
       ToastMessage('Failed to load profile', 'error');
     }
-  };
+  }, []);
 
   const uploadProfilePhoto = async file => {
     const uri = file?.path || file?.uri;
@@ -251,10 +252,11 @@ const Profile = () => {
     }
   };
 
-  useEffect(() => {
-    if (!isFocused) return;
-    fetchProfile();
-  }, [isFocused]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, []),
+  );
 
   const contactRows = useMemo(() => {
     const email = profile?.contact?.email || profile?.email;

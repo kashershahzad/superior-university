@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View, Keyboard } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View, Keyboard, Dimensions, Platform, TextInput } from 'react-native';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import ImageFast from '../../../components/ImageFast';
@@ -25,6 +25,8 @@ import SelectRoute from './SelectRoute';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 
+const EXTRA_SCROLL = 80;
+
 const initialForm = {
   email: '',
   phone: '',
@@ -47,6 +49,86 @@ const Signup = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [signinModelVisible, setSigninModelVisible] = useState(false);
   const [routeModalVisible, setRouteModalVisible] = useState(false);
+
+  const studentIdRef = useRef(null);
+  const fullNameRef = useRef(null);
+  const programRef = useRef(null);
+  const semesterRef = useRef(null);
+  const emailRef = useRef(null);
+  const phoneRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const scrollViewRef = useRef(null);
+  const keyboardTopYRef = useRef(null);
+  const scrollOffsetRef = useRef(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = Keyboard.addListener(showEvent, e => {
+      keyboardTopYRef.current =
+        typeof e.endCoordinates?.screenY === 'number'
+          ? e.endCoordinates.screenY
+          : null;
+    });
+    const onHide = Keyboard.addListener(hideEvent, () => {
+      keyboardTopYRef.current = null;
+    });
+
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, []);
+
+  const scrollInputIntoView = useCallback((input) => {
+    const node = input?.current ?? input;
+    if (!node || typeof node.measureInWindow !== 'function') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      node.measureInWindow((_x, y, _width, height) => {
+        const scroller = scrollViewRef.current;
+        const keyboardTopY = keyboardTopYRef.current;
+        if (!scroller || keyboardTopY == null) {
+          return;
+        }
+
+        const windowHeight = Dimensions.get('window').height;
+        const overlap = Math.max(0, windowHeight - keyboardTopY);
+        const visibleBottom = windowHeight - overlap - EXTRA_SCROLL;
+        const overflow = y + height - visibleBottom;
+        if (overflow <= 0) {
+          return;
+        }
+
+        const nextY = Math.max(0, scrollOffsetRef.current + overflow);
+        if (typeof scroller.scrollToPosition === 'function') {
+          scroller.scrollToPosition(0, nextY, true);
+          return;
+        }
+        if (typeof scroller.scrollTo === 'function') {
+          scroller.scrollTo({ y: nextY, animated: true });
+        }
+      });
+    });
+  }, []);
+
+  const focusNext = useCallback((nextRef) => {
+    nextRef?.current?.focus();
+    setTimeout(() => {
+      scrollInputIntoView(nextRef.current);
+    }, 80);
+  }, [scrollInputIntoView]);
+
+  const handleFieldFocus = useCallback(() => {
+    setTimeout(() => {
+      const current = TextInput.State.currentlyFocusedInput?.();
+      scrollInputIntoView(current);
+    }, 80);
+  }, [scrollInputIntoView]);
 
   const handleSelectRoute = (route) => {
     Keyboard.dismiss();
@@ -191,6 +273,7 @@ const Signup = ({ navigation }) => {
   const renderStudentCardFields = () => (
     <>
       <CustomInput
+        ref={studentIdRef}
         placeholder="Enter Your ID"
         value={form.studentId}
         onChangeText={text => updateField('studentId', text)}
@@ -198,34 +281,55 @@ const Signup = ({ navigation }) => {
         withLabel="Student ID"
         borderColor="#98A2B3"
         icon={Images.studentId}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(fullNameRef)}
       />
 
       <CustomInput
+        ref={fullNameRef}
         placeholder="Enter Your Full Name"
         value={form.fullName}
         onChangeText={text => updateField('fullName', text)}
         withLabel="Full Name"
         borderColor="#98A2B3"
         iconName="user"
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(programRef)}
       />
 
       <CustomInput
+        ref={programRef}
         placeholder="Enter Program"
         value={form.program}
         onChangeText={text => updateField('program', text)}
         withLabel="Program"
         borderColor="#98A2B3"
         icon={Images.program}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(semesterRef)}
       />
 
       <CustomInput
+        ref={semesterRef}
         placeholder="Enter Semester"
         value={form.semester}
         onChangeText={text => updateField('semester', text)}
         withLabel="Semester"
         borderColor="#98A2B3"
         icon={Images.semester}
-        keyboardType="numeric"
+        keyboardType="default"
+        returnKeyType="next"
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => {
+          Keyboard.dismiss();
+          setRouteModalVisible(true);
+        }}
       />
 
       <CustomInput
@@ -255,6 +359,7 @@ const Signup = ({ navigation }) => {
   const renderEmailFields = () => (
     <>
       <CustomInput
+        ref={emailRef}
         placeholder="yourservo@uni.com"
         value={form.email}
         onChangeText={text => updateField('email', text)}
@@ -263,15 +368,25 @@ const Signup = ({ navigation }) => {
         borderColor="#98A2B3"
         iconName="mail"
         keyboardType="email-address"
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(phoneRef)}
       />
 
       <CountryPhoneInput
+        ref={phoneRef}
         withLabel="Phone Number"
         value={form.phone}
         setValue={text => updateField('phone', text)}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(passwordRef)}
       />
 
       <CustomInput
+        ref={passwordRef}
         placeholder="Password"
         value={form.password}
         onChangeText={text => updateField('password', text)}
@@ -280,9 +395,14 @@ const Signup = ({ navigation }) => {
         icon={Images.password}
         secureTextEntry
         eyeIconColor={COLORS.primaryColor}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(confirmPasswordRef)}
       />
 
       <CustomInput
+        ref={confirmPasswordRef}
         placeholder="Confirm Password"
         value={form.confirmPassword}
         onChangeText={text => updateField('confirmPassword', text)}
@@ -291,6 +411,9 @@ const Signup = ({ navigation }) => {
         icon={Images.password}
         secureTextEntry
         eyeIconColor={COLORS.primaryColor}
+        returnKeyType="done"
+        isFocus={handleFieldFocus}
+        onSubmitEditing={handleSignUp}
       />
     </>
   );
@@ -302,7 +425,6 @@ const Signup = ({ navigation }) => {
       backgroundColor="#FAFAFA"
       paddingHorizontal={30}
       statusBarColor={COLORS.white}
-      scrollEnabled
       footerUnScrollable={() =>
         !isStudentStep ? (
           <View style={styles.dualTextContainer}>
@@ -324,10 +446,19 @@ const Signup = ({ navigation }) => {
       }
     >
       <KeyboardAwareScrollView
+        ref={scrollViewRef}
         enableOnAndroid
-        extraScrollHeight={25}
+        enableAutomaticScroll
+        extraScrollHeight={EXTRA_SCROLL}
+        extraHeight={EXTRA_SCROLL}
+        keyboardOpeningTime={0}
+        enableResetScrollToCoords={false}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={e => {
+          scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+        }}>
 
         <View style={styles.header}>
           <ImageFast source={Images.signin_img} style={styles.logo} />
@@ -433,7 +564,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 60,
   },
   termsRow: {
     flexDirection: 'row',

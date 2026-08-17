@@ -35,6 +35,7 @@ const ScreenWrapper = ({
   paddingBottom,
   nestedScrollEnabled,
   paddingHorizontal = 16,
+  extraScrollHeight = 24,
 }) => {
   const insets = useSafeAreaInsets();
   const topInset = translucent ? insets.top : Platform.OS === "ios" ? insets.top : 0;
@@ -66,6 +67,10 @@ const ScreenWrapper = ({
             <KeyboardAwareScrollView
               nestedScrollEnabled={nestedScrollEnabled}
               refreshControl={refreshControl}
+              enableOnAndroid
+              extraScrollHeight={extraScrollHeight}
+              keyboardOpeningTime={0}
+              enableAutomaticScroll
               style={[
                 styles.container,
                 {

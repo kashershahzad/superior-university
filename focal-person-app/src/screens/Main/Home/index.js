@@ -428,16 +428,6 @@ const Home = () => {
             </MapView>
           </View>
         )}
-        <View style={styles.busLocationInfo}>
-          <View style={styles.dot} />
-          <CustomText
-            label="Bus #03 2.3km away"
-            color="#701A73"
-            fontSize={14}
-            fontFamily={fonts.medium}
-            removeTranslation
-          />
-        </View>
       </Animated.View>
 
       <Animated.View style={[styles.tabsWrap, getFadeUpStyle(anims.list, 24)]}>

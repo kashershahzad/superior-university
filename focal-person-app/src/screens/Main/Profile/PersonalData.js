@@ -1,6 +1,14 @@
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -29,6 +37,39 @@ const PersonalData = () => {
   const isFocused = useIsFocused();
   const [form, setForm] = useState(EMPTY_FORM);
   const [updating, setUpdating] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const nameRef = useRef(null);
+  const emailRef = useRef(null);
+  const phoneRef = useRef(null);
+  const badgeRef = useRef(null);
+  const shiftStartRef = useRef(null);
+  const shiftEndRef = useRef(null);
+  const scrollRef = useRef(null);
+  const fieldY = useRef({});
+  const focusedField = useRef(null);
+  const keyboardVisible = useRef(false);
+
+  const scrollToField = key => {
+    if (key === 'shift_end') {
+      scrollRef.current?.scrollToEnd({animated: true});
+      return;
+    }
+    const y = fieldY.current[key];
+    if (y == null) return;
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, y - 12),
+      animated: true,
+    });
+  };
+
+  const handleFieldFocus = key => {
+    focusedField.current = key;
+    if (keyboardVisible.current) {
+      scrollToField(key);
+      return;
+    }
+    setTimeout(() => scrollToField(key), Platform.OS === 'ios' ? 80 : 280);
+  };
 
   const syncForm = data => {
     setForm({
@@ -69,6 +110,33 @@ const PersonalData = () => {
     if (!isFocused) return;
     fetchPersonalData();
   }, [isFocused]);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, e => {
+      keyboardVisible.current = true;
+      setKeyboardHeight(e.endCoordinates?.height || 280);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      keyboardVisible.current = false;
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!keyboardHeight || !focusedField.current) return;
+    const timer = setTimeout(() => scrollToField(focusedField.current), 80);
+    return () => clearTimeout(timer);
+  }, [keyboardHeight]);
 
   const handleUpdate = async () => {
     if (updating) return;
@@ -117,7 +185,6 @@ const PersonalData = () => {
       paddingHorizontal={0}
       statusBarColor="transparent"
       translucent
-      scrollEnabled
       footerUnScrollable={() => {
         return (
           <View style={styles.footerContainer}>
@@ -162,64 +229,135 @@ const PersonalData = () => {
           </View>
         );
       }}>
-      <View style={styles.container}>
-        <CustomInput
-          placeholder="Enter Your Full Name"
-          value={form.name}
-          onChangeText={text => updateField('name', text)}
-          withLabel="Full Name"
-          borderColor="#98A2B3"
-          iconName="user"
-        />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.flex}
+          contentContainerStyle={[
+            styles.container,
+            {paddingBottom: keyboardHeight > 0 ? keyboardHeight + 24 : 24},
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}>
+          <View
+            onLayout={e => {
+              fieldY.current.name = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={nameRef}
+              placeholder="Enter Your Full Name"
+              value={form.name}
+              onChangeText={text => updateField('name', text)}
+              withLabel="Full Name"
+              borderColor="#98A2B3"
+              iconName="user"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              isFocus={() => handleFieldFocus('name')}
+              onSubmitEditing={() => emailRef.current?.focus()}
+            />
+          </View>
 
-        <CustomInput
-          placeholder="Enter Email"
-          value={form.email}
-          onChangeText={text => updateField('email', text)}
-          withLabel="Email"
-          borderColor="#98A2B3"
-          icon={Images.email}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <View
+            onLayout={e => {
+              fieldY.current.email = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={emailRef}
+              placeholder="Enter Email"
+              value={form.email}
+              onChangeText={text => updateField('email', text)}
+              withLabel="Email"
+              borderColor="#98A2B3"
+              icon={Images.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              isFocus={() => handleFieldFocus('email')}
+              onSubmitEditing={() => phoneRef.current?.focus()}
+            />
+          </View>
 
-        <CustomInput
-          placeholder="Enter Phone"
-          value={form.phone}
-          onChangeText={text => updateField('phone', text)}
-          withLabel="Phone"
-          borderColor="#98A2B3"
-          icon={Images.phone}
-          keyboardType="phone-pad"
-        />
+          <View
+            onLayout={e => {
+              fieldY.current.phone = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={phoneRef}
+              placeholder="Enter Phone"
+              value={form.phone}
+              onChangeText={text => updateField('phone', text)}
+              withLabel="Phone"
+              borderColor="#98A2B3"
+              icon={Images.phone}
+              keyboardType="phone-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              isFocus={() => handleFieldFocus('phone')}
+              onSubmitEditing={() => badgeRef.current?.focus()}
+            />
+          </View>
 
-        <CustomInput
-          placeholder="Enter Badge Number"
-          value={form.badge_number}
-          onChangeText={text => updateField('badge_number', text)}
-          withLabel="Badge Number"
-          borderColor="#98A2B3"
-          icon={Images.semester}
-        />
+          <View
+            onLayout={e => {
+              fieldY.current.badge_number = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={badgeRef}
+              placeholder="Enter Badge Number"
+              value={form.badge_number}
+              onChangeText={text => updateField('badge_number', text)}
+              withLabel="Badge Number"
+              borderColor="#98A2B3"
+              icon={Images.semester}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              isFocus={() => handleFieldFocus('badge_number')}
+              onSubmitEditing={() => shiftStartRef.current?.focus()}
+            />
+          </View>
 
-        <CustomInput
-          placeholder="Shift Start (HH:MM)"
-          value={form.shift_start}
-          onChangeText={text => updateField('shift_start', text)}
-          withLabel="Shift Start"
-          borderColor="#98A2B3"
-          icon={Images.semester}
-        />
+          <View
+            onLayout={e => {
+              fieldY.current.shift_start = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={shiftStartRef}
+              placeholder="Shift Start (HH:MM)"
+              value={form.shift_start}
+              onChangeText={text => updateField('shift_start', text)}
+              withLabel="Shift Start"
+              borderColor="#98A2B3"
+              icon={Images.semester}
+              returnKeyType="next"
+              blurOnSubmit={false}
+              isFocus={() => handleFieldFocus('shift_start')}
+              onSubmitEditing={() => shiftEndRef.current?.focus()}
+            />
+          </View>
 
-        <CustomInput
-          placeholder="Shift End (HH:MM)"
-          value={form.shift_end}
-          onChangeText={text => updateField('shift_end', text)}
-          withLabel="Shift End"
-          borderColor="#98A2B3"
-          icon={Images.semester}
-        />
-      </View>
+          <View
+            onLayout={e => {
+              fieldY.current.shift_end = e.nativeEvent.layout.y;
+            }}>
+            <CustomInput
+              ref={shiftEndRef}
+              placeholder="Shift End (HH:MM)"
+              value={form.shift_end}
+              onChangeText={text => updateField('shift_end', text)}
+              withLabel="Shift End"
+              borderColor="#98A2B3"
+              icon={Images.semester}
+              returnKeyType="done"
+              isFocus={() => handleFieldFocus('shift_end')}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 };
@@ -249,8 +387,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  container: {
+  flex: {
     flex: 1,
+  },
+  container: {
     paddingVertical: 20,
     paddingHorizontal: 20,
     gap: 6,
@@ -258,7 +398,7 @@ const styles = StyleSheet.create({
   footerContainer: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 20,
-    paddingBottom: 26,
+    paddingBottom: 36,
     paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#D0D5DD',

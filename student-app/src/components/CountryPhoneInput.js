@@ -7,18 +7,23 @@ import CustomText from "./CustomText";
 import { COLORS } from "../utils/COLORS";
 import fonts from "../assets/fonts";
 
-const CountryPhoneInput = ({
+const CountryPhoneInput = React.forwardRef(({
   value = "+92",
   setValue,
   withLabel,
   onEndEditing,
   error,
   borderColor = "#98A2B3",
-}) => {
+  returnKeyType,
+  onSubmitEditing,
+  blurOnSubmit = true,
+  isFocus,
+}, forwardedRef) => {
   const [isFocused, setIsFocused] = useState(false);
   const ref = useRef();
   const handleFocus = () => {
     setIsFocused(true);
+    isFocus?.();
   };
   const handleBlur = () => {
     setIsFocused(false);
@@ -49,11 +54,15 @@ const CountryPhoneInput = ({
           { backgroundColor: inputBackgroundColor },
         ]}
         textInputProps={{
+          ref: forwardedRef,
           placeholderTextColor: COLORS.inputLabel,
           maxLength: 12,
           onFocus: handleFocus,
           onBlur: handleBlur,
           onEndEditing,
+          returnKeyType,
+          onSubmitEditing,
+          blurOnSubmit,
         }}
         flagButtonStyle={styles.flagButton}
         countryPickerButtonStyle={[
@@ -86,7 +95,10 @@ const CountryPhoneInput = ({
       )}
     </View>
   );
-};
+});
+
+CountryPhoneInput.displayName = 'CountryPhoneInput';
+
 export default CountryPhoneInput;
 const styles = StyleSheet.create({
   phoneInput: {

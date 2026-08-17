@@ -17,6 +17,7 @@ import { COLORS } from '../../../utils/COLORS';
 import GradientButton from '../Home/GradientButton';
 import ModalBox from '../Home/ModalBox';
 import { get } from '../../../services/ApiRequest';
+import { getCurrentCoords } from '../../../utils/GetLocation';
 
 const DEFAULT_BUS_LOCATION = {
     latitude: 31.4704,
@@ -56,7 +57,11 @@ const Fees = () => {
 
     const fetchTracking = async () => {
         try {
-            const res = await get('student/transport/tracking');
+            const coords = await getCurrentCoords();
+            const res = await get('student/transport/tracking', {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+            });
             if (res?.data?.success) {
                 setDistanceKm(res.data.data?.distance_km ?? null);
                 setDisplayName(res.data.data?.display_name ?? null);
@@ -139,10 +144,11 @@ const Fees = () => {
                                 <View style={styles.busLocationInfo}>
                                     <View style={styles.dot} />
                                     <CustomText
-                                        label={fee?.fee_status === 'unpaid' ? 'Pay fee to unlock track' : `${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
+                                        label={fee?.fee_status === 'unpaid' ? 'Pay fee to unlock track' : `${displayName || 'Bus'} ${distanceKm == null ? '0' : distanceKm}KM away`}
                                         color="#701A73"
                                         fontSize={12}
                                         fontFamily={fonts.medium}
+                                        removeTranslation
                                     />
                                 </View>
                             ) : null}
