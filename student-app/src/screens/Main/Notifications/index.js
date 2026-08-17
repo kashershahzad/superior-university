@@ -1,133 +1,153 @@
-import {ActivityIndicator, RefreshControl, FlatList, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
-import moment from 'moment';
+import {ActivityIndicator, RefreshControl, FlatList, View, StyleSheet} from 'react-native';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
 
-import {useSocket} from '../../../components/SocketProvider';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import NoDataFound from '../../../components/NoDataFound';
 import Header from '../../../components/Header';
+import CustomText from '../../../components/CustomText';
 
 import Item from './molecules/Item';
 
 import {get} from '../../../services/ApiRequest';
-import {Images} from '../../../assets/images';
 import {COLORS} from '../../../utils/COLORS';
+import fonts from '../../../assets/fonts';
 
 const Notifications = () => {
-  const socket = useSocket();
+  const isFocused = useIsFocused();
   const navigation = useNavigation();
 
   const [data, setData] = useState([]);
-  const [lastId, setLastId] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [bottomLoader, setBottomLoader] = useState(false);
 
-  const handlePress = item => {
-    if (item?.type === 'message') {
-      navigation.navigate('InboxScreen', {data: item?.user});
-    } else if (item?.type === 'offer') {
-      navigation.navigate('TabStack', {
-        screen: 'Requests',
-        params: {data: item},
-      });
-    } else if (item?.type === 'order') {
-      navigation.navigate('TabStack', {
-        screen: 'MyRide',
-        params: {data: item},
-      });
-    } else if (item?.type === 'schedule' || item?.type === 'proposal') {
-      navigation.navigate('ScheduleDetail', {id: item?.schedule});
-    } else if (item?.type === 'contract') {
-      navigation.navigate('ViewContract', {
-        id: item?.order?._id,
-      });
-    }
-  };
-
-  const fetchData = async (isRefresh = false) => {
+  const fetchNotifications = useCallback(async (nextPage = 1, isRefresh = false) => {
     try {
-      if (isRefresh) {
-        setLoading(true);
-        setLastId('');
-      }
-      const endpoint = lastId
-        ? `notification/all/${lastId}`
-        : `notification/all`;
-      const res = await get(endpoint);
+      if (isRefresh) setRefreshing(true);
+      else if (nextPage === 1) setLoading(true);
+      else setBottomLoader(true);
 
-      if (res.data?.success) {
-        const newNotifications = res.data?.notifications;
+      const res = await get('student/notifications', {
+        per_page: 20,
+        unread_only: 0,
+        page: nextPage,
+      });
 
-        if (newNotifications.length > 0) {
-          setData(
-            isRefresh ? newNotifications : [...data, ...newNotifications],
-          );
-          setLastId(newNotifications[newNotifications.length - 1]._id);
-        }
+      if (res?.data?.success) {
+        const payload = res.data?.data || {};
+        const items = payload.items || [];
+
+        setUnreadCount(payload.unread_count || 0);
+        setLastPage(payload.pagination?.last_page || 1);
+        setPage(payload.pagination?.current_page || nextPage);
+        setData(prev => (nextPage === 1 ? items : [...prev, ...items]));
       }
-      setLoading(false);
-      setBottomLoader(false);
     } catch (error) {
+      console.log('Notifications fetch error:', error);
+    } finally {
       setLoading(false);
+      setRefreshing(false);
       setBottomLoader(false);
-      console.log('err in getting notifications===>', error.response.data);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchNotifications(1, false);
+    }
+  }, [isFocused, fetchNotifications]);
+
+  const handleLoadMore = () => {
+    if (!bottomLoader && !loading && page < lastPage) {
+      fetchNotifications(page + 1);
     }
   };
 
-  const fetchMoreData = async () => {
-    if (data?.length !== 0 && !bottomLoader) {
-      setBottomLoader(true);
-      await fetchData(false);
+  const handlePress = item => {
+    if (item?.type === 'fee') {
+      navigation.navigate('Fees');
     }
   };
-
-  // useEffect(() => {
-  //   fetchData(true);
-  // }, []);
-  // useEffect(() => {
-  //   if (socket) {
-  //     socket.emit("seen-notification", {});
-  //   }
-  // }, [socket]);
 
   return (
-    <ScreenWrapper headerUnScrollable={() => <Header title="Notifications" />}>
-      <FlatList
-        data={data}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => {}}
-            tintColor={COLORS.primaryColor}
-          />
-        }
-        ListFooterComponent={
-          bottomLoader ? (
-            <View style={{marginBottom: 15}}>
-              <ActivityIndicator size="large" color={COLORS.primaryColor} />
-            </View>
-          ) : null
-        }
-        onEndReached={fetchMoreData}
-        onEndReachedThreshold={0.5}
-        ListEmptyComponent={
-          loading ? null : <NoDataFound title="No Notification Found" />
-        }
-        renderItem={({item}) => (
-          <Item
-            key={item}
-            title={item?.title}
-            time={moment(item?.createdAt).fromNow()}
-            desc={item?.description}
-            img={Images?.placeholderUser}
-            onPress={() => handlePress(item)}
-          />
-        )}
-      />
+    <ScreenWrapper
+      backgroundColor="#FAFAFA"
+      statusBarColor="#FAFAFA"
+      headerUnScrollable={() => (
+        <View>
+          <Header title="Notifications" hideBackArrow />
+          {unreadCount > 0 ? (
+            <CustomText
+              label={`${unreadCount} unread`}
+              fontSize={13}
+              fontFamily={fonts.medium}
+              color={COLORS.primaryColor}
+              textAlign="center"
+              marginBottom={8}
+              removeTranslation
+            />
+          ) : null}
+        </View>
+      )}>
+      {loading ? (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={COLORS.primaryColor} />
+        </View>
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={item => String(item.id)}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchNotifications(1, true)}
+              tintColor={COLORS.primaryColor}
+            />
+          }
+          ListFooterComponent={
+            bottomLoader ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="small" color={COLORS.primaryColor} />
+              </View>
+            ) : null
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.4}
+          ListEmptyComponent={
+            <NoDataFound
+              title="No Notification Found"
+              desc="You don’t have any notifications yet."
+            />
+          }
+          renderItem={({item}) => (
+            <Item item={item} onPress={() => handlePress(item)} />
+          )}
+        />
+      )}
     </ScreenWrapper>
   );
 };
 
 export default Notifications;
+
+const styles = StyleSheet.create({
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  list: {
+    paddingTop: 8,
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
+  footer: {
+    marginVertical: 16,
+  },
+});
