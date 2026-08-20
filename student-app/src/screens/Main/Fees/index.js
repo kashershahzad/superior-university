@@ -45,7 +45,8 @@ const Fees = () => {
         try {
             const res = await get('student/fee');
             if (res?.data?.success) {
-                setFee(res.data.data?.fee_status);
+                // Full payload: { fee_status, details: { route, bus, ... } }
+                setFee(res.data.data || null);
             }
         } catch (e) {
             console.log('Fee fetch error:', e);
@@ -143,7 +144,12 @@ const Fees = () => {
                                 <View style={styles.busLocationInfo}>
                                     <View style={styles.dot} />
                                     <CustomText
-                                        label={fee === 'pending' ? 'Pay fee to unlock track' : `Bus ${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
+                                        label={
+                                            (fee?.fee_status || status) === 'pending' ||
+                                            (fee?.fee_status || status) === 'unpaid'
+                                                ? 'Pay fee to unlock track'
+                                                : `Bus ${displayName || ''} ${distanceKm == null ? '0' : distanceKm}KM away`
+                                        }
                                         color="#701A73"
                                         fontSize={12}
                                         fontFamily={fonts.medium}
@@ -155,11 +161,15 @@ const Fees = () => {
                         <InfoCard
                             title="Fee Details"
                             titleStatus={fee?.details?.status}
-                            titleStatusType={fee?.details?.status === 'active' ? 'done' : 'pending'}
+                            titleStatusType={
+                                fee?.details?.status === 'active' || fee?.fee_status === 'paid'
+                                    ? 'done'
+                                    : 'pending'
+                            }
                             items={[
-                                { item: 'Route', itemValue: fee?.details?.route },
-                                { item: 'Bus', itemValue: fee?.details?.bus },
-                                { item: 'Submitted Date', itemValue: fee?.details?.submitted_date },
+                                { item: 'Route', itemValue: fee?.details?.route || '-' },
+                                { item: 'Bus', itemValue: fee?.details?.bus || '-' },
+                                { item: 'Submitted Date', itemValue: fee?.details?.submitted_date || '-' },
                             ]}
                         />
                     </View>
