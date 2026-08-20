@@ -370,7 +370,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
               label={
                 feeStatus === 'unpaid'
                   ? 'Pay fee to unlock track'
-                  : `Bus#${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`
+                  : `Bus ${busLabel} ${distanceKm == null ? '0' : distanceKm}KM away`
               }
               color="#701A73"
               fontSize={12}

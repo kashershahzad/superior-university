@@ -1,10 +1,9 @@
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, View, Image} from 'react-native';
 import React from 'react';
 
 import CustomButton from './CustomButton';
 import CustomModal from './CustomModal';
 import CustomText from './CustomText';
-import ImageFast from './ImageFast';
 
 import {Images} from '../assets/images';
 import {COLORS} from '../utils/COLORS';
@@ -21,7 +20,7 @@ const SuccessModal = ({
   return (
     <CustomModal isVisible={isVisible} onDisable={onDisable}>
       <View style={styles.mainContainer}>
-        <ImageFast
+        <Image
           source={Images.greenCheck}
           style={styles.img}
           resizeMode="contain"

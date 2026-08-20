@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -6,7 +6,6 @@ import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import VerificationContent from './VerificationStatusCard';
@@ -40,7 +39,7 @@ const Verification = ({ route }) => {
                   }
                   navigation.navigate('Profile');
                 }}>
-                <ImageFast
+                <Image
                   source={Images.backArrow}
                   style={{ width: 18, height: 18 }}
                 />

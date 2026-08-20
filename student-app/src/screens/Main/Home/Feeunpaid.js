@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl } from 'react-native';
+import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -99,9 +99,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
     ],
   });
 
-  const profileSource = user.profile_photo
-    ? { uri: user.profile_photo }
-    : Images.placeholderUser;
+  const profilePhoto = user.profile_photo;
 
   const serviceItems = [
     { item: 'Route', itemValue: transport.route || '-' },
@@ -150,11 +148,19 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
                 onPress={() => navigation.navigate('Profile')}
               >
                 <View style={styles.profileContainer}>
-                  <ImageFast
-                    source={profileSource}
-                    style={styles.profileImage}
-                    resizeMode="contain"
-                  />
+                  {profilePhoto ? (
+                    <ImageFast
+                      source={{ uri: profilePhoto }}
+                      style={styles.profileImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Image
+                      source={Images.placeholderUser}
+                      style={styles.profileImage}
+                      resizeMode="contain"
+                    />
+                  )}
                   <View>
                     <View
                       style={{
@@ -169,7 +175,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
                         color="#2D2D2D"
                       />
                       {user.is_verified ? (
-                        <ImageFast
+                        <Image
                           source={Images.verfied}
                           style={styles.verfiedImage}
                           resizeMode="contain"
@@ -190,18 +196,22 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
                   activeOpacity={0.8}
                   onPress={() => navigation.navigate('Profile')}
                 >
-                  <ImageFast
+                  <Image
                     source={Images.profile}
                     style={styles.notificationImage}
                     resizeMode="contain"
                   />
                 </TouchableOpacity>
-                <ImageFast
-                  source={Images.notification}
-                  style={styles.notificationImage}
-                  resizeMode="contain"
+                <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={() => navigation.navigate('Reciepts')}
-                />
+                >
+                  <Image
+                    source={Images.notification}
+                    style={styles.notificationImage}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
               </View>
             </Animated.View>
           </View>
@@ -209,7 +219,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
       }}>
       <View style={styles.container}>
         <Animated.View style={fadeUpStyle(anims.cover, 18)}>
-          <ImageFast
+          <Image
             source={Images.cover2}
             style={{ height: 120, width: '100%', marginBottom: 4 }}
             resizeMode="contain"

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Image } from 'react-native';
 import React from 'react';
 
 import CustomText from '../../../components/CustomText';
@@ -57,9 +57,6 @@ const StudentCard = ({ card }) => {
     const issueDate = card?.issue_date;
     const validUpto = card?.valid_until;
     const profilePhoto = card?.student?.profile_photo;
-    const avatar = hasValue(profilePhoto)
-        ? { uri: profilePhoto }
-        : Images.profileimage;
     const footerText = card?.valid_for;
     const qrPayload = card?.qr_payload;
     const semesterLabel = hasValue(program)
@@ -72,7 +69,7 @@ const StudentCard = ({ card }) => {
         <View style={styles.card}>
             {/* header */}
             <View style={styles.header}>
-                <ImageFast
+                <Image
                     source={Images.studentCardHeader}
                     style={styles.studentCardHeader}
                     resizeMode="cover"
@@ -81,7 +78,11 @@ const StudentCard = ({ card }) => {
             {/* body */}
             <View style={styles.body}>
                 <View style={styles.profileRow}>
-                    <ImageFast source={avatar} style={styles.avatar} />
+                    {hasValue(profilePhoto) ? (
+                        <ImageFast source={{ uri: profilePhoto }} style={styles.avatar} />
+                    ) : (
+                        <Image source={Images.profileimage} style={styles.avatar} />
+                    )}
                     <View style={styles.profileInfo}>
                         {hasValue(name) ? (
                             <CustomText label={name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
@@ -124,11 +125,11 @@ const StudentCard = ({ card }) => {
             <View style={styles.footer}>
                 <View style={styles.footerContent}>
                     <View style={styles.footerLeft}>
-                        <ImageFast source={Images.busLogo} style={styles.busIcon} />
+                        <Image source={Images.busLogo} style={styles.busIcon} />
                         <CustomText label={footerText} color="#fff" fontSize={12} />
                     </View>
                     <View style={styles.footerRight}>
-                        <ImageFast source={Images.signature} style={styles.signature} />
+                        <Image source={Images.signature} style={styles.signature} />
                     </View>
                 </View>
             </View>

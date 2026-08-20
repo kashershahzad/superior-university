@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform, Image, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -9,13 +9,11 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import { COLORS } from '../../../utils/COLORS';
 
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
 import { useRoute } from '@react-navigation/native';
 
-import { Linking } from 'react-native';
 import { get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 
@@ -207,7 +205,7 @@ const FeeVoucher = () => {
                   }
                   navigation.navigate('Home');
                 }}>
-                <ImageFast
+                <Image
                   source={Images.backArrow}
                   style={{ width: 18, height: 18 }}
                 />
@@ -221,7 +219,7 @@ const FeeVoucher = () => {
       <View style={styles.container}>
         <View style={styles.cardWrapper}>
           <View style={styles.voucherHeader}>
-            <ImageFast
+            <Image
               source={Images.calender}
               style={{ width: 16, height: 16 }}
             />
@@ -235,7 +233,7 @@ const FeeVoucher = () => {
               fontFamily={fonts.medium}
               color="#475467"
             />
-            <ImageFast
+            <Image
               source={Images.voucher}
               style={styles.voucherPreview}
               resizeMode="contain"

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Platform,
   PixelRatio,
+  Image,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import React, {useState, useEffect, useRef} from 'react';
@@ -16,7 +17,6 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import {COLORS} from '../../../utils/COLORS';
 
-import ImageFast from '../../../components/ImageFast';
 import {Images} from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
@@ -149,7 +149,7 @@ const GenerateCard = () => {
                   }
                   navigation.navigate('Home');
                 }}>
-                <ImageFast
+                <Image
                   source={Images.backArrow}
                   style={{width: 18, height: 18}}
                 />
@@ -169,7 +169,7 @@ const GenerateCard = () => {
       ) : (
         <View style={styles.container}>
           <View style={styles.cardInfoContainer}>
-            <ImageFast
+            <Image
               source={Images.check}
               style={{width: 16, height: 16}}
               resizeMode="contain"

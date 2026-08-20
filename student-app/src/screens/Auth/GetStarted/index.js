@@ -1,12 +1,11 @@
 import {useDispatch} from 'react-redux';
 import React, {useEffect} from 'react';
-import {View} from 'react-native';
+import {View, Image} from 'react-native';
 
 import TermsAndConditionsText from '../../../components/TermsAndConditionsText';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomButton from '../../../components/CustomButton';
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 
 import {setLocation} from '../../../store/reducer/usersSlice';
 import {setOnBoarding} from '../../../store/reducer/AuthConfig';
@@ -48,7 +47,7 @@ const GetStarted = ({navigation}) => {
           </View>
         </>
       )}>
-      <ImageFast
+      <Image
         resizeMode="contain"
         source={Images.logo}
         style={{height: 362, width: 373}}

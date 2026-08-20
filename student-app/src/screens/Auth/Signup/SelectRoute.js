@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { get } from '../../../services/ApiRequest';
 import CustomModal from '../../../components/CustomModal';
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
@@ -114,12 +113,12 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
                 />
 
                 <View style={styles.metaRow}>
-                  <ImageFast source={Images.busIcon} style={styles.metaIcon} />
+                  <Image source={Images.busIcon} style={styles.metaIcon} />
                   <CustomText label={busDisplay || 'N/A'} removeTranslation fontSize={12} color="#667085" />
                 </View>
 
                 <View style={styles.metaRow}>
-                  <ImageFast source={Images.monthlyFee} style={styles.metaIcon} />
+                  <Image source={Images.monthlyFee} style={styles.metaIcon} />
                   <CustomText
                     label={`PKR ${route.monthly_fee ?? 0}/month`}
                     removeTranslation
@@ -129,7 +128,7 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
                 </View>
 
                 <View style={styles.metaRow}>
-                  <ImageFast source={Images.clock} style={styles.metaIcon} />
+                  <Image source={Images.clock} style={styles.metaIcon} />
                   <CustomText
                     label={route.pickup_time || 'N/A'}
                     removeTranslation

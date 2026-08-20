@@ -4,11 +4,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import { COLORS } from '../../../utils/COLORS';
@@ -51,7 +51,7 @@ const SmallStatusCard = ({ variant, title, subtitle }) => {
         },
       ]}>
       <View style={styles.iconWrap}>
-        <ImageFast source={variantStyle.image} style={styles.cardIcon} />
+        <Image source={variantStyle.image} style={styles.cardIcon} />
       </View>
       <View style={styles.textWrap}>
         <CustomText
@@ -203,7 +203,7 @@ const VerificationContent = ({ onStatusChange }) => {
     <View style={styles.content}>
       <View style={styles.top}>
         <View style={styles.heroWrap}>
-          <ImageFast
+          <Image
             source={
               success ? Images.verificationSuccess : Images.verificationPending
             }

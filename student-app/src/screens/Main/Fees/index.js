@@ -1,9 +1,8 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 
 import { Images } from '../../../assets/images';
-import ImageFast from '../../../components/ImageFast';
 import CustomText from '../../../components/CustomText';
 import fonts from '../../../assets/fonts';
 import MapView, { Marker } from 'react-native-maps';
@@ -98,7 +97,7 @@ const Fees = () => {
                                     onPress={() => {
                                         navigation.goBack();
                                     }}>
-                                    <ImageFast
+                                    <Image
                                         source={Images.backArrow}
                                         style={{ width: 18, height: 18 }}
                                     />
@@ -110,7 +109,7 @@ const Fees = () => {
                 }}>
                 <View style={styles.container}>
                     <View>
-                        <ImageFast
+                        <Image
                             source={Images.serviceFee}
                             style={{ height: 130, width: '100%' }}
                             resizeMode="contain"
@@ -144,7 +143,7 @@ const Fees = () => {
                                 <View style={styles.busLocationInfo}>
                                     <View style={styles.dot} />
                                     <CustomText
-                                        label={fee?.fee_status === 'unpaid' ? 'Pay fee to unlock track' : `${displayName || 'Bus'} ${distanceKm == null ? '0' : distanceKm}KM away`}
+                                        label={`Bus ${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
                                         color="#701A73"
                                         fontSize={12}
                                         fontFamily={fonts.medium}

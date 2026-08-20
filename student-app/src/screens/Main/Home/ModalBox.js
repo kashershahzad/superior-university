@@ -8,6 +8,7 @@ import {
   Keyboard,
   Platform,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +19,6 @@ import CustomModal from '../../../components/CustomModal';
 import CustomText from '../../../components/CustomText';
 import CustomInput from '../../../components/CustomInput';
 import CustomButton from '../../../components/CustomButton';
-import ImageFast from '../../../components/ImageFast';
 import InfoCard from './InfoCard';
 import GradientButton from './GradientButton';
 
@@ -210,7 +210,7 @@ const UploadContent = ({ onUpload, onClose }) => {
         onPress={handleBrowse}
         activeOpacity={0.8}
         disabled={uploading}>
-        <ImageFast source={Images.uploadIcon} style={styles.uploadIcon} resizeMode="contain" />
+        <Image source={Images.uploadIcon} style={styles.uploadIcon} resizeMode="contain" />
         <CustomText
           label="Drag & drop files or "
           fontSize={14}
@@ -249,7 +249,7 @@ const UploadContent = ({ onUpload, onClose }) => {
               style={{ flex: 1 }}
             />
             <TouchableOpacity onPress={handleRemoveFile} hitSlop={10} disabled={uploading}>
-              <ImageFast source={Images.closeIcon} style={styles.closeIcon} resizeMode="contain" />
+              <Image source={Images.closeIcon} style={styles.closeIcon} resizeMode="contain" />
             </TouchableOpacity>
           </View>
           {(uploading || progress > 0) ? (
@@ -366,7 +366,7 @@ const ModalBox = ({
         ]}
       >
         <View style={styles.topImgWrap}>
-          <ImageFast source={topImg} style={styles.topImg} resizeMode="contain" />
+          <Image source={topImg} style={styles.topImg} resizeMode="contain" />
         </View>
         {type === 'upload' && (
           <CustomText

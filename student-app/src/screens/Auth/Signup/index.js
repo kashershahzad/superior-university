@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, Keyboard, Dimensions, Platform, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Keyboard, Dimensions, Platform, TextInput, Image } from 'react-native';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
-import ImageFast from '../../../components/ImageFast';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomButton from '../../../components/CustomButton';
 import CustomInput from '../../../components/CustomInput';
@@ -461,7 +460,7 @@ const Signup = ({ navigation }) => {
         }}>
 
         <View style={styles.header}>
-          <ImageFast source={Images.signin_img} style={styles.logo} />
+          <Image source={Images.signin_img} style={styles.logo} />
           <CustomText
             label="Registration"
             fontSize={20}

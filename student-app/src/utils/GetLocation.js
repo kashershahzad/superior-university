@@ -2,6 +2,52 @@ import {Alert, Linking, Platform, PermissionsAndroid} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {useEffect, useState} from 'react';
 
+const requestLocationPermission = async () => {
+  if (Platform.OS === 'android') {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: 'Location Permission',
+        message: 'This app needs your location to track the bus.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  }
+
+  return new Promise(resolve => {
+    Geolocation.requestAuthorization(
+      () => resolve(true),
+      () => resolve(false),
+    );
+  });
+};
+
+const getPosition = () =>
+  new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      resolve,
+      reject,
+      {
+        enableHighAccuracy: false,
+        timeout: 30000,
+        maximumAge: 60000,
+      },
+    );
+  });
+
+export const getCurrentCoords = async () => {
+  const allowed = await requestLocationPermission();
+  if (!allowed) {
+    throw new Error('Location permission denied');
+  }
+
+  const position = await getPosition();
+  return position.coords;
+};
+
 const GetLocation = () => {
   const [locationData, setLocationData] = useState({});
 

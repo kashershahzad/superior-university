@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Image } from "react-native";
 import React from "react";
 
 import CustomText from "../../../../components/CustomText";
@@ -15,12 +15,20 @@ const Item = ({ source, onPress, name, unseen, lastMsg, time }) => {
       activeOpacity={0.6}
       style={styles.mainContainer}
     >
-      <ImageFast
-        source={source ? { uri: source } : Images.placeholderUser}
-        style={styles.image}
-        resizeMode="cover"
-        isView
-      />
+      {source ? (
+        <ImageFast
+          source={{ uri: source }}
+          style={styles.image}
+          resizeMode="cover"
+          isView
+        />
+      ) : (
+        <Image
+          source={Images.placeholderUser}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      )}
 
       <View style={styles.rightContainer}>
         <View style={styles.row}>

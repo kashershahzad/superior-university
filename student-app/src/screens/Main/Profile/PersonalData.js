@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Keyboard, Dimensions, Platform, TextInput } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Keyboard, Dimensions, Platform, TextInput, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -7,7 +7,6 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
 import { COLORS } from '../../../utils/COLORS';
 
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
@@ -222,7 +221,7 @@ const PersonalData = () => {
                   }
                   navigation.navigate('Profile');
                 }}>
-                <ImageFast
+                <Image
                   source={Images.backArrow}
                   style={{ width: 18, height: 18 }}
                 />

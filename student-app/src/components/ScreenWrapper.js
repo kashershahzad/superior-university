@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
   Platform,
+  Image,
 } from "react-native";
 
 import ImageFast from "./ImageFast";
@@ -89,16 +90,29 @@ const ScreenWrapper = ({
   return backgroundImage ? (
     <View style={{ width, height: height + 70, zIndex: 999 }}>
       {content()}
-      <ImageFast
-        source={backgroundImage}
-        style={{
-          width,
-          height: height + 70,
-          position: "absolute",
-          zIndex: -1,
-        }}
-        resizeMode="cover"
-      />
+      {backgroundImage?.uri ? (
+        <ImageFast
+          source={backgroundImage}
+          style={{
+            width,
+            height: height + 70,
+            position: "absolute",
+            zIndex: -1,
+          }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Image
+          source={backgroundImage}
+          style={{
+            width,
+            height: height + 70,
+            position: "absolute",
+            zIndex: -1,
+          }}
+          resizeMode="cover"
+        />
+      )}
     </View>
   ) : (
     content()
