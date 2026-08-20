@@ -148,8 +148,6 @@ const PersonalData = () => {
       { key: 'Phone', value: phone },
       { key: 'Program', value: program },
       { key: 'Semester', value: semester },
-      { key: 'Session', value: session },
-      { key: 'Blood Group', value: bloodGroup },
     ];
 
     const emptyField = fields.find(field => !String(field.value || '').trim());
@@ -330,7 +328,7 @@ const PersonalData = () => {
             placeholder="Enter Session"
             value={session}
             onChangeText={text => setSession(text)}
-            withLabel="Session"
+            withLabel="Session (Optional)"
             borderColor="#98A2B3"
             icon={Images.semester}
             editable={false}
@@ -341,7 +339,7 @@ const PersonalData = () => {
             placeholder="Enter Blood Group"
             value={bloodGroup}
             onChangeText={text => setBloodGroup(text)}
-            withLabel="Blood Group"
+            withLabel="Blood Group (Optional)"
             borderColor="#98A2B3"
             iconName="user"
             returnKeyType="done"
