@@ -45,7 +45,7 @@ const Fees = () => {
         try {
             const res = await get('student/fee');
             if (res?.data?.success) {
-                setFee(res.data.data);
+                setFee(res.data.data?.fee_status);
             }
         } catch (e) {
             console.log('Fee fetch error:', e);
@@ -143,7 +143,7 @@ const Fees = () => {
                                 <View style={styles.busLocationInfo}>
                                     <View style={styles.dot} />
                                     <CustomText
-                                        label={`Bus ${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
+                                        label={fee === 'pending' ? 'Pay fee to unlock track' : `Bus ${displayName} ${distanceKm == null ? '0' : distanceKm}KM away`}
                                         color="#701A73"
                                         fontSize={12}
                                         fontFamily={fonts.medium}
