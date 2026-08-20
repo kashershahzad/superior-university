@@ -1,11 +1,10 @@
-import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl, Image } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import InfoCard from './InfoCard';
 import ModalBox from './ModalBox';
@@ -132,25 +131,42 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
     }
   };
 
-  const fetchTracking = async () => {
+  const trackingInFlight = useRef(false);
+
+  const fetchTracking = useCallback(async () => {
+    if (trackingInFlight.current) {
+      return;
+    }
+    trackingInFlight.current = true;
     try {
       const coords = await getCurrentCoords();
+      console.log('Tracking API coords:', {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
       const res = await get('student/transport/tracking', {
         latitude: coords.latitude,
         longitude: coords.longitude,
       });
+      console.log('Tracking API response:', res?.data ?? res);
       if (res?.data?.success) {
         setDistanceKm(res.data.data?.distance_km ?? null);
       }
     } catch (e) {
       console.log('Tracking error:', e);
+    } finally {
+      trackingInFlight.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (!isFocused) return;
+    if (!isFocused) {
+      return undefined;
+    }
     fetchTracking();
-  }, [isFocused]);
+    const intervalId = setInterval(fetchTracking, 5000);
+    return () => clearInterval(intervalId);
+  }, [isFocused, fetchTracking]);
 
   return (
     <ScreenWrapper
@@ -190,7 +206,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
               fontFamily={fonts.medium}
             />
           </View>
-          <ImageFast
+          <Image
             source={Images.bus}
             style={styles.busImage}
             resizeMode="contain"
@@ -231,13 +247,15 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
               fontFamily={fonts.regular}
             />
             <View style={styles.infoContainer}>
-              <TouchableOpacity style={styles.infoWrapper} activeOpacity={0.8} onPress={() => navigation.navigate('Fees', {
-                status: feeStatus,
-                unlockText: feeStatus === 'unpaid' ? 'Pay fee to unlock track' : `${busLabel} nearby`,
-              })}>
+              <TouchableOpacity
+                style={styles.infoWrapper}
+                activeOpacity={0.8}
+                onPress={() =>
+                  navigation.navigate('Verification', { status: 'success' })
+                }>
                 <View>
                   <View style={styles.feeRow}>
-                    <ImageFast
+                    <Image
                       source={Images.fee}
                       style={styles.feeImage}
                       resizeMode="contain"
@@ -263,7 +281,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
 
               <View style={styles.infoWrapper}>
                 <View style={styles.feeRow}>
-                  <ImageFast
+                  <Image
                     source={Images.bus2}
                     style={styles.feeImage}
                     resizeMode="contain"
@@ -288,7 +306,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
 
               <View style={styles.infoWrapper}>
                 <View style={styles.feeRow}>
-                  <ImageFast
+                  <Image
                     source={Images.timer}
                     style={styles.feeImage}
                     resizeMode="contain"
@@ -398,7 +416,7 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
             }
           }}>
           <View style={styles.footerContainer}>
-            <ImageFast
+            <Image
               source={Images.discontinue}
               style={styles.discontinueIcon}
               resizeMode="contain"

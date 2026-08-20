@@ -217,9 +217,18 @@ const Profile = () => {
       return;
     }
     if (actionKey === 'fee-status') {
-      navigation.navigate('Verification', {
-        status: profile?.fee_status || 'pending',
-      });
+      const feeStatus =
+        profile?.account?.fee_status || profile?.fee_status || 'unpaid';
+
+      if (feeStatus === 'paid') {
+        navigation.navigate('Verification', { status: 'success' });
+      } else {
+        navigation.navigate('Fees', {
+          status: feeStatus,
+          isMapLocked: true,
+          unlockText: 'Pay fee to unlock track',
+        });
+      }
     }
     if (actionKey === 'password') {
       navigation.navigate('ChangePassword');
@@ -332,12 +341,6 @@ const Profile = () => {
     { key: 'settings', title: 'SETTINGS', rows: settingsRows },
   ];
 
-  const avatarSource = avatarUri
-    ? { uri: avatarUri }
-    : profile?.profile_photo
-      ? { uri: profile.profile_photo }
-      : Images.profileimage;
-
   if (loading && !profile) {
     return (
       <View style={styles.loader}>
@@ -363,7 +366,7 @@ const Profile = () => {
             }
             navigation.navigate('Home');
           }}>
-          <ImageFast
+          <Image
             source={Images.backArrow}
             style={{ width: 16, height: 16 }}
           />
@@ -395,11 +398,19 @@ const Profile = () => {
                 onPress={uploadingPhoto ? undefined : openPickerModal}
                 disabled={uploadingPhoto}
                 style={styles.avatarTouch}>
-                <Image
-                  source={avatarSource}
-                  style={styles.avatar}
-                  resizeMode="cover"
-                />
+                {avatarUri || profile?.profile_photo ? (
+                  <ImageFast
+                    source={{ uri: avatarUri || profile.profile_photo }}
+                    style={styles.avatar}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Image
+                    source={Images.profileimage}
+                    style={styles.avatar}
+                    resizeMode="cover"
+                  />
+                )}
                 {uploadingPhoto ? (
                   <View style={styles.avatarLoader}>
                     <ActivityIndicator color={COLORS.white} />
