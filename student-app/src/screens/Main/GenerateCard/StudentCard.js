@@ -10,16 +10,23 @@ import fonts from '../../../assets/fonts';
 import QRCode from 'react-native-qrcode-svg';
 
 
-const DetailRow = ({ label, value }) => (
-    <View style={styles.detailRow}>
-        <View style={styles.detailRowLabel}>
-            <CustomText label={label} fontSize={13} fontFamily={fonts.medium} color="#45495A" />
+const hasValue = value =>
+    value !== null && value !== undefined && String(value).trim() !== '';
+
+const DetailRow = ({ label, value }) => {
+    if (!hasValue(value)) return null;
+
+    return (
+        <View style={styles.detailRow}>
+            <View style={styles.detailRowLabel}>
+                <CustomText label={label} fontSize={13} fontFamily={fonts.medium} color="#45495A" />
+            </View>
+            <View style={styles.detailRowValue}>
+                <CustomText label={value} fontSize={13} fontFamily={fonts.medium} color="#283342" />
+            </View>
         </View>
-        <View style={styles.detailRowValue}>
-            <CustomText label={value} fontSize={13} fontFamily={fonts.medium} color="#283342" />
-        </View>
-    </View>
-);
+    );
+};
 
 const getOrdinal = (n) => {
     const num = Number(n);
@@ -49,29 +56,49 @@ const StudentCard = ({ card }) => {
     const bloodGroup = card?.student?.blood_group;
     const issueDate = card?.issue_date;
     const validUpto = card?.valid_until;
-    const avatar = Images.profileimage;
+    const profilePhoto = card?.student?.profile_photo;
+    const avatar = hasValue(profilePhoto)
+        ? { uri: profilePhoto }
+        : Images.profileimage;
     const footerText = card?.valid_for;
     const qrPayload = card?.qr_payload;
+    const semesterLabel = hasValue(program)
+        ? String(program).toLowerCase().includes('semester')
+            ? program
+            : `${getOrdinal(program)} Semester`
+        : null;
 
     return (
         <View style={styles.card}>
             {/* header */}
             <View style={styles.header}>
-                <ImageFast source={Images.studentCardHeader} style={styles.studentCardHeader} resizeMode="contain" />
+                <ImageFast
+                    source={Images.studentCardHeader}
+                    style={styles.studentCardHeader}
+                    resizeMode="cover"
+                />
             </View>
             {/* body */}
             <View style={styles.body}>
                 <View style={styles.profileRow}>
                     <ImageFast source={avatar} style={styles.avatar} />
                     <View style={styles.profileInfo}>
-                        <CustomText label={name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
-                        <CustomText label={department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
-                        <CustomText label={`${getOrdinal(program)} Semester`} fontFamily={fonts.medium} color="#667085" fontSize={12} />
+                        {hasValue(name) ? (
+                            <CustomText label={name} fontFamily={fonts.bold} fontSize={18} color="#101828" />
+                        ) : null}
+                        {hasValue(department) ? (
+                            <CustomText label={department} fontFamily={fonts.medium} color="#701A73" fontSize={12} />
+                        ) : null}
+                        {hasValue(semesterLabel) ? (
+                            <CustomText label={semesterLabel} fontFamily={fonts.medium} color="#667085" fontSize={12} />
+                        ) : null}
                     </View>
-                    <View style={styles.idBox}>
-                        <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />
-                        <CustomText label={studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
-                    </View>
+                    {hasValue(studentId) ? (
+                        <View style={styles.idBox}>
+                            <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />
+                            <CustomText label={studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
+                        </View>
+                    ) : null}
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.detailsSection}>
@@ -113,18 +140,22 @@ export default StudentCard;
 
 const styles = StyleSheet.create({
     card: {
-        // backgroundColor: 'green',
-        borderRadius: 17,
+        width: '100%',
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
     },
     header: {
         width: '100%',
+        height: 87,
+        backgroundColor: '#701A73',
+        overflow: 'hidden',
     },
     studentCardHeader: {
         width: '100%',
-        height: 87,
+        height: '100%',
     },
     body: {
+        width: '100%',
         backgroundColor: '#fff',
         padding: 14,
     },
@@ -178,10 +209,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     footer: {
+        width: '100%',
         backgroundColor: '#701A73',
         padding: 18,
         borderTopWidth: 2,
-        borderColor: '#F5C518'
+        borderColor: '#F5C518',
     },
     footerContent: {
         flexDirection: 'row',

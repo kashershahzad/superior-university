@@ -1,31 +1,36 @@
-import { StyleSheet, View, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React, { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
-import { Buffer } from 'buffer';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  PixelRatio,
+} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, {useState, useEffect, useRef} from 'react';
+import {useNavigation} from '@react-navigation/native';
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import {captureRef} from 'react-native-view-shot';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
-import { COLORS } from '../../../utils/COLORS';
+import {COLORS} from '../../../utils/COLORS';
 
 import ImageFast from '../../../components/ImageFast';
-import { Images } from '../../../assets/images';
+import {Images} from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
 import StudentCard from './StudentCard';
-import { useRoute } from '@react-navigation/native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { endPoints } from '../../../services/ENV';
-import { get } from '../../../services/ApiRequest';
-import { ToastMessage } from '../../../utils/ToastMessage';
+import {get} from '../../../services/ApiRequest';
+import {ToastMessage} from '../../../utils/ToastMessage';
+import {createPdfFromJpegBase64} from '../../../utils/jpegToPdf';
 
 const GenerateCard = () => {
-  const route = useRoute();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const cardRef = useRef(null);
+  const cardSizeRef = useRef({width: 0, height: 0});
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -34,6 +39,7 @@ const GenerateCard = () => {
     const fetchCard = async () => {
       try {
         const res = await get('student/card');
+        console.log('Card details:', res?.data?.data);
         if (res?.data?.success) {
           setCard(res.data.data);
         } else {
@@ -51,58 +57,64 @@ const GenerateCard = () => {
 
   const handleDownloadCard = async () => {
     if (downloading) return;
-    if (!card) {
+    if (!card || !cardRef.current) {
       ToastMessage('Card not found', 'error');
       return;
     }
+
     setDownloading(true);
     try {
-      const token = await AsyncStorage.getItem('token');
-      const rawName = card?.card_no || 'student-card';
-      const fileName = String(rawName).toLowerCase().endsWith('.pdf')
-        ? String(rawName)
-        : `${rawName}.pdf`;
-      const filePath = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
-      const response = await axios.get(
-        `${endPoints.BASE_URL}/student/card/download`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/pdf', // Postman mein jo type ho woh
-          },
-          responseType: 'arraybuffer',
-          timeout: 60000,
-        },
+      const layoutW = cardSizeRef.current.width || 360;
+      const layoutH = cardSizeRef.current.height || 280;
+      const pixelRatio = PixelRatio.get();
+      const captureW = Math.round(layoutW * pixelRatio);
+      const captureH = Math.round(layoutH * pixelRatio);
+
+      const jpegBase64 = await captureRef(cardRef, {
+        format: 'jpg',
+        quality: 1,
+        result: 'base64',
+        width: captureW,
+        height: captureH,
+      });
+
+      const pdfBase64 = createPdfFromJpegBase64(
+        jpegBase64,
+        captureW,
+        captureH,
       );
-      if (response.status !== 200) {
-        throw new Error(`Server error ${response.status}`);
-      }
-      const base64 = Buffer.from(response.data, 'binary').toString('base64');
-      await ReactNativeBlobUtil.fs.writeFile(filePath, base64, 'base64');
-      const stat = await ReactNativeBlobUtil.fs.stat(filePath);
-      if (!stat?.size || Number(stat.size) < 100) {
-        throw new Error('Card file empty');
-      }
+
+      const rawName = card?.card_no || 'student-card';
+      const fileName = `${String(rawName).replace(/[^\w.-]/g, '_')}.pdf`;
+      const pdfPath = `${ReactNativeBlobUtil.fs.dirs.DocumentDir}/${fileName}`;
+
+      await ReactNativeBlobUtil.fs.writeFile(pdfPath, pdfBase64, 'base64');
+
       if (Platform.OS === 'android') {
-        await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
-          {
-            name: fileName,
-            parentFolder: '',
-            mimeType: 'application/pdf',
-          },
-          'Download',
-          filePath,
-        );
+        try {
+          await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+            {
+              name: fileName,
+              parentFolder: '',
+              mimeType: 'application/pdf',
+            },
+            'Download',
+            pdfPath,
+          );
+        } catch (mediaErr) {
+          console.log('Media store copy skipped:', mediaErr?.message || mediaErr);
+        }
       }
-      ToastMessage('Card saved to Downloads', 'success');
-      // Open pehle, unlink baad mein (warna open fail)
+
+      ToastMessage('Card saved as PDF', 'success');
+
       if (Platform.OS === 'android') {
         await ReactNativeBlobUtil.android.actionViewIntent(
-          filePath,
+          pdfPath,
           'application/pdf',
         );
       } else {
-        ReactNativeBlobUtil.ios.openDocument(filePath);
+        ReactNativeBlobUtil.ios.openDocument(pdfPath);
       }
     } catch (error) {
       console.log('Download card error:', error?.message || error);
@@ -124,7 +136,7 @@ const GenerateCard = () => {
           <View
             style={[
               styles.headerWrapper,
-              { marginTop: -insets.top, paddingTop: insets.top },
+              {marginTop: -insets.top, paddingTop: insets.top},
             ]}>
             <View style={styles.headerContainer}>
               <TouchableOpacity
@@ -139,32 +151,65 @@ const GenerateCard = () => {
                 }}>
                 <ImageFast
                   source={Images.backArrow}
-                  style={{ width: 18, height: 18 }}
+                  style={{width: 18, height: 18}}
                 />
               </TouchableOpacity>
-              <CustomText label="Generate Card" fontSize={16} fontFamily={fonts.bold} color="#101828" />
+              <CustomText
+                label="Generate Card"
+                fontSize={16}
+                fontFamily={fonts.bold}
+                color="#101828"
+              />
             </View>
           </View>
         );
-      }}
-    >
+      }}>
       {loading ? (
-  <ActivityIndicator size="large" color={COLORS.primaryColor} />
-) : (
-      <View style={styles.container}>
-        <View style={styles.cardInfoContainer}>
-            <ImageFast source={Images.check} style={{ width: 16, height: 16 }} resizeMode="contain" />
-            <CustomText label={card?.message} fontSize={13} fontFamily={fonts.medium} color="#19B36E" />
+        <ActivityIndicator size="large" color={COLORS.primaryColor} />
+      ) : (
+        <View style={styles.container}>
+          <View style={styles.cardInfoContainer}>
+            <ImageFast
+              source={Images.check}
+              style={{width: 16, height: 16}}
+              resizeMode="contain"
+            />
+            <CustomText
+              label={card?.message}
+              fontSize={13}
+              fontFamily={fonts.medium}
+              color="#19B36E"
+            />
+          </View>
+          <View style={styles.cardRoundedClip}>
+            <View
+              ref={cardRef}
+              collapsable={false}
+              style={styles.cardCaptureWrap}
+              onLayout={e => {
+                const {width, height} = e.nativeEvent.layout;
+                if (width > 0 && height > 0) {
+                  cardSizeRef.current = {width, height};
+                }
+              }}>
+              <StudentCard card={card} />
+            </View>
+          </View>
+          <CustomText
+            label="Show this card while boarding the university transport."
+            fontSize={13}
+            fontFamily={fonts.medium}
+            color="#475467"
+            textAlign="center"
+          />
+          <View style={styles.buttonContainer}>
+            <GradientButton
+              title="Download Card"
+              loading={downloading}
+              onPress={handleDownloadCard}
+            />
+          </View>
         </View>
-        <StudentCard card={card} />
-        <CustomText label={`Show this card while boarding the university transport.`} fontSize={13} fontFamily={fonts.medium} color="#475467" textAlign="center" />
-        <View style={styles.buttonContainer}>
-        <GradientButton title="Download Card"
-        loading={downloading}
-        onPress={handleDownloadCard}
-         />
-        </View>
-      </View>
       )}
     </ScreenWrapper>
   );
@@ -201,6 +246,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 24,
   },
+  cardRoundedClip: {
+    borderRadius: 17,
+    overflow: 'hidden',
+  },
+  cardCaptureWrap: {
+    backgroundColor: '#FFFFFF',
+  },
   cardInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,14 +261,5 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     paddingHorizontal: 12,
-  },
-  footerContainer: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-    paddingBottom: 26,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#D0D5DD',
-    boxShadow: '0px -4px 9px rgba(170, 159, 254, 0.10), 0px -17px 17px rgba(170, 159, 254, 0.09), 0px -38px 23px rgba(170, 159, 254, 0.05), 0px -67px 27px rgba(170, 159, 254, 0.01), 0px -105px 29px rgba(170, 159, 254, 0)',
   },
 });
