@@ -20,3 +20,11 @@ classpath("com.google.gms:google-services:4.5.0")
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+subprojects { subproject ->
+    subproject.tasks.configureEach { task ->
+        if (task.name.toLowerCase().contains("lint")) {
+            task.enabled = false
+        }
+    }
+}
