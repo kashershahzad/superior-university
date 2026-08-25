@@ -1,7 +1,7 @@
-import { StyleSheet, View, TouchableOpacity, Platform, Image, Linking } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import { Buffer } from 'buffer';
 
@@ -12,7 +12,6 @@ import { COLORS } from '../../../utils/COLORS';
 import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
-import { useRoute } from '@react-navigation/native';
 
 import { get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
@@ -108,7 +107,6 @@ const FeeVoucher = () => {
           filePath,
         );
         ToastMessage('PDF saved to Downloads', 'success');
-        // Public Downloads URI se open — yeh kaam karega
         try {
           await ReactNativeBlobUtil.android.actionViewIntent(
             mediaUri || filePath,
@@ -125,7 +123,6 @@ const FeeVoucher = () => {
       }
     } catch (error) {
       console.log('Export PDF Error:', error?.message || error);
-      // axios error pe better message
       const msg =
         error?.response?.status
           ? `Download failed (${error.response.status})`
@@ -178,6 +175,7 @@ const FeeVoucher = () => {
       translucent
       scrollEnabled
       footerUnScrollable={() => {
+        if (!voucher) return null;
         return (
           <View style={styles.footerContainer}>
             <GradientButton title="Export as PDF"
@@ -217,49 +215,54 @@ const FeeVoucher = () => {
       }}
     >
       <View style={styles.container}>
-        <View style={styles.cardWrapper}>
-          <View style={styles.voucherHeader}>
-            <Image
-              source={Images.calender}
-              style={{ width: 16, height: 16 }}
-            />
-            <CustomText label={voucher?.generated_date || '-'} fontSize={14} fontFamily={fonts.semiBold} color="#101828" marginLeft={8} />
+        {loading ? (
+          <View style={styles.loaderWrap}>
+            <ActivityIndicator size="large" color={COLORS.primaryColor} />
           </View>
-          <View style={styles.card}>
-            <CustomText
-              label="Transport Fees Voucher"
-              removeTranslation
-              fontSize={12}
-              fontFamily={fonts.medium}
-              color="#475467"
-            />
-            <Image
-              source={Images.voucher}
-              style={styles.voucherPreview}
-              resizeMode="contain"
-            />
-            <View style={styles.detailsHeader}>
+        ) : voucher ? (
+          <View style={styles.cardWrapper}>
+            <View style={styles.voucherHeader}>
+              <Image
+                source={Images.calender}
+                style={{ width: 16, height: 16 }}
+              />
+              <CustomText label={voucher?.generated_date || '-'} fontSize={14} fontFamily={fonts.semiBold} color="#101828" marginLeft={8} />
+            </View>
+            <View style={styles.card}>
               <CustomText
-                label="Voucher Details"
+                label="Transport Fees Voucher"
                 removeTranslation
                 fontSize={12}
-                fontFamily={fonts.semiBold}
+                fontFamily={fonts.medium}
                 color="#475467"
               />
-              <View style={styles.detailsUnderline} />
-            </View>
-            <View style={styles.detailsGrid}>
-              {VOUCHER_DETAILS.map(item => (
-                <DetailItem
-                  key={item.label}
-                  label={item.label}
-                  value={item.value}
-                // style={item.wide ? styles.detailColWide : styles.detailCol}
+              <Image
+                source={Images.voucher}
+                style={styles.voucherPreview}
+                resizeMode="contain"
+              />
+              <View style={styles.detailsHeader}>
+                <CustomText
+                  label="Voucher Details"
+                  removeTranslation
+                  fontSize={12}
+                  fontFamily={fonts.semiBold}
+                  color="#475467"
                 />
-              ))}
+                <View style={styles.detailsUnderline} />
+              </View>
+              <View style={styles.detailsGrid}>
+                {VOUCHER_DETAILS.map(item => (
+                  <DetailItem
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                  />
+                ))}
+              </View>
             </View>
           </View>
-        </View>
+        ) : null}
       </View>
     </ScreenWrapper>
   );
@@ -294,6 +297,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 20,
     paddingHorizontal: 12,
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 220,
   },
   voucherHeader: {
     flexDirection: 'row',
@@ -334,7 +343,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    // gap: 32,
     rowGap: 12,
   },
   detailItem: {

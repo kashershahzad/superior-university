@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useNavigation, CommonActions } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../../store/reducer/AuthConfig';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -118,17 +118,28 @@ const getFeeBadge = feeStatus => {
 const Profile = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const { userData } = useSelector(state => state.users);
+  const isTeacher = userData?.role === 'teacher';
   const [avatarUri, setAvatarUri] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generatingCard, setGeneratingCard] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [selectedFeeCycle, setSelectedFeeCycle] = useState(null);
 
   const fetchProfile = useCallback(async () => {
     try {
-      const res = await get('student/profile');
-      if (res?.data?.success) {
-        setProfile(res.data.data || null);
+      const [profileRes, feeRes] = await Promise.all([
+        get('student/profile'),
+        get('student/fee-installments'),
+      ]);
+
+      if (profileRes?.data?.success) {
+        setProfile(profileRes.data.data || null);
+      }
+
+      if (feeRes?.data?.success) {
+        setSelectedFeeCycle(feeRes.data.data?.selected_cycle || null);
       }
     } catch (err) {
       console.log('Profile fetch error:', err);
@@ -214,6 +225,16 @@ const Profile = () => {
       } finally {
         setGeneratingCard(false);
       }
+      return;
+    }
+    if (actionKey === 'fee-period') {
+      navigation.navigate('SelectFeePackage', {
+        mode: selectedFeeCycle ? 'change' : 'add',
+      });
+      return;
+    }
+    if (actionKey === 'change-route') {
+      navigation.navigate('ChangeRoute');
       return;
     }
     if (actionKey === 'fee-status') {
@@ -303,6 +324,20 @@ const Profile = () => {
       badge: getFeeBadge(profile?.account?.fee_status || profile?.fee_status),
       actionKey: 'fee-status',
     },
+    {
+      key: 'fee-period',
+      Icons: Images.monthlyFee,
+      label: selectedFeeCycle ? 'Change Fee Period' : 'Add Fee Period',
+      showArrow: true,
+      actionKey: 'fee-period',
+    },
+    {
+      key: 'change-route',
+      Icons: Images.route,
+      label: 'Change Route',
+      showArrow: true,
+      actionKey: 'change-route',
+    },
   ].filter(Boolean);
 
   const settingsRows = [
@@ -337,9 +372,11 @@ const Profile = () => {
 
   const sectionData = [
     { key: 'contact', title: 'CONTACT', rows: contactRows },
-    { key: 'account', title: 'ACCOUNT', rows: accountRows },
+    !isTeacher
+      ? { key: 'account', title: 'ACCOUNT', rows: accountRows }
+      : null,
     { key: 'settings', title: 'SETTINGS', rows: settingsRows },
-  ];
+  ].filter(Boolean);
 
   if (loading && !profile) {
     return (

@@ -1,5 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, Keyboard, Dimensions, Platform, TextInput, Image } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Keyboard,
+  Dimensions,
+  Platform,
+  TextInput,
+  Image,
+} from 'react-native';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -9,7 +18,7 @@ import CustomText from '../../../components/CustomText';
 import CustomCheckbox from '../../../components/CustomCheckBox';
 import DualText from '../../../components/DualText';
 import CountryPhoneInput from '../../../components/CountryPhoneInput';
-import { post } from '../../../services/ApiRequest';
+import { post, get } from '../../../services/ApiRequest';
 import { registerFcmToken } from '../../../utils/fcm';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,8 +30,8 @@ import fonts from '../../../assets/fonts';
 import { Images } from '../../../assets/images';
 import Signinmodel from '../Login/Signinmodel';
 import SelectRoute from './SelectRoute';
+import SelectStop from './SelectStop';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
 
 const EXTRA_SCROLL = 80;
 
@@ -36,8 +45,11 @@ const initialForm = {
   program: '',
   semester: '',
   route: '',
+  stop: '',
   busNumber: '',
   routeId: null,
+  stopId: null,
+  busId: null,
 };
 
 const Signup = ({ navigation }) => {
@@ -48,6 +60,7 @@ const Signup = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [signinModelVisible, setSigninModelVisible] = useState(false);
   const [routeModalVisible, setRouteModalVisible] = useState(false);
+  const [stopModalVisible, setStopModalVisible] = useState(false);
 
   const studentIdRef = useRef(null);
   const fullNameRef = useRef(null);
@@ -62,8 +75,10 @@ const Signup = ({ navigation }) => {
   const scrollOffsetRef = useRef(0);
 
   useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = Keyboard.addListener(showEvent, e => {
       keyboardTopYRef.current =
@@ -81,7 +96,7 @@ const Signup = ({ navigation }) => {
     };
   }, []);
 
-  const scrollInputIntoView = useCallback((input) => {
+  const scrollInputIntoView = useCallback(input => {
     const node = input?.current ?? input;
     if (!node || typeof node.measureInWindow !== 'function') {
       return;
@@ -115,12 +130,15 @@ const Signup = ({ navigation }) => {
     });
   }, []);
 
-  const focusNext = useCallback((nextRef) => {
-    nextRef?.current?.focus();
-    setTimeout(() => {
-      scrollInputIntoView(nextRef.current);
-    }, 80);
-  }, [scrollInputIntoView]);
+  const focusNext = useCallback(
+    nextRef => {
+      nextRef?.current?.focus();
+      setTimeout(() => {
+        scrollInputIntoView(nextRef.current);
+      }, 80);
+    },
+    [scrollInputIntoView],
+  );
 
   const handleFieldFocus = useCallback(() => {
     setTimeout(() => {
@@ -129,12 +147,55 @@ const Signup = ({ navigation }) => {
     }, 80);
   }, [scrollInputIntoView]);
 
-  const handleSelectRoute = (route) => {
+  const handleSelectRoute = route => {
     Keyboard.dismiss();
-    updateField('route', route.name);
-    updateField('routeId', Number(route.id));
-    updateField('busNumber', route.busNumber);
+    setForm(prev => ({
+      ...prev,
+      route: route.name,
+      routeId: Number(route.id),
+      // Route change → reset stop/bus so user picks again
+      stop: '',
+      stopId: null,
+      busId: null,
+      busNumber: '',
+    }));
     setRouteModalVisible(false);
+  };
+
+  const handleSelectStop = async stop => {
+    Keyboard.dismiss();
+    const routeId = form.routeId;
+    updateField('stop', stop.name);
+    updateField('stopId', Number(stop.id));
+    updateField('busNumber', '');
+    updateField('busId', null);
+    setStopModalVisible(false);
+
+    if (!routeId) return;
+    try {
+      const res = await get(`routes/${routeId}/buses`);
+      if (res?.data?.success) {
+        const autoBus = res.data.data?.auto_bus || res.data.data?.buses?.[0];
+        if (autoBus) {
+          updateField('busId', Number(autoBus.id));
+          updateField(
+            'busNumber',
+            autoBus.bus_number || autoBus.display_name || '',
+          );
+        }
+      }
+    } catch (err) {
+      console.log('Auto bus fetch error:', err);
+    }
+  };
+
+  const openStopModal = () => {
+    Keyboard.dismiss();
+    if (!form.routeId) {
+      ToastMessage('Please select a route first', 'error');
+      return;
+    }
+    setStopModalVisible(true);
   };
 
   const handleSigninModel = () => {
@@ -156,7 +217,14 @@ const Signup = ({ navigation }) => {
   // }, []);
 
   const handleNext = useCallback(async () => {
-    if (!form.studentId || !form.fullName || !form.program || !form.semester || !form.routeId) {
+    if (
+      !form.studentId ||
+      !form.fullName ||
+      !form.program ||
+      !form.semester ||
+      !form.routeId ||
+      !form.stopId
+    ) {
       ToastMessage('Please fill all student details', 'error');
       return;
     }
@@ -173,6 +241,8 @@ const Signup = ({ navigation }) => {
         program: form.program,
         semester: form.semester,
         route_id: form.routeId,
+        stop_id: form.stopId,
+        ...(form.busId ? {bus_id: form.busId} : {}),
         terms: agreed,
       };
 
@@ -182,7 +252,19 @@ const Signup = ({ navigation }) => {
 
       if (res?.data?.success && res?.data?.data?.valid) {
         updateField('route', res.data.data.route?.name || form.route);
-        updateField('busNumber', res.data.data.bus?.bus_number || form.busNumber);
+        updateField(
+          'busNumber',
+          res.data.data.bus?.bus_number || form.busNumber,
+        );
+        if (res.data.data.stop?.name) {
+          updateField('stop', res.data.data.stop.name);
+        }
+        if (res.data.data.stop?.id) {
+          updateField('stopId', Number(res.data.data.stop.id));
+        }
+        if (res.data.data.bus?.id) {
+          updateField('busId', Number(res.data.data.bus.id));
+        }
         ToastMessage(res.data.message || 'Step 1 validated.', 'success');
         setStep(2);
       } else {
@@ -230,6 +312,8 @@ const Signup = ({ navigation }) => {
         program: form.program,
         semester: form.semester,
         route_id: form.routeId,
+        stop_id: form.stopId,
+        ...(form.busId ? {bus_id: form.busId} : {}),
         email: form.email,
         phone: form.phone,
         password: form.password,
@@ -250,7 +334,10 @@ const Signup = ({ navigation }) => {
 
         await registerFcmToken();
 
-        ToastMessage(res.data?.message || 'Registration successful.', 'success');
+        ToastMessage(
+          res.data?.message || 'Registration successful.',
+          'success',
+        );
 
         navigation.getParent()?.dispatch(
           CommonActions.reset({
@@ -342,6 +429,16 @@ const Signup = ({ navigation }) => {
           Keyboard.dismiss();
           setRouteModalVisible(true);
         }}
+      />
+
+      <CustomInput
+        placeholder="Select your Stop"
+        value={form.stop}
+        withLabel="Select Stop"
+        borderColor="#98A2B3"
+        icon={Images.route}
+        rightIconName="chevron-right"
+        onPress={openStopModal}
       />
 
       <CustomInput
@@ -457,8 +554,8 @@ const Signup = ({ navigation }) => {
         scrollEventThrottle={16}
         onScroll={e => {
           scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
-        }}>
-
+        }}
+      >
         <View style={styles.header}>
           <Image source={Images.signin_img} style={styles.logo} />
           <CustomText
@@ -484,7 +581,12 @@ const Signup = ({ navigation }) => {
           {isStudentStep ? renderStudentCardFields() : renderEmailFields()}
         </View>
 
-        <View style={[styles.termsRow, isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 }]}>
+        <View
+          style={[
+            styles.termsRow,
+            isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 },
+          ]}
+        >
           <CustomCheckbox value={agreed} onValueChange={setAgreed} />
           <Text style={styles.termsText}>
             I agree with{' '}
@@ -501,7 +603,7 @@ const Signup = ({ navigation }) => {
           marginTop={10}
           marginBottom={20}
           borderRadius={30}
-          color='#ffffff'
+          color="#ffffff"
         />
 
         {isStudentStep && (
@@ -533,6 +635,15 @@ const Signup = ({ navigation }) => {
           onClose={() => setRouteModalVisible(false)}
           selectedRoute={form.route}
           onSelectRoute={handleSelectRoute}
+        />
+
+        <SelectStop
+          visible={stopModalVisible}
+          onClose={() => setStopModalVisible(false)}
+          routeId={form.routeId}
+          selectedStopId={form.stopId}
+          listType="stops"
+          onSelectStop={handleSelectStop}
         />
       </KeyboardAwareScrollView>
     </ScreenWrapper>

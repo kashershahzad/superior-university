@@ -5,11 +5,13 @@ import InboxScreen from '../screens/Main/Chat/InboxScreen';
 import Notifications from '../screens/Main/Notifications';
 import NotificationDetail from '../screens/Main/Notifications/NotificationDetail';
 import FeeVoucher from '../screens/Main/FeeVoucher';
+import SelectFeePackage from '../screens/Main/SelectFeePackage';
 import TabStack from './TabStack';
 import GenerateCard from '../screens/Main/GenerateCard';
 import Verification from '../screens/Main/Verification';
 import Fees from '../screens/Main/Fees';
 import ChangePassword from '../screens/Main/Profile/ChangePassword';
+import ChangeRoute from '../screens/Main/Profile/ChangeRoute';
 import Help from '../screens/Main/Profile/Help';
 import PersonalData from '../screens/Main/Profile/PersonalData';
 
@@ -28,11 +30,13 @@ const MainStack = () => {
       <Stack.Screen name="InboxScreen" component={InboxScreen} />
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="NotificationDetail" component={NotificationDetail} />
+      <Stack.Screen name="SelectFeePackage" component={SelectFeePackage} />
       <Stack.Screen name="FeeVoucher" component={FeeVoucher} />
       <Stack.Screen name="GenerateCard" component={GenerateCard} />
       <Stack.Screen name="Verification" component={Verification} />
       <Stack.Screen name="Fees" component={Fees} />
       <Stack.Screen name="ChangePassword" component={ChangePassword} />
+      <Stack.Screen name="ChangeRoute" component={ChangeRoute} />
       <Stack.Screen name="Help" component={Help} />
       <Stack.Screen name="PersonalData" component={PersonalData} />
     </Stack.Navigator>

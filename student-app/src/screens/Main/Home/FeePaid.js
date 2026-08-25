@@ -2,6 +2,7 @@ import { Animated, StyleSheet, View, TouchableOpacity, RefreshControl, Image } f
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
@@ -23,6 +24,8 @@ const DEFAULT_BUS_LOCATION = {
 
 const FeePaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
+  const { userData } = useSelector(state => state.users);
+  const isTeacher = userData?.role === 'teacher';
   const [isSheetVisible, setSheetVisible] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -43,12 +46,12 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
   const transport = data?.transport_service || {};
   const feeStatus = data?.fee_status || 'paid';
   const busLabel = transport.bus || '-';
-  const timePeriod = transport.active_period.label || '-';
+  const timePeriod = transport.active_period?.label || '-';
   const pickupETA = transport.pickup_time;
 
   const actions = data?.actions || {};
-  const canDiscontinue = !!actions.can_discontinue;
-  const canCancelDiscontinue = !!actions.can_cancel_discontinue;
+  const canDiscontinue = !isTeacher && !!actions.can_discontinue;
+  const canCancelDiscontinue = !isTeacher && !!actions.can_cancel_discontinue;
   const discontinuationId = data?.discontinuation_id; // cancel API ke liye
 
   useEffect(() => {
@@ -247,37 +250,39 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
               fontFamily={fonts.regular}
             />
             <View style={styles.infoContainer}>
-              <TouchableOpacity
-                style={styles.infoWrapper}
-                activeOpacity={0.8}
-                onPress={() =>
-                  navigation.navigate('Verification', { status: 'success' })
-                }>
-                <View>
-                  <View style={styles.feeRow}>
-                    <Image
-                      source={Images.fee}
-                      style={styles.feeImage}
-                      resizeMode="contain"
-                    />
+              {!isTeacher ? (
+                <TouchableOpacity
+                  style={styles.infoWrapper}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    navigation.navigate('Verification', { status: 'success' })
+                  }>
+                  <View>
+                    <View style={styles.feeRow}>
+                      <Image
+                        source={Images.fee}
+                        style={styles.feeImage}
+                        resizeMode="contain"
+                      />
+                      <CustomText
+                        label="Fee"
+                        color="#475467"
+                        fontSize={12}
+                        fontFamily={fonts.medium}
+                      />
+                    </View>
                     <CustomText
-                      label="Fee"
-                      color="#475467"
-                      fontSize={12}
-                      fontFamily={fonts.medium}
+                      label={feeStatus === 'paid' ? 'Paid' : 'Unpaid'}
+                      color="#101828"
+                      fontSize={22}
+                      fontFamily={fonts.regular}
+                      marginTop={3}
+                      marginLeft={2}
+                      removeTranslation
                     />
                   </View>
-                  <CustomText
-                    label={feeStatus === 'paid' ? 'Paid' : 'Unpaid'}
-                    color="#101828"
-                    fontSize={22}
-                    fontFamily={fonts.regular}
-                    marginTop={3}
-                    marginLeft={2}
-                    removeTranslation
-                  />
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              ) : null}
 
               <View style={styles.infoWrapper}>
                 <View style={styles.feeRow}>

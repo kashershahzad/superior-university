@@ -40,6 +40,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
   const transport = data?.transport_service || {};
   const actions = data?.actions || {};
   const timeline = data?.timeline || [];
+  const feePlan = data?.fee_plan || {};
 
   useEffect(() => {
     const animate = value =>
@@ -62,7 +63,16 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
     return () => entranceAnimation.stop();
   }, [anims]);
 
-  const handleGenerateVoucher = async () => {
+  const navigateTo = (screen, params) => {
+    const parent = navigation.getParent();
+    if (parent) {
+      parent.navigate(screen, params);
+    } else {
+      navigation.navigate(screen, params);
+    }
+  };
+
+  const generateVoucherDirect = async () => {
     if (generating) return;
     setGenerating(true);
     try {
@@ -70,12 +80,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
       if (res?.data?.success) {
         const voucherId = res.data.data?.id;
         ToastMessage(res.data?.message || 'Fee voucher generated.', 'success');
-        const parent = navigation.getParent();
-        if (parent) {
-          parent.navigate('FeeVoucher', { voucherId });
-        } else {
-          navigation.navigate('FeeVoucher', { voucherId });
-        }
+        navigateTo('FeeVoucher', { voucherId });
       } else {
         ToastMessage(res?.error?.message || 'Failed to generate voucher', 'error');
       }
@@ -85,6 +90,15 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const openFeeVoucher = () => {
+    // Plan already selected on dashboard → skip package screen
+    if (feePlan.selected_cycle) {
+      generateVoucherDirect();
+      return;
+    }
+    navigateTo('SelectFeePackage');
   };
 
   const fadeUpStyle = (animation, distance = 20) => ({
@@ -101,10 +115,39 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
 
   const profilePhoto = user.profile_photo;
 
+  const nextDue = feePlan.next_due || {};
+
   const serviceItems = [
     { item: 'Route', itemValue: transport.route || '-' },
     { item: 'Bus', itemValue: transport.bus || '-' },
     { item: 'Submitted Date', itemValue: transport.submitted_date || '-' },
+    {
+      item: 'Fee Period',
+      itemValue:
+        feePlan.selected_cycle_label ||
+        feePlan.selected_cycle ||
+        '-',
+    },
+    {
+      item: 'Due Date',
+      itemValue: nextDue.due_date || '-',
+    },
+    {
+      item: 'Grace Days',
+      itemValue:
+        nextDue.grace_days != null
+          ? String(nextDue.grace_days)
+          : feePlan.grace_days != null
+            ? String(feePlan.grace_days)
+            : '-',
+    },
+    {
+      item: 'Fine After Grace Period',
+      itemValue:
+        nextDue.fine_amount != null || feePlan.fine_amount != null
+          ? `PKR ${Number(nextDue.fine_amount ?? feePlan.fine_amount).toLocaleString()}`
+          : '-',
+    },
   ];
 
   const timelineItems = timeline.map(step => {
@@ -281,7 +324,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
             <GradientButton
               title="Generate Fee Voucher"
               loading={generating}
-              onPress={handleGenerateVoucher}
+              onPress={openFeeVoucher}
             />
         </Animated.View>
       </View>

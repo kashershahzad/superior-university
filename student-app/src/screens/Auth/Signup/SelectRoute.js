@@ -16,16 +16,26 @@ import fonts from '../../../assets/fonts';
 //   { id: '4', name: 'Route 4 - Jaranwala Road', busNumber: 'Bus #04' },
 // ];
 
-const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
-
+const SelectRoute = ({
+  visible,
+  onClose,
+  onSelectRoute,
+  selectedRoute,
+  routes: routesProp,
+}) => {
   const insets = useSafeAreaInsets();
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    if (visible && routes.length === 0) {
-      fetchRoutes();
+    if (!visible) return;
+    if (Array.isArray(routesProp) && routesProp.length > 0) {
+      setRoutes(routesProp);
+      return;
     }
-  }, [visible]);
+    fetchRoutes();
+  }, [visible, routesProp]);
+
   const fetchRoutes = async () => {
     setLoading(true);
     try {
@@ -101,7 +111,6 @@ const SelectRoute = ({ visible, onClose, onSelectRoute, selectedRoute }) => {
                   onSelectRoute?.({
                     id: route.id,
                     name: route.name,
-                    busNumber,
                   })
                 }
               >
