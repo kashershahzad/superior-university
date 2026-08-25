@@ -14,9 +14,6 @@ import ModalBox from './ModalBox';
 import CustomButton from '../../../components/CustomButton';
 import { COLORS } from '../../../utils/COLORS';
 
-import { post } from '../../../services/ApiRequest';
-import { ToastMessage } from '../../../utils/ToastMessage';
-
 const TIMELINE_STATUS = {
   done: { label: 'Done', type: 'done' },
   in_progress: { label: 'In Progress', type: 'inProgress' },
@@ -27,7 +24,6 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const anims = useRef({
     header: new Animated.Value(0),
     cover: new Animated.Value(0),
@@ -39,8 +35,22 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
   const user = data?.user || {};
   const transport = data?.transport_service || {};
   const actions = data?.actions || {};
+  const voucherFlow = data?.voucher_flow || {};
   const timeline = data?.timeline || [];
   const feePlan = data?.fee_plan || {};
+
+  const canUploadVoucher =
+    !!voucherFlow.can_upload_voucher || !!actions.can_upload_voucher;
+
+  const latestVoucherId =
+    voucherFlow.latest_voucher_id || data?.latest_voucher_id || null;
+
+  // Voucher already generated (upload step) → package screen skip
+  const hasGeneratedVoucher =
+    !!latestVoucherId ||
+    canUploadVoucher ||
+    voucherFlow.step === 'upload' ||
+    !!voucherFlow.has_upload;
 
   useEffect(() => {
     const animate = value =>
@@ -72,32 +82,13 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
     }
   };
 
-  const generateVoucherDirect = async () => {
-    if (generating) return;
-    setGenerating(true);
-    try {
-      const res = await post('student/vouchers/generate');
-      if (res?.data?.success) {
-        const voucherId = res.data.data?.id;
-        ToastMessage(res.data?.message || 'Fee voucher generated.', 'success');
-        navigateTo('FeeVoucher', { voucherId });
-      } else {
-        ToastMessage(res?.error?.message || 'Failed to generate voucher', 'error');
-      }
-    } catch (err) {
-      console.log('Generate voucher error:', err);
-      ToastMessage('Failed to generate voucher', 'error');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const openFeeVoucher = () => {
-    // Plan already selected on dashboard → skip package screen
-    if (feePlan.selected_cycle) {
-      generateVoucherDirect();
+    // Already generated → open voucher screen, no package select
+    if (hasGeneratedVoucher && latestVoucherId) {
+      navigateTo('FeeVoucher', {voucherId: latestVoucherId});
       return;
     }
+    // First generate / after cancel → select package then generate
     navigateTo('SelectFeePackage');
   };
 
@@ -308,7 +299,7 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
             styles.footerContainer,
             fadeUpStyle(anims.actions, 18),
           ]}>
-          {actions.can_upload_voucher ? (
+          {canUploadVoucher ? (
             <CustomButton
               title="Upload Fee Voucher"
               backgroundColor="transparent"
@@ -321,11 +312,10 @@ const Feeunpaid = ({ data, refreshing, onRefresh }) => {
               onPress={() => setIsModalVisible(true)}
             />
           ) : null}
-            <GradientButton
-              title="Generate Fee Voucher"
-              loading={generating}
-              onPress={openFeeVoucher}
-            />
+          <GradientButton
+            title="Generate Fee Voucher"
+            onPress={openFeeVoucher}
+          />
         </Animated.View>
       </View>
 

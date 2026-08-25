@@ -13,12 +13,13 @@ import { Images } from '../../../assets/images';
 import fonts from '../../../assets/fonts';
 import GradientButton from '../Home/GradientButton';
 
-import { get } from '../../../services/ApiRequest';
+import { get, post } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { endPoints } from '../../../services/ENV';
+import CustomButton from '../../../components/CustomButton';
 
 
 const FeeVoucher = () => {
@@ -27,6 +28,7 @@ const FeeVoucher = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [exporting, setExporting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [voucher, setVoucher] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +54,36 @@ const FeeVoucher = () => {
     fetchVoucher();
   }, [voucherId]);
 
+  const handleCancelVoucher = async () => {
+    const id = voucher?.id || voucherId;
+    if (!id) {
+      ToastMessage('Voucher not found', 'error');
+      return;
+    }
+    if (cancelling) return;
+    setCancelling(true);
+    try {
+      const res = await post(`student/vouchers/${id}/cancel`);
+      if (res?.data?.success) {
+        ToastMessage(res.data?.message || 'Voucher cancelled.', 'success');
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.navigate('TabStack');
+        }
+      } else {
+        ToastMessage(
+          res?.error?.message || res?.data?.message || 'Failed to cancel voucher',
+          'error',
+        );
+      }
+    } catch (err) {
+      console.log('Cancel voucher error:', err);
+      ToastMessage('Failed to cancel voucher', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
   const handleExportPdf = async () => {
     const id = voucher?.id;
     if (!id) {
@@ -178,9 +210,25 @@ const FeeVoucher = () => {
         if (!voucher) return null;
         return (
           <View style={styles.footerContainer}>
-            <GradientButton title="Export as PDF"
+            <GradientButton
+              title="Export as PDF"
               loading={exporting}
+              disabled={cancelling}
               onPress={handleExportPdf}
+            />
+            <CustomButton
+              title="Cancel Voucher"
+              backgroundColor="transparent"
+              color={COLORS.primaryColor}
+              borderWidth={1}
+              borderColor={COLORS.primaryColor}
+              borderRadius={24}
+              height={48}
+              marginTop={10}
+              loading={cancelling}
+              disabled={exporting || cancelling}
+              indicatorColor={COLORS.primaryColor}
+              onPress={handleCancelVoucher}
             />
           </View>
         );

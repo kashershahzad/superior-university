@@ -13,10 +13,12 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
 import ImageFast from '../../../components/ImageFast';
+import Icons from '../../../components/Icons';
 import {Images} from '../../../assets/images';
 import {COLORS} from '../../../utils/COLORS';
 import {get, post} from '../../../services/ApiRequest';
 import {ToastMessage} from '../../../utils/ToastMessage';
+import QRScanner from './QRScanner';
 
 const Attendance = () => {
   const insets = useSafeAreaInsets();
@@ -25,6 +27,7 @@ const Attendance = () => {
   const [markingId, setMarkingId] = useState(null);
   const [attendanceData, setAttendanceData] = useState(null);
   const [attendance, setAttendance] = useState({});
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   const anims = useRef({
     header: new Animated.Value(0),
@@ -143,6 +146,26 @@ const Attendance = () => {
     }
   };
 
+  const handleScanPress = () => {
+    if (attendanceData?.is_submitted) {
+      ToastMessage('Attendance already submitted', 'error');
+      return;
+    }
+    if (!students.length) {
+      ToastMessage('No students found to mark attendance', 'error');
+      return;
+    }
+    setScannerVisible(true);
+  };
+
+  const handleMarkedFromScan = data => {
+    if (!data) {
+      return;
+    }
+    setAttendanceData(data);
+    syncAttendanceMarks(data);
+  };
+
   const handleReviewSubmit = () => {
     navigation.navigate('ReviewAttendance', {
       attendance,
@@ -257,7 +280,8 @@ const Attendance = () => {
   };
 
   return (
-    <ScreenWrapper
+    <>
+      <ScreenWrapper
       backgroundColor="#F1F3F8"
       paddingHorizontal={0}
       statusBarColor="#701A73"
@@ -313,19 +337,44 @@ const Attendance = () => {
             },
           ]}>
           <View style={styles.detailCard}>
-            <CustomText
-              label="Attendance Detail"
-              color="#101828"
-              fontSize={14}
-              fontFamily={fonts.medium}
-            />
-            <CustomText
-              label={attendanceData?.message || ''}
-              color="#667085"
-              fontSize={12}
-              fontFamily={fonts.regular}
-              removeTranslation
-            />
+            <View style={styles.detailHeader}>
+              <View style={styles.detailTitleWrap}>
+                <CustomText
+                  label="Attendance Detail"
+                  color="#101828"
+                  fontSize={14}
+                  fontFamily={fonts.medium}
+                />
+                <CustomText
+                  label={attendanceData?.message || ''}
+                  color="#667085"
+                  fontSize={12}
+                  fontFamily={fonts.regular}
+                  removeTranslation
+                />
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={!!attendanceData?.is_submitted}
+                style={[
+                  styles.scanBtn,
+                  attendanceData?.is_submitted && styles.scanBtnDisabled,
+                ]}
+                onPress={handleScanPress}>
+                <Icons
+                  family="Ionicons"
+                  name="qr-code-outline"
+                  size={16}
+                  color={COLORS.primaryColor}
+                />
+                <CustomText
+                  label="Scan QR"
+                  color={COLORS.primaryColor}
+                  fontSize={12}
+                  fontFamily={fonts.medium}
+                />
+              </TouchableOpacity>
+            </View>
             <View style={styles.statsRow}>
               {renderStatCard(Images.userTick, 'Present', presentCount)}
               {renderStatCard(Images.userRemove, 'Absent', absentCount)}
@@ -383,6 +432,13 @@ const Attendance = () => {
         </TouchableOpacity>
       </Animated.View>
     </ScreenWrapper>
+      <QRScanner
+        visible={scannerVisible}
+        students={students}
+        onClose={() => setScannerVisible(false)}
+        onMarked={handleMarkedFromScan}
+      />
+    </>
   );
 };
 
@@ -432,6 +488,30 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     gap: 2,
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  detailTitleWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  scanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#701A73',
+    backgroundColor: '#F4F3FF',
+  },
+  scanBtnDisabled: {
+    opacity: 0.45,
   },
   statsRow: {
     marginTop: 12,

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
@@ -25,24 +25,13 @@ const formatAmount = amount => `PKR ${Number(amount || 0).toLocaleString()}`;
 const SelectFeePackage = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const route = useRoute();
-
-  // 'generate' (default from unpaid) | 'add' | 'change' (from profile)
-  const mode = route.params?.mode || 'generate';
-  const isChange = mode === 'change';
-  const isProfileFlow = mode === 'add' || mode === 'change';
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [periods, setPeriods] = useState([]);
   const [fee, setFee] = useState(null);
   const [selectedCycle, setSelectedCycle] = useState(null);
-
-  const screenTitle = isChange
-    ? 'Change Fee Period'
-    : mode === 'add'
-      ? 'Add Fee Period'
-      : 'Select Fee Package';
+  const [hasExistingPlan, setHasExistingPlan] = useState(false);
 
   useEffect(() => {
     const fetchPeriods = async () => {
@@ -54,6 +43,7 @@ const SelectFeePackage = () => {
           setPeriods(data.periods || []);
           setFee(data.fee || null);
           setSelectedCycle(data.selected_cycle || null);
+          setHasExistingPlan(!!data.selected_cycle);
         } else {
           ToastMessage(res?.error?.message || 'Failed to load packages', 'error');
         }
@@ -87,38 +77,16 @@ const SelectFeePackage = () => {
 
     setSubmitting(true);
     try {
-      if (isChange) {
-        const res = await post('student/fee-installments/change', payload);
-        if (res?.data?.success) {
-          ToastMessage(
-            res.data?.message || 'Fee period updated.',
-            'success',
-          );
-          navigation.goBack();
-        } else {
-          ToastMessage(
-            res?.error?.message || 'Failed to change fee period',
-            'error',
-          );
-        }
-        return;
-      }
+      // Existing plan (e.g. after cancel / re-generate) → change API
+      const periodRes = hasExistingPlan
+        ? await post('student/fee-installments/change', payload)
+        : await post('student/fee-installments', payload);
 
-      const periodRes = await post('student/fee-installments', payload);
       if (!periodRes?.data?.success) {
         ToastMessage(
           periodRes?.error?.message || 'Failed to select package',
           'error',
         );
-        return;
-      }
-
-      if (isProfileFlow) {
-        ToastMessage(
-          periodRes.data?.message || 'Fee period added.',
-          'success',
-        );
-        navigation.goBack();
         return;
       }
 
@@ -138,12 +106,7 @@ const SelectFeePackage = () => {
       }
     } catch (err) {
       console.log('Select fee package error:', err);
-      ToastMessage(
-        isChange
-          ? 'Failed to change fee period'
-          : 'Failed to save fee package',
-        'error',
-      );
+      ToastMessage('Failed to generate voucher', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -189,7 +152,7 @@ const SelectFeePackage = () => {
               />
             </TouchableOpacity>
             <CustomText
-              label={screenTitle}
+              label="Select Fee Package"
               fontSize={16}
               fontFamily={fonts.bold}
               color="#101828"

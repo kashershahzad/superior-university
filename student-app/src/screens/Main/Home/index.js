@@ -1,6 +1,7 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useState, useCallback} from 'react';
 import {ActivityIndicator, View, StyleSheet} from 'react-native';
 import {useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
 
 import {get} from '../../../services/ApiRequest';
 import {COLORS} from '../../../utils/COLORS';
@@ -32,11 +33,15 @@ const Home = () => {
       setRefreshing(false);
     }
   }, []);
-  useEffect(() => {
-    fetchDashboard(false);
-  }, [fetchDashboard]);
 
-  if (loading) {
+  // Voucher generate/cancel ke baad wapas aao → flags refresh (generate hide / upload show)
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboard(false);
+    }, [fetchDashboard]),
+  );
+
+  if (loading && !dashboardData) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={COLORS.primaryColor} />

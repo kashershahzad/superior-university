@@ -125,21 +125,12 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [generatingCard, setGeneratingCard] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [selectedFeeCycle, setSelectedFeeCycle] = useState(null);
 
   const fetchProfile = useCallback(async () => {
     try {
-      const [profileRes, feeRes] = await Promise.all([
-        get('student/profile'),
-        get('student/fee-installments'),
-      ]);
-
-      if (profileRes?.data?.success) {
-        setProfile(profileRes.data.data || null);
-      }
-
-      if (feeRes?.data?.success) {
-        setSelectedFeeCycle(feeRes.data.data?.selected_cycle || null);
+      const res = await get('student/profile');
+      if (res?.data?.success) {
+        setProfile(res.data.data || null);
       }
     } catch (err) {
       console.log('Profile fetch error:', err);
@@ -225,12 +216,6 @@ const Profile = () => {
       } finally {
         setGeneratingCard(false);
       }
-      return;
-    }
-    if (actionKey === 'fee-period') {
-      navigation.navigate('SelectFeePackage', {
-        mode: selectedFeeCycle ? 'change' : 'add',
-      });
       return;
     }
     if (actionKey === 'change-route') {
@@ -323,13 +308,6 @@ const Profile = () => {
       label: 'Fee Status',
       badge: getFeeBadge(profile?.account?.fee_status || profile?.fee_status),
       actionKey: 'fee-status',
-    },
-    {
-      key: 'fee-period',
-      Icons: Images.monthlyFee,
-      label: selectedFeeCycle ? 'Change Fee Period' : 'Add Fee Period',
-      showArrow: true,
-      actionKey: 'fee-period',
     },
     {
       key: 'change-route',
