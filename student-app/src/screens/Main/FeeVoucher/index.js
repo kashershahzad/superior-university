@@ -171,12 +171,13 @@ const FeeVoucher = () => {
     { label: 'Bus No.', value: voucher?.bus_no ? `Bus #${voucher.bus_no}` : '-' },
     { label: 'Due Date', value: voucher?.due_date || '-', wide: true },
     {
-      label: 'Monthly Fee',
+      label: 'Fee',
       value: voucher?.monthly_fee != null
         ? `PKR ${Number(voucher.monthly_fee).toLocaleString()}`
         : '-',
       wide: true,
     },
+    { label: 'Package', value: voucher?.installment.label || '-', wide: true },
   ];
 
   const DetailItem = ({ label, value }) => (

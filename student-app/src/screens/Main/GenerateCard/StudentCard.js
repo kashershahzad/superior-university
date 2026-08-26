@@ -96,7 +96,7 @@ const StudentCard = ({ card }) => {
                     </View>
                     {hasValue(studentId) ? (
                         <View style={styles.idBox}>
-                            <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" />
+                            <CustomText label="STUDENT ID" fontFamily={fonts.medium} fontSize={10} color="#667085" numberOfLines={1}/>
                             <CustomText label={studentId} fontFamily={fonts.bold} color="#701A73" fontSize={14} />
                         </View>
                     ) : null}

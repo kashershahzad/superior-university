@@ -1,5 +1,6 @@
 import {
   Animated,
+  Image,
   StyleSheet,
   View,
   TouchableOpacity,
@@ -12,7 +13,6 @@ import { useIsFocused } from '@react-navigation/native';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 import { Images } from '../../../assets/images';
 import { get } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
@@ -166,7 +166,7 @@ const Home = () => {
   const renderStatCard = (icon, label, value) => (
     <View style={styles.statCard}>
       <View style={styles.statRow}>
-        <ImageFast source={icon} style={styles.statIcon} resizeMode="contain" />
+        <Image source={icon} style={styles.statIcon} resizeMode="contain" />
         <CustomText
           label={label}
           color="#475467"
@@ -208,7 +208,7 @@ const Home = () => {
           isPaid ? styles.studentCardPaid : styles.studentCardUnpaid,
         ]}>
         <View style={styles.studentInfo}>
-          <ImageFast
+          <Image
             source={avatarSource}
             style={styles.avatar}
             resizeMode="cover"
@@ -281,7 +281,7 @@ const Home = () => {
               removeTranslation
             />
           </View>
-          <ImageFast
+          <Image
             source={Images.bus}
             style={styles.busImage}
             resizeMode="contain"
@@ -336,7 +336,7 @@ const Home = () => {
         style={[styles.busStatusCard, getFadeUpStyle(anims.busStatus, 24)]}>
         <View style={styles.busStatusHeader}>
           <View style={styles.busStatusTitleRow}>
-            <ImageFast
+            <Image
               source={Images.onduty}
               style={styles.busStatusIcon}
               resizeMode="contain"

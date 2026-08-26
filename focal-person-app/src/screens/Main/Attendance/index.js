@@ -1,5 +1,6 @@
 import {
   Animated,
+  Image,
   StyleSheet,
   View,
   TouchableOpacity,
@@ -12,7 +13,6 @@ import {useIsFocused, useNavigation} from '@react-navigation/native';
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import fonts from '../../../assets/fonts';
 import CustomText from '../../../components/CustomText';
-import ImageFast from '../../../components/ImageFast';
 import Icons from '../../../components/Icons';
 import {Images} from '../../../assets/images';
 import {COLORS} from '../../../utils/COLORS';
@@ -186,7 +186,7 @@ const Attendance = () => {
   const renderStatCard = (icon, label, value) => (
     <View style={styles.statCard}>
       <View style={styles.statRow}>
-        <ImageFast source={icon} style={styles.statIcon} resizeMode="contain" />
+        <Image source={icon} style={styles.statIcon} resizeMode="contain" />
         <CustomText
           label={label}
           color="#475467"
@@ -219,7 +219,7 @@ const Attendance = () => {
     return (
       <View key={item.id || item.attendance_id} style={styles.studentRow}>
         <View style={styles.studentInfo}>
-          <ImageFast
+          <Image
             source={avatarSource}
             style={styles.avatar}
             resizeMode="cover"
@@ -255,7 +255,7 @@ const Attendance = () => {
                   isPresent && styles.actionBtnPresent,
                 ]}
                 onPress={() => markAttendance(item.id, 'present')}>
-                <ImageFast
+                <Image
                   source={Images.tickSquare}
                   style={styles.actionIcon}
                   resizeMode="contain"
@@ -266,7 +266,7 @@ const Attendance = () => {
                 disabled={isDisabled}
                 style={[styles.actionBtn, isAbsent && styles.actionBtnAbsent]}
                 onPress={() => markAttendance(item.id, 'absent')}>
-                <ImageFast
+                <Image
                   source={Images.closeSquare}
                   style={styles.actionIcon}
                   resizeMode="contain"
@@ -308,7 +308,7 @@ const Attendance = () => {
               fontFamily={fonts.medium}
             />
           </View>
-          <ImageFast
+          <Image
             source={Images.attendanceHeader}
             style={styles.headerImage}
             resizeMode="contain"
@@ -418,7 +418,7 @@ const Attendance = () => {
           activeOpacity={0.8}
           style={styles.submitBtn}
           onPress={handleReviewSubmit}>
-          <ImageFast
+          <Image
             source={Images.review}
             style={styles.submitIcon}
             resizeMode="contain"

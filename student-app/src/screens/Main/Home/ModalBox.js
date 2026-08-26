@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,6 +9,7 @@ import {
   Platform,
   useWindowDimensions,
   Image,
+  Dimensions,
 } from 'react-native';
 import { pick, types, isErrorWithCode, errorCodes } from '@react-native-documents/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +30,7 @@ import { endPoints } from '../../../services/ENV';
 import { ToastMessage } from '../../../utils/ToastMessage';
 
 const TOP_IMAGE_OVERFLOW = 50;
+const SCREEN_HEIGHT = Dimensions.get('screen').height;
 
 const SERVICE_DETAILS = [
   { item: 'Current Service', itemValue: 'Bus #03' },
@@ -36,16 +38,33 @@ const SERVICE_DETAILS = [
   { item: 'Effective Date', itemValue: '23 June 2025', itemValueColor: '#701A72' },
 ];
 
-const DiscontinueContent = ({ onConfirm, onKeepService, onClose }) => {
+const DiscontinueContent = ({ onConfirm, onKeepService, onClose, keyboardPadding = 0 }) => {
   const [reason, setReason] = useState('');
+  const scrollRef = useRef(null);
+
+  const scrollToReason = () => {
+    // Keyboard open → input dikhne ke liye sheet andar scroll
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd?.({ animated: true });
+    });
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd?.({ animated: true });
+    }, 100);
+  };
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.scroll}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       bounces={false}
-      contentContainerStyle={styles.scrollContent}
+      nestedScrollEnabled
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingBottom: 16 + keyboardPadding },
+      ]}
     >
       <View style={styles.topWrap}>
         <InfoCard
@@ -76,6 +95,7 @@ const DiscontinueContent = ({ onConfirm, onKeepService, onClose }) => {
           marginBottom={10}
           fontSize={14}
           fontFamily={fonts.regular}
+          isFocus={scrollToReason}
         />
         <CustomText
           label="Discontinuation takes effect 1 month after you request. You will continue to have bus access until then."
@@ -295,33 +315,23 @@ const ModalBox = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
-  // Absolute Y of keyboard top; overlap is derived from live windowHeight so adjustResize can't double-lift.
-  const [keyboardTopY, setKeyboardTopY] = useState(null);
-  const [keyboardFallbackHeight, setKeyboardFallbackHeight] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     if (!isVisible) {
-      setKeyboardTopY(null);
-      setKeyboardFallbackHeight(0);
+      setKeyboardHeight(0);
       return undefined;
     }
 
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const onShow = Keyboard.addListener(showEvent, (e) => {
-      const coords = e?.endCoordinates;
-      if (typeof coords?.screenY === 'number') {
-        setKeyboardTopY(coords.screenY);
-        setKeyboardFallbackHeight(0);
-      } else {
-        setKeyboardTopY(null);
-        setKeyboardFallbackHeight(Math.max(0, Math.round(coords?.height ?? 0)));
-      }
+    const onShow = Keyboard.addListener(showEvent, e => {
+      const height = Math.max(0, Math.round(e?.endCoordinates?.height ?? 0));
+      setKeyboardHeight(height);
     });
     const onHide = Keyboard.addListener(hideEvent, () => {
-      setKeyboardTopY(null);
-      setKeyboardFallbackHeight(0);
+      setKeyboardHeight(0);
     });
 
     return () => {
@@ -330,16 +340,22 @@ const ModalBox = ({
     };
   }, [isVisible]);
 
-  const keyboardOverlap =
-    keyboardTopY != null
-      ? Math.max(0, Math.round(windowHeight - keyboardTopY))
-      : keyboardFallbackHeight;
+  const isKeyboardOpen = keyboardHeight > 0;
+  // Android adjustResize pe window pehle se shrink hota hai — dobara lift mat karo
+  const windowAlreadyShrunk =
+    Platform.OS === 'android' &&
+    isKeyboardOpen &&
+    windowHeight < SCREEN_HEIGHT * 0.9;
 
-  // Fit sheet into visible area above the keyboard (overlap is 0 when adjustResize already shrunk the window).
-  const availableHeight =
-    windowHeight - keyboardOverlap - insets.top - TOP_IMAGE_OVERFLOW - 8;
-  const sheetMaxHeight = Math.min(windowHeight * 0.9, Math.max(availableHeight, 280));
-  const isKeyboardOpen = keyboardTopY != null || keyboardFallbackHeight > 0;
+  const liftBottom = windowAlreadyShrunk ? 0 : keyboardHeight;
+
+  // Sheet kabhi screen se upar na jaye — maxHeight clamp + andar scroll
+  const usableHeight =
+    SCREEN_HEIGHT - liftBottom - insets.top - TOP_IMAGE_OVERFLOW - 8;
+  const sheetMaxHeight = Math.max(
+    260,
+    Math.min(windowHeight * 0.9, usableHeight),
+  );
 
   return (
     <CustomModal
@@ -352,15 +368,15 @@ const ModalBox = ({
       animationOut="slideOutDown"
       statusBarTranslucent
       withBlur
+      avoidKeyboard={false}
     >
       <View
         style={[
           styles.sheet,
           {
             maxHeight: sheetMaxHeight,
-            // Bound height while keyboard is open so inner ScrollView can scroll.
-            ...(isKeyboardOpen ? { height: sheetMaxHeight } : null),
-            marginBottom: keyboardOverlap,
+            height: isKeyboardOpen ? sheetMaxHeight : undefined,
+            marginBottom: liftBottom,
             paddingBottom: Math.max(insets.bottom, 16) + 8,
           },
         ]}
@@ -388,6 +404,7 @@ const ModalBox = ({
             onConfirm={onConfirm}
             onKeepService={onKeepService}
             onClose={onClose}
+            keyboardPadding={isKeyboardOpen ? 24 : 0}
           />
         )}
       </View>
@@ -410,8 +427,10 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     flexShrink: 1,
+    maxHeight: '100%',
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 16,
   },
   topImgWrap: {
