@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { get, post } from '../../../services/ApiRequest';
 import { ToastMessage } from '../../../utils/ToastMessage';
 import { setUserData } from '../../../store/reducer/usersSlice';
+import { store } from '../../../store';
 
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
@@ -119,25 +120,40 @@ const Profile = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const { userData } = useSelector(state => state.users);
-  const isTeacher = userData?.role === 'teacher';
   const [avatarUri, setAvatarUri] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generatingCard, setGeneratingCard] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  const role = String(
+    profile?.role || userData?.role || '',
+  ).toLowerCase();
+  const isTeacher = role === 'teacher';
+
   const fetchProfile = useCallback(async () => {
     try {
       const res = await get('student/profile');
       if (res?.data?.success) {
-        setProfile(res.data.data || null);
+        const data = res.data.data || null;
+        setProfile(data);
+        if (data?.role) {
+          const currentUser = store.getState()?.users?.userData || {};
+          dispatch(
+            setUserData({
+              ...currentUser,
+              ...data,
+              role: data.role,
+            }),
+          );
+        }
       }
     } catch (err) {
       console.log('Profile fetch error:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
   useFocusEffect(
     useCallback(() => {
@@ -284,7 +300,7 @@ const Profile = () => {
   ];
 
   const accountRows = [
-    profile?.account?.personal_data
+    profile?.account?.personal_data !== false
       ? {
           key: 'personal-data',
           Icons: Images.user,
@@ -293,7 +309,7 @@ const Profile = () => {
           actionKey: 'personal-data',
         }
       : null,
-    profile?.account?.generate_card
+    !isTeacher && profile?.account?.generate_card
       ? {
           key: 'generate-card',
           Icons: Images.generateCard,
@@ -302,13 +318,15 @@ const Profile = () => {
           actionKey: 'generate-card',
         }
       : null,
-    {
-      key: 'fee-status',
-      Icons: Images.feeStatus,
-      label: 'Fee Status',
-      badge: getFeeBadge(profile?.account?.fee_status || profile?.fee_status),
-      actionKey: 'fee-status',
-    },
+    !isTeacher
+      ? {
+          key: 'fee-status',
+          Icons: Images.feeStatus,
+          label: 'Fee Status',
+          badge: getFeeBadge(profile?.account?.fee_status || profile?.fee_status),
+          actionKey: 'fee-status',
+        }
+      : null,
     {
       key: 'change-route',
       Icons: Images.route,
@@ -350,11 +368,9 @@ const Profile = () => {
 
   const sectionData = [
     { key: 'contact', title: 'CONTACT', rows: contactRows },
-    !isTeacher
-      ? { key: 'account', title: 'ACCOUNT', rows: accountRows }
-      : null,
+    { key: 'account', title: 'ACCOUNT', rows: accountRows },
     { key: 'settings', title: 'SETTINGS', rows: settingsRows },
-  ].filter(Boolean);
+  ];
 
   if (loading && !profile) {
     return (

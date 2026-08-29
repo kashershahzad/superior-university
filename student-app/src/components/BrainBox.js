@@ -1,29 +1,21 @@
-// import messaging from '@react-native-firebase/messaging';
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect} from 'react';
 import {View} from 'react-native';
+import {useSelector} from 'react-redux';
 
-import {getToken} from '../utils/constants';
+import {setupFcmListeners} from '../utils/fcm';
 
 const BrainBox = ({children}) => {
   const navigation = useNavigation();
-  // useEffect(() => {
-  //   getToken();
-  // }, []);
-  const handlePress = data => {
-    const item = JSON.parse(data?.recipient);
-    if (data?.messageType === 'message') {
-      navigation.navigate('MainStack', {
-        screen: 'InboxScreen',
-        params: {data: item},
-      });
+  const token = useSelector(state => state.authConfig?.token);
+
+  useEffect(() => {
+    if (!token) {
+      return undefined;
     }
-  };
-  // useEffect(() => {
-  //   messaging().onNotificationOpenedApp(remoteMessage => {
-  //     handlePress(remoteMessage?.data);
-  //   });
-  // }, []);
+    const cleanup = setupFcmListeners(navigation);
+    return cleanup;
+  }, [token, navigation]);
 
   return <View style={{flex: 1}}>{children}</View>;
 };

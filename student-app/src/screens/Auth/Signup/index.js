@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   Keyboard,
   Dimensions,
@@ -15,8 +14,7 @@ import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomButton from '../../../components/CustomButton';
 import CustomInput from '../../../components/CustomInput';
 import CustomText from '../../../components/CustomText';
-import CustomCheckbox from '../../../components/CustomCheckBox';
-import DualText from '../../../components/DualText';
+import CustomDropDown from '../../../components/CustomDropDown';
 import CountryPhoneInput from '../../../components/CountryPhoneInput';
 import { post, get } from '../../../services/ApiRequest';
 import { registerFcmToken } from '../../../utils/fcm';
@@ -24,6 +22,7 @@ import { ToastMessage } from '../../../utils/ToastMessage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { setToken } from '../../../store/reducer/AuthConfig';
+import { setUserData } from '../../../store/reducer/usersSlice';
 
 import { COLORS } from '../../../utils/COLORS';
 import fonts from '../../../assets/fonts';
@@ -31,11 +30,18 @@ import { Images } from '../../../assets/images';
 import Signinmodel from '../Login/Signinmodel';
 import SelectRoute from './SelectRoute';
 import SelectStop from './SelectStop';
+import SelectProgram from './SelectProgram';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const EXTRA_SCROLL = 80;
 
+const ROLE_OPTIONS = [
+  {_id: 'teacher', title: 'Teacher'},
+  {_id: 'student', title: 'Student'},
+];
+
 const initialForm = {
+  role: '',
   email: '',
   phone: '',
   password: '',
@@ -43,7 +49,10 @@ const initialForm = {
   studentId: '',
   fullName: '',
   program: '',
+  programId: null,
   semester: '',
+  department: '',
+  designation: '',
   route: '',
   stop: '',
   busNumber: '',
@@ -56,16 +65,17 @@ const Signup = ({ navigation }) => {
   const dispatch = useDispatch();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
-  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [signinModelVisible, setSigninModelVisible] = useState(false);
   const [routeModalVisible, setRouteModalVisible] = useState(false);
   const [stopModalVisible, setStopModalVisible] = useState(false);
+  const [programModalVisible, setProgramModalVisible] = useState(false);
 
   const studentIdRef = useRef(null);
   const fullNameRef = useRef(null);
-  const programRef = useRef(null);
   const semesterRef = useRef(null);
+  const departmentRef = useRef(null);
+  const designationRef = useRef(null);
   const emailRef = useRef(null);
   const phoneRef = useRef(null);
   const passwordRef = useRef(null);
@@ -198,6 +208,16 @@ const Signup = ({ navigation }) => {
     setStopModalVisible(true);
   };
 
+  const handleSelectProgram = program => {
+    Keyboard.dismiss();
+    setForm(prev => ({
+      ...prev,
+      program: program.name,
+      programId: program.id != null ? program.id : null,
+    }));
+    setProgramModalVisible(false);
+  };
+
   const handleSigninModel = () => {
     setSigninModelVisible(true);
   };
@@ -205,6 +225,70 @@ const Signup = ({ navigation }) => {
   const updateField = useCallback((key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  const isTeacher = form.role === 'teacher';
+
+  const getApiErrorMessage = res =>
+    res?.error?.message ||
+    res?.error?.data?.message ||
+    res?.data?.message ||
+    'Something went wrong';
+
+  const buildStep1Payload = useCallback(() => {
+    const base = {
+      role: form.role,
+      student_id: form.studentId,
+      name: form.fullName,
+      route_id: form.routeId,
+      stop_id: form.stopId,
+      ...(form.busId ? {bus_id: form.busId} : {}),
+      terms: true,
+    };
+
+    if (isTeacher) {
+      return {
+        ...base,
+        department: form.department,
+        designation: form.designation,
+      };
+    }
+
+    return {
+      ...base,
+      program: form.program,
+      semester: form.semester,
+    };
+  }, [form, isTeacher]);
+
+  const buildRegisterPayload = useCallback(() => {
+    const base = {
+      role: form.role,
+      student_id: form.studentId,
+      name: form.fullName,
+      route_id: form.routeId,
+      stop_id: form.stopId,
+      ...(form.busId ? {bus_id: form.busId} : {}),
+      email: form.email,
+      phone: form.phone,
+      password: form.password,
+      password_confirmation: form.confirmPassword,
+      terms: true,
+    };
+
+    if (isTeacher) {
+      return {
+        ...base,
+        department: form.department,
+        designation: form.designation,
+      };
+    }
+
+    return {
+      ...base,
+      program: form.program,
+      semester: form.semester,
+    };
+  }, [form, isTeacher]);
 
   useFocusEffect(
     useCallback(() => {
@@ -217,38 +301,48 @@ const Signup = ({ navigation }) => {
   // }, []);
 
   const handleNext = useCallback(async () => {
-    if (
+    if (!form.role) {
+      ToastMessage('Please select a role', 'error');
+      return;
+    }
+
+    const missingTeacherFields =
+      !form.studentId ||
+      !form.fullName ||
+      !form.department ||
+      !form.designation ||
+      !form.routeId ||
+      !form.stopId;
+
+    const missingStudentFields =
       !form.studentId ||
       !form.fullName ||
       !form.program ||
       !form.semester ||
       !form.routeId ||
-      !form.stopId
-    ) {
-      ToastMessage('Please fill all student details', 'error');
-      return;
-    }
-    if (!agreed) {
-      ToastMessage('Please accept terms & conditions', 'error');
+      !form.stopId;
+
+    if (isTeacher ? missingTeacherFields : missingStudentFields) {
+      ToastMessage(
+        isTeacher
+          ? 'Please fill all teacher details'
+          : 'Please fill all student details',
+        'error',
+      );
       return;
     }
 
     setLoading(true);
     try {
-      const payload = {
-        student_id: form.studentId,
-        name: form.fullName,
-        program: form.program,
-        semester: form.semester,
-        route_id: form.routeId,
-        stop_id: form.stopId,
-        ...(form.busId ? {bus_id: form.busId} : {}),
-        terms: agreed,
-      };
+      const payload = buildStep1Payload();
 
       const res = await post('auth/register/validate', payload);
       console.log('payload', payload);
       console.log('res', res);
+
+      if (res?.error) {
+        return;
+      }
 
       if (res?.data?.success && res?.data?.data?.valid) {
         updateField('route', res.data.data.route?.name || form.route);
@@ -268,14 +362,14 @@ const Signup = ({ navigation }) => {
         ToastMessage(res.data.message || 'Step 1 validated.', 'success');
         setStep(2);
       } else {
-        ToastMessage(res?.data?.message || 'Validation failed', 'error');
+        ToastMessage(getApiErrorMessage(res), 'error');
       }
     } catch (err) {
       console.log('Step1 validate error:', err);
     } finally {
       setLoading(false);
     }
-  }, [form, agreed, updateField]);
+  }, [form, isTeacher, buildStep1Payload, updateField]);
 
   // const handleSignUp = useCallback(() => {
   //   setLoading(true);
@@ -299,37 +393,30 @@ const Signup = ({ navigation }) => {
       return;
     }
 
-    if (!agreed) {
-      ToastMessage('Please accept terms & conditions', 'error');
-      return;
-    }
-
     setLoading(true);
     try {
-      const payload = {
-        student_id: form.studentId,
-        name: form.fullName,
-        program: form.program,
-        semester: form.semester,
-        route_id: form.routeId,
-        stop_id: form.stopId,
-        ...(form.busId ? {bus_id: form.busId} : {}),
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        password_confirmation: form.confirmPassword,
-        terms: agreed,
-      };
+      const payload = buildRegisterPayload();
 
       const res = await post('auth/register', payload);
       console.log('register', res);
 
+      if (res?.error) {
+        return;
+      }
+
       if (res?.data?.success) {
         const token = res.data?.data?.token; // important: data.token
+        const user = res.data?.data?.user;
 
         if (token) {
           await AsyncStorage.setItem('token', token);
           dispatch(setToken(token));
+        }
+
+        if (user) {
+          dispatch(setUserData({...user, role: user.role || form.role}));
+        } else if (form.role) {
+          dispatch(setUserData({role: form.role}));
         }
 
         await registerFcmToken();
@@ -346,7 +433,7 @@ const Signup = ({ navigation }) => {
           }),
         );
       } else {
-        console.log('Register failed:', res?.error);
+        ToastMessage(getApiErrorMessage(res), 'error');
       }
     } catch (err) {
       console.log('Register error:', err);
@@ -354,9 +441,96 @@ const Signup = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, [form, agreed, dispatch, navigation]);
+  }, [form, buildRegisterPayload, dispatch, navigation]);
 
-  const renderStudentCardFields = () => (
+  const renderRoleDropdown = () => (
+    <CustomDropDown
+      data={ROLE_OPTIONS}
+      value={ROLE_OPTIONS.find(item => item._id === form.role)?.title || ''}
+      setValue={option => {
+        const nextRole = option?._id || option;
+        setForm(prev => ({
+          ...prev,
+          role: nextRole,
+          program: '',
+          programId: null,
+          semester: '',
+          department: '',
+          designation: '',
+        }));
+      }}
+      placeholder="Select Role"
+      withLabel="Role"
+      borderColor="#98A2B3"
+      iconName="users"
+      marginBottom={20}
+    />
+  );
+
+  const renderTeacherFields = () => (
+    <>
+      <CustomInput
+        ref={studentIdRef}
+        placeholder="Enter Teacher ID"
+        value={form.studentId}
+        onChangeText={text => updateField('studentId', text)}
+        autoCapitalize="none"
+        withLabel="Teacher ID"
+        borderColor="#98A2B3"
+        icon={Images.studentId}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(fullNameRef)}
+      />
+
+      <CustomInput
+        ref={fullNameRef}
+        placeholder="Enter Full Name"
+        value={form.fullName}
+        onChangeText={text => updateField('fullName', text)}
+        withLabel="Full Name"
+        borderColor="#98A2B3"
+        iconName="user"
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(departmentRef)}
+      />
+
+      <CustomInput
+        ref={departmentRef}
+        placeholder="Enter Department"
+        value={form.department}
+        onChangeText={text => updateField('department', text)}
+        withLabel="Department"
+        borderColor="#98A2B3"
+        icon={Images.program}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => focusNext(designationRef)}
+      />
+
+      <CustomInput
+        ref={designationRef}
+        placeholder="Enter Designation"
+        value={form.designation}
+        onChangeText={text => updateField('designation', text)}
+        withLabel="Designation"
+        borderColor="#98A2B3"
+        icon={Images.semester}
+        returnKeyType="next"
+        isFocus={handleFieldFocus}
+        onSubmitEditing={() => {
+          Keyboard.dismiss();
+          setRouteModalVisible(true);
+        }}
+      />
+    </>
+  );
+
+  const renderStudentFields = () => (
     <>
       <CustomInput
         ref={studentIdRef}
@@ -384,21 +558,23 @@ const Signup = ({ navigation }) => {
         returnKeyType="next"
         blurOnSubmit={false}
         isFocus={handleFieldFocus}
-        onSubmitEditing={() => focusNext(programRef)}
+        onSubmitEditing={() => {
+          Keyboard.dismiss();
+          setProgramModalVisible(true);
+        }}
       />
 
       <CustomInput
-        ref={programRef}
-        placeholder="Enter Program"
+        placeholder="Select your Program"
         value={form.program}
-        onChangeText={text => updateField('program', text)}
         withLabel="Program"
         borderColor="#98A2B3"
         icon={Images.program}
-        returnKeyType="next"
-        blurOnSubmit={false}
-        isFocus={handleFieldFocus}
-        onSubmitEditing={() => focusNext(semesterRef)}
+        rightIconName="chevron-right"
+        onPress={() => {
+          Keyboard.dismiss();
+          setProgramModalVisible(true);
+        }}
       />
 
       <CustomInput
@@ -417,7 +593,11 @@ const Signup = ({ navigation }) => {
           setRouteModalVisible(true);
         }}
       />
+    </>
+  );
 
+  const renderRouteFields = () => (
+    <>
       <CustomInput
         placeholder="Select your Route"
         value={form.route}
@@ -449,6 +629,14 @@ const Signup = ({ navigation }) => {
         icon={Images.busIcon}
         editable={false}
       />
+    </>
+  );
+
+  const renderDetailsFields = () => (
+    <>
+      {renderRoleDropdown()}
+      {!form.role ? null : isTeacher ? renderTeacherFields() : renderStudentFields()}
+      {form.role ? renderRouteFields() : null}
     </>
   );
 
@@ -567,7 +755,9 @@ const Signup = ({ navigation }) => {
           <CustomText
             label={
               isStudentStep
-                ? 'Enter Your Student Details'
+                ? isTeacher
+                  ? 'Enter Your Teacher Details'
+                  : 'Enter Your Student Details'
                 : 'Register Using Your Credentials'
             }
             fontSize={14}
@@ -578,29 +768,14 @@ const Signup = ({ navigation }) => {
         </View>
 
         <View style={styles.form}>
-          {isStudentStep ? renderStudentCardFields() : renderEmailFields()}
-        </View>
-
-        <View
-          style={[
-            styles.termsRow,
-            isStudentStep ? { marginBottom: 10 } : { marginBottom: 36 },
-          ]}
-        >
-          <CustomCheckbox value={agreed} onValueChange={setAgreed} />
-          <Text style={styles.termsText}>
-            I agree with{' '}
-            <Text style={styles.termsLink}>terms & conditions</Text>
-            {' and '}
-            <Text style={styles.termsLink}>privacy policy</Text>
-          </Text>
+          {isStudentStep ? renderDetailsFields() : renderEmailFields()}
         </View>
 
         <CustomButton
           title={isStudentStep ? 'Next' : 'Sign Up'}
           onPress={isStudentStep ? handleNext : handleSignUp}
           loading={loading}
-          marginTop={10}
+          marginTop={isStudentStep ? 10 : 36}
           marginBottom={20}
           borderRadius={30}
           color="#ffffff"
@@ -645,6 +820,14 @@ const Signup = ({ navigation }) => {
           listType="stops"
           onSelectStop={handleSelectStop}
         />
+
+        <SelectProgram
+          visible={programModalVisible}
+          onClose={() => setProgramModalVisible(false)}
+          selectedProgramId={form.programId}
+          selectedProgram={form.program}
+          onSelectProgram={handleSelectProgram}
+        />
       </KeyboardAwareScrollView>
     </ScreenWrapper>
   );
@@ -675,22 +858,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 60,
-  },
-  termsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  termsText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 20,
-    color: '#393B41',
-    fontFamily: fonts.regular,
-  },
-  termsLink: {
-    fontSize: 12,
-    color: COLORS.primaryColor,
-    fontFamily: fonts.semiBold,
   },
 });

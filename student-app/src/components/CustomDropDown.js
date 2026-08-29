@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TouchableOpacity,
   LayoutAnimation,
@@ -25,9 +25,17 @@ const CustomDropdown = ({
   placeholder,
   error,
   withLabel,
+  borderColor = "#98A2B3",
+  marginBottom = 20,
+  iconName,
+  iconFamily = "Feather",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    setText(value || "");
+  }, [value]);
 
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -41,9 +49,13 @@ const CustomDropdown = ({
       setText(option.title);
     } else {
       setValue(option);
+      setText(option);
     }
     setIsOpen(false);
   };
+
+  const displayText = text || value || placeholder;
+  const hasValue = Boolean(text || value);
 
   return (
     <>
@@ -52,37 +64,49 @@ const CustomDropdown = ({
           label={withLabel}
           fontFamily={fonts.medium}
           marginBottom={8}
-          // color={COLORS.inputLabel}
+          color={COLORS.black}
         />
       )}
       <View
         style={[
           styles.dropdownMainContainer,
           {
-            marginBottom: error ? 5 : 15,
-            borderColor: error ? COLORS.red : "transparent",
-            borderRadius: 12,
-            backgroundColor: isOpen ? "#e3ebef" : "#FAFAFA",
+            marginBottom: error ? 5 : marginBottom,
+            borderColor: error ? COLORS.red : isOpen ? COLORS.primaryColor : borderColor,
+            backgroundColor: "#FFFFFF",
           },
         ]}
       >
         <TouchableOpacity
-          activeOpacity={0.6}
-          style={[
-            styles.container,
-            { backgroundColor: isOpen ? "#e3ebef" : "#FAFAFA" },
-          ]}
+          activeOpacity={0.7}
+          style={styles.container}
           onPress={toggleDropdown}
         >
-          <CustomText
-            label={text || value || placeholder}
-            color={value?.length ? COLORS.black : COLORS.inputLabel}
-          />
+          <View style={styles.leftContent}>
+            {iconName ? (
+              <Icons
+                name={iconName}
+                family={iconFamily}
+                color={COLORS.primaryColor}
+                size={20}
+                style={styles.leftIcon}
+              />
+            ) : null}
+            <CustomText
+              label={displayText}
+              fontFamily={fonts.regular}
+              fontSize={14}
+              color={hasValue ? COLORS.black : COLORS.inputLabel}
+              textStyle={styles.valueText}
+            />
+          </View>
           {!showIcon ? (
             <Icons
-              style={{ color: COLORS.black, fontSize: 20 }}
-              family="Entypo"
+              style={styles.chevron}
+              family="Feather"
               name={isOpen ? "chevron-up" : "chevron-down"}
+              color={COLORS.primaryColor}
+              size={20}
             />
           ) : (
             <View />
@@ -90,25 +114,33 @@ const CustomDropdown = ({
         </TouchableOpacity>
 
         {isOpen && data?.length > 0 && (
-          <ScrollView
-            scrollEnabled
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            {data?.map((option, i) => (
-              <TouchableOpacity
-                style={styles.list}
-                key={i}
-                onPress={() => selectOption(option)}
-              >
-                <CustomText
-                  label={option?._id ? option.title : option}
-                  fontSize={12}
-                  color={COLORS.black}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.listContainer}>
+            <ScrollView
+              scrollEnabled
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+            >
+              {data?.map((option, i) => {
+                const label = option?._id ? option.title : option;
+                const selected = hasValue && (text === label || value === label);
+
+                return (
+                  <TouchableOpacity
+                    style={[styles.list, selected && styles.listSelected]}
+                    key={option?._id || i}
+                    onPress={() => selectOption(option)}
+                  >
+                    <CustomText
+                      label={label}
+                      fontSize={14}
+                      fontFamily={selected ? fonts.semiBold : fonts.regular}
+                      color={selected ? COLORS.primaryColor : COLORS.black}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
       </View>
       {error && (
@@ -128,24 +160,46 @@ export default CustomDropdown;
 const styles = StyleSheet.create({
   dropdownMainContainer: {
     width: "100%",
-    maxHeight: 200,
-    overflow: "scroll",
+    maxHeight: 220,
     borderWidth: 1,
-    borderColor: "black",
+    borderRadius: 12,
+    overflow: "hidden",
   },
   container: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     width: "100%",
-    height: 56,
-
-    overflow: "scroll",
+    height: 58,
+  },
+  leftContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  leftIcon: {
+    marginRight: 10,
+  },
+  valueText: {
+    flex: 1,
+  },
+  chevron: {
+    alignSelf: "center",
+  },
+  listContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#EAECF0",
+    maxHeight: 140,
   },
   list: {
-    paddingHorizontal: 15,
-    paddingVertical: 9,
-    fontFamily: fonts.medium,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F4F7",
+  },
+  listSelected: {
+    backgroundColor: "#F9F5FF",
   },
 });

@@ -25,7 +25,8 @@ const DEFAULT_BUS_LOCATION = {
 const FeePaid = ({ data, refreshing, onRefresh }) => {
   const insets = useSafeAreaInsets();
   const { userData } = useSelector(state => state.users);
-  const isTeacher = userData?.role === 'teacher';
+  const role = String(data?.role || userData?.role || '').toLowerCase();
+  const isTeacher = role === 'teacher';
   const [isSheetVisible, setSheetVisible] = useState(false);
   const [discontinuing, setDiscontinuing] = useState(false);
   const [cancelling, setCancelling] = useState(false);

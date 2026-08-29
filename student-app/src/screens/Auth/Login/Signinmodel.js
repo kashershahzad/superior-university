@@ -190,9 +190,14 @@ const Signinmodel = ({ visible, onClose, navigation }) => {
           dispatch(setToken(token));
           console.log('Token saved:', await AsyncStorage.getItem('token'));
         }
-        if (user) {
-          dispatch(setUserData(user));
-        }
+
+        // Always refresh user — stale teacher role se student unpaid screen skip na ho
+        dispatch(
+          setUserData({
+            ...(user || {}),
+            role: user?.role || 'student',
+          }),
+        );
 
         await registerFcmToken();
 
