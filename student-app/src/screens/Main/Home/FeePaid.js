@@ -238,18 +238,22 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
             },
           ]}>
           <View style={styles.card}>
-            <CustomText
-              label="Total Expense"
-              color="#101828"
-              fontSize={14}
-              fontFamily={fonts.medium}
-            />
-            <CustomText
-              label={timePeriod}
-              color="#101828"
-              fontSize={12}
-              fontFamily={fonts.regular}
-            />
+            {!isTeacher ? (
+              <>
+                <CustomText
+                  label="Total Expense"
+                  color="#101828"
+                  fontSize={14}
+                  fontFamily={fonts.medium}
+                />
+                <CustomText
+                  label={timePeriod}
+                  color="#101828"
+                  fontSize={12}
+                  fontFamily={fonts.regular}
+                />
+              </>
+            ) : null}
             <View style={styles.infoContainer}>
               {!isTeacher ? (
                 <TouchableOpacity
@@ -393,8 +397,8 @@ const FeePaid = ({ data, refreshing, onRefresh }) => {
         ]}>
         <InfoCard
           title="Bus Details"
-          titleStatus={transport.status_label}
-          titleStatusType={transport.status_label}
+          titleStatus={isTeacher ? null : transport.status_label}
+          titleStatusType={isTeacher ? null : transport.status_label}
           items={feeDetailsItems}
         />
       </Animated.View>

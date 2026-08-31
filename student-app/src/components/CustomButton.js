@@ -1,10 +1,15 @@
-import { TouchableOpacity, ActivityIndicator, Animated } from "react-native";
-import React, { useState } from "react";
+import {
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  View,
+} from 'react-native';
+import React from 'react';
 
-import CustomText from "./CustomText";
+import CustomText from './CustomText';
 
-import { COLORS } from "../utils/COLORS";
-import fonts from "../assets/fonts";
+import {COLORS} from '../utils/COLORS';
+import fonts from '../assets/fonts';
 
 const CustomButton = ({
   onPress,
@@ -17,13 +22,13 @@ const CustomButton = ({
   marginTop,
   backgroundColor,
   color,
-  width = "100%",
+  width = '100%',
   height = 54,
   borderRadius = 8,
-  justifyContent = "center",
-  alignItems = "center",
-  flexDirection = "row",
-  alignSelf = "center",
+  justifyContent = 'center',
+  alignItems = 'center',
+  flexDirection = 'row',
+  alignSelf = 'center',
   fontSize,
   indicatorColor,
   marginRight,
@@ -33,79 +38,62 @@ const CustomButton = ({
   loadingSize,
   mainStyle,
 }) => {
-  const [animation] = useState(new Animated.Value(1));
-
-  const handlePressIn = () => {
-    Animated.spring(animation, {
-      toValue: 0.9,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(animation, {
-      toValue: 1,
-      friction: 3,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
+  const isDisabled = !!(loading || disabled);
 
   return (
-    <Animated.View
+    <TouchableOpacity
+      activeOpacity={0.7}
+      disabled={isDisabled}
+      onPress={onPress}
       style={[
+        styles.button,
         mainStyle,
-        { transform: [{ scale: animation }], width, alignSelf },
-      ]}
-    >
-      <TouchableOpacity
-        disabled={loading || disabled}
-        activeOpacity={0.6}
-        style={[
-          {
-            backgroundColor: disabled
-              ? COLORS.authText
-              : backgroundColor
-              ? backgroundColor
-              : COLORS.primaryColor,
-            marginTop,
-            marginBottom,
-            width: "100%",
-            height,
-            borderRadius,
-            flexDirection,
-            alignItems,
-            justifyContent,
-            marginRight,
-            borderWidth,
-            borderColor,
-          },
-          customStyle,
-        ]}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-      >
-        {loading && (
-          <ActivityIndicator
-            size={loadingSize || 25}
-            color={indicatorColor ? COLORS.primaryColor : COLORS.white}
-          />
-        )}
-        {!loading && (
+        {
+          backgroundColor: disabled
+            ? COLORS.authText
+            : backgroundColor || COLORS.primaryColor,
+          marginTop,
+          marginBottom,
+          marginRight,
+          width,
+          height,
+          borderRadius,
+          flexDirection,
+          alignItems,
+          justifyContent,
+          alignSelf,
+          borderWidth,
+          borderColor,
+          opacity: isDisabled && loading ? 0.9 : 1,
+        },
+        customStyle,
+      ]}>
+      {loading ? (
+        <ActivityIndicator
+          size={loadingSize || 25}
+          color={indicatorColor ? COLORS.primaryColor : COLORS.white}
+        />
+      ) : (
+        <View pointerEvents="none">
           <CustomText
             textStyle={customText}
             label={title}
-            color={color ? color : COLORS.white}
+            removeTranslation
+            color={color || COLORS.white}
             fontFamily={fontFamily || fonts.semiBold}
             fontSize={fontSize || 15}
             lineHeight={22}
-            marginTop={-2}
           />
-        )}
-      </TouchableOpacity>
-    </Animated.View>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 };
 
 export default CustomButton;
+
+const styles = StyleSheet.create({
+  button: {
+    overflow: 'hidden',
+  },
+});

@@ -10,6 +10,7 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import React, {useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -42,6 +43,10 @@ const getHeaderValue = (headers, key) => {
 const GenerateCard = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const {userData} = useSelector(state => state.users);
+  const isTeacher =
+    String(userData?.role || '').toLowerCase() === 'teacher';
+  const screenTitle = isTeacher ? 'Teacher Card' : 'Generate Card';
   // const cardRef = useRef(null);
   // const cardSizeRef = useRef({width: 0, height: 0});
   const [card, setCard] = useState(null);
@@ -287,7 +292,8 @@ const GenerateCard = () => {
                 />
               </TouchableOpacity>
               <CustomText
-                label="Generate Card"
+                label={screenTitle}
+                removeTranslation
                 fontSize={16}
                 fontFamily={fonts.bold}
                 color="#101828"
@@ -309,7 +315,8 @@ const GenerateCard = () => {
               resizeMode="contain"
             />
             <CustomText
-              label={card?.message}
+              label="Your Bus card is ready!"
+              removeTranslation
               fontSize={13}
               fontFamily={fonts.medium}
               color="#19B36E"

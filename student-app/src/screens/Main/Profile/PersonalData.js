@@ -11,6 +11,7 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import React, {useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
 import CustomText from '../../../components/CustomText';
@@ -27,32 +28,49 @@ const PersonalData = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
+  const {userData} = useSelector(state => state.users);
   const initialProfile = route.params?.profile;
 
   const [loading, setLoading] = useState(!initialProfile);
   const [updating, setUpdating] = useState(false);
+  const [role, setRole] = useState(
+    String(initialProfile?.role || userData?.role || '').toLowerCase(),
+  );
   const [studentId, setStudentId] = useState(initialProfile?.student_id || '');
   const [fullName, setFullName] = useState(initialProfile?.name || '');
   const [email, setEmail] = useState(initialProfile?.email || '');
   const [phone, setPhone] = useState(initialProfile?.phone || '');
-  const [program, setProgram] = useState(initialProfile?.department || '');
+  const [program, setProgram] = useState(
+    initialProfile?.program || initialProfile?.department || '',
+  );
   const [semester, setSemester] = useState(initialProfile?.semester || '');
   const [session, setSession] = useState(initialProfile?.session || '');
+  const [department, setDepartment] = useState(
+    initialProfile?.department || '',
+  );
+  const [designation, setDesignation] = useState(
+    initialProfile?.designation || '',
+  );
   const [bloodGroup, setBloodGroup] = useState(
     initialProfile?.blood_group || '',
   );
+
+  const isTeacher = role === 'teacher';
 
   const fillForm = data => {
     if (!data) {
       return;
     }
+    setRole(String(data.role || userData?.role || '').toLowerCase());
     setStudentId(data.student_id || '');
     setFullName(data.name || '');
     setEmail(data.email || '');
     setPhone(data.phone || '');
-    setProgram(data.department || '');
+    setProgram(data.program || data.department || '');
     setSemester(data.semester || '');
     setSession(data.session || '');
+    setDepartment(data.department || '');
+    setDesignation(data.designation || '');
     setBloodGroup(data.blood_group || '');
   };
 
@@ -74,32 +92,44 @@ const PersonalData = () => {
   }, []);
 
   const handleUpdate = async () => {
-    const fields = [
-      {key: 'Student ID', value: studentId},
-      {key: 'Full Name', value: fullName},
-      {key: 'Email', value: email},
-      {key: 'Phone', value: phone},
-      {key: 'Program', value: program},
-      {key: 'Semester', value: semester},
-    ];
-
-    const emptyField = fields.find(field => !String(field.value || '').trim());
-    if (emptyField) {
-      ToastMessage(`${emptyField.key} is required`, 'error');
+    if (!String(fullName || '').trim()) {
+      ToastMessage('Full Name is required', 'error');
       return;
+    }
+
+    if (!isTeacher) {
+      const fields = [
+        {key: 'Student ID', value: studentId},
+        {key: 'Email', value: email},
+        {key: 'Phone', value: phone},
+        {key: 'Program', value: program},
+        {key: 'Semester', value: semester},
+      ];
+
+      const emptyField = fields.find(
+        field => !String(field.value || '').trim(),
+      );
+      if (emptyField) {
+        ToastMessage(`${emptyField.key} is required`, 'error');
+        return;
+      }
     }
 
     setUpdating(true);
     try {
-      const res = await put('student/profile', {
-        name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        program: program.trim(),
-        semester: semester.trim(),
-        session: session.trim(),
-        blood_group: bloodGroup.trim(),
-      });
+      const payload = isTeacher
+        ? {name: fullName.trim()}
+        : {
+            name: fullName.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+            program: program.trim(),
+            semester: semester.trim(),
+            session: session.trim(),
+            blood_group: bloodGroup.trim(),
+          };
+
+      const res = await put('student/profile', payload);
 
       if (res?.data?.success) {
         ToastMessage(res.data?.message || 'Profile updated', 'success');
@@ -174,11 +204,11 @@ const PersonalData = () => {
             showsVerticalScrollIndicator={false}>
             <View style={styles.container}>
               <CustomInput
-                placeholder="Enter Your ID"
+                placeholder={isTeacher ? 'Enter Teacher ID' : 'Enter Your ID'}
                 value={studentId}
                 onChangeText={text => setStudentId(text)}
                 autoCapitalize="none"
-                withLabel="Student ID"
+                withLabel={isTeacher ? 'Teacher ID' : 'Student ID'}
                 borderColor="#98A2B3"
                 icon={Images.studentId}
                 editable={false}
@@ -191,6 +221,7 @@ const PersonalData = () => {
                 withLabel="Full Name"
                 borderColor="#98A2B3"
                 iconName="user"
+                editable={true}
                 returnKeyType="next"
                 blurOnSubmit={false}
               />
@@ -218,47 +249,71 @@ const PersonalData = () => {
                 editable={false}
               />
 
-              <CustomInput
-                placeholder="Enter Program"
-                value={program}
-                onChangeText={text => setProgram(text)}
-                withLabel="Program"
-                borderColor="#98A2B3"
-                icon={Images.program}
-                editable={false}
-              />
+              {isTeacher ? (
+                <>
+                  <CustomInput
+                    placeholder="Department"
+                    value={department}
+                    withLabel="Department"
+                    borderColor="#98A2B3"
+                    icon={Images.program}
+                    editable={false}
+                  />
 
-              <CustomInput
-                placeholder="Enter Semester"
-                value={semester}
-                onChangeText={text => setSemester(text)}
-                withLabel="Semester"
-                borderColor="#98A2B3"
-                icon={Images.semester}
-                returnKeyType="next"
-                blurOnSubmit={false}
-              />
+                  <CustomInput
+                    placeholder="Designation"
+                    value={designation}
+                    withLabel="Designation"
+                    borderColor="#98A2B3"
+                    icon={Images.semester}
+                    editable={false}
+                  />
+                </>
+              ) : (
+                <>
+                  <CustomInput
+                    placeholder="Enter Program"
+                    value={program}
+                    onChangeText={text => setProgram(text)}
+                    withLabel="Program"
+                    borderColor="#98A2B3"
+                    icon={Images.program}
+                    editable={false}
+                  />
 
-              <CustomInput
-                placeholder="Enter Session"
-                value={session}
-                onChangeText={text => setSession(text)}
-                withLabel="Session (Optional)"
-                borderColor="#98A2B3"
-                icon={Images.semester}
-                editable={false}
-              />
+                  <CustomInput
+                    placeholder="Enter Semester"
+                    value={semester}
+                    onChangeText={text => setSemester(text)}
+                    withLabel="Semester"
+                    borderColor="#98A2B3"
+                    icon={Images.semester}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                  />
 
-              <CustomInput
-                placeholder="Enter Blood Group"
-                value={bloodGroup}
-                onChangeText={text => setBloodGroup(text)}
-                withLabel="Blood Group (Optional)"
-                borderColor="#98A2B3"
-                iconName="user"
-                returnKeyType="done"
-                onSubmitEditing={handleUpdate}
-              />
+                  <CustomInput
+                    placeholder="Enter Session"
+                    value={session}
+                    onChangeText={text => setSession(text)}
+                    withLabel="Session (Optional)"
+                    borderColor="#98A2B3"
+                    icon={Images.semester}
+                    editable={false}
+                  />
+
+                  <CustomInput
+                    placeholder="Enter Blood Group"
+                    value={bloodGroup}
+                    onChangeText={text => setBloodGroup(text)}
+                    withLabel="Blood Group (Optional)"
+                    borderColor="#98A2B3"
+                    iconName="user"
+                    returnKeyType="done"
+                    onSubmitEditing={handleUpdate}
+                  />
+                </>
+              )}
             </View>
 
             <View

@@ -222,7 +222,7 @@ const Profile = () => {
       try {
         const res = await post('student/card/generate');
         if (res?.data?.success) {
-          ToastMessage(res.data?.message || 'Card generated successfully', 'success');
+          ToastMessage('Your Bus card is ready!', 'success');
           navigation.navigate('GenerateCard');
         } else {
           console.log('Generate card failed:', res?.error);
@@ -309,12 +309,15 @@ const Profile = () => {
           actionKey: 'personal-data',
         }
       : null,
-    !isTeacher && profile?.account?.generate_card
+    profile?.account?.generate_card !== false
       ? {
           key: 'generate-card',
           Icons: Images.generateCard,
-          label: 'Generate Card',
-          badge: { text: 'Generate Card', variant: 'primary' },
+          label: isTeacher ? 'Teacher Card' : 'Generate Card',
+          badge: {
+            text: isTeacher ? 'Teacher Card' : 'Generate Card',
+            variant: 'primary',
+          },
           actionKey: 'generate-card',
         }
       : null,

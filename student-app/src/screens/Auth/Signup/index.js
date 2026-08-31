@@ -7,11 +7,12 @@ import {
   Platform,
   TextInput,
   Image,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import ScreenWrapper from '../../../components/ScreenWrapper';
-import CustomButton from '../../../components/CustomButton';
 import CustomInput from '../../../components/CustomInput';
 import CustomText from '../../../components/CustomText';
 import CustomDropDown from '../../../components/CustomDropDown';
@@ -341,6 +342,7 @@ const Signup = ({ navigation }) => {
       console.log('res', res);
 
       if (res?.error) {
+        ToastMessage(getApiErrorMessage(res), 'error');
         return;
       }
 
@@ -401,6 +403,7 @@ const Signup = ({ navigation }) => {
       console.log('register', res);
 
       if (res?.error) {
+        ToastMessage(getApiErrorMessage(res), 'error');
         return;
       }
 
@@ -709,35 +712,18 @@ const Signup = ({ navigation }) => {
       backgroundColor="#FAFAFA"
       paddingHorizontal={30}
       statusBarColor={COLORS.white}
-      footerUnScrollable={() =>
-        !isStudentStep ? (
-          <View style={styles.dualTextContainer}>
-            <CustomText
-              label="Already have an account?"
-              fontSize={12}
-              fontFamily={fonts.medium}
-              color="#393B41"
-            />
-            <CustomText
-              label=" Sign in here"
-              fontSize={12}
-              fontFamily={fonts.medium}
-              color={COLORS.primaryColor}
-              onPress={handleSigninModel}
-            />
-          </View>
-        ) : null
-      }
     >
       <KeyboardAwareScrollView
         ref={scrollViewRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         enableOnAndroid
         enableAutomaticScroll
         extraScrollHeight={EXTRA_SCROLL}
         extraHeight={EXTRA_SCROLL}
         keyboardOpeningTime={0}
         enableResetScrollToCoords={false}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={e => {
@@ -771,33 +757,49 @@ const Signup = ({ navigation }) => {
           {isStudentStep ? renderDetailsFields() : renderEmailFields()}
         </View>
 
-        <CustomButton
-          title={isStudentStep ? 'Next' : 'Sign Up'}
-          onPress={isStudentStep ? handleNext : handleSignUp}
-          loading={loading}
-          marginTop={isStudentStep ? 10 : 36}
-          marginBottom={20}
-          borderRadius={30}
-          color="#ffffff"
-        />
+        <TouchableOpacity
+          activeOpacity={0.7}
+          disabled={loading}
+          onPress={() => {
+            Keyboard.dismiss();
+            if (isStudentStep) {
+              handleNext();
+            } else {
+              handleSignUp();
+            }
+          }}
+          style={[
+            styles.submitBtn,
+            {marginTop: isStudentStep ? 10 : 36, opacity: loading ? 0.85 : 1},
+          ]}>
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <CustomText
+              label={isStudentStep ? 'Next' : 'Sign Up'}
+              removeTranslation
+              color="#ffffff"
+              fontFamily={fonts.semiBold}
+              fontSize={15}
+            />
+          )}
+        </TouchableOpacity>
 
-        {isStudentStep && (
-          <View style={styles.dualTextContainer}>
-            <CustomText
-              label="Already have an account?"
-              fontSize={12}
-              fontFamily={fonts.medium}
-              color="#393B41"
-            />
-            <CustomText
-              label=" Sign in here"
-              fontSize={12}
-              fontFamily={fonts.medium}
-              color={COLORS.primaryColor}
-              onPress={handleSigninModel}
-            />
-          </View>
-        )}
+        <View style={styles.dualTextContainer}>
+          <CustomText
+            label="Already have an account?"
+            fontSize={12}
+            fontFamily={fonts.medium}
+            color="#393B41"
+          />
+          <CustomText
+            label=" Sign in here"
+            fontSize={12}
+            fontFamily={fonts.medium}
+            color={COLORS.primaryColor}
+            onPress={handleSigninModel}
+          />
+        </View>
 
         <Signinmodel
           visible={signinModelVisible}
@@ -836,6 +838,13 @@ const Signup = ({ navigation }) => {
 export default Signup;
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   logo: {
     width: 56,
     height: 56,
@@ -849,9 +858,14 @@ const styles = StyleSheet.create({
   form: {
     marginTop: 10,
   },
-  dualText: {
+  submitBtn: {
     width: '100%',
-    backgroundColor: 'red',
+    height: 54,
+    borderRadius: 30,
+    backgroundColor: COLORS.primaryColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   dualTextContainer: {
     flexDirection: 'row',
